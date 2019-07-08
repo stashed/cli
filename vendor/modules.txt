@@ -16,6 +16,7 @@ github.com/PuerkitoBio/urlesc
 # github.com/appscode/go v0.0.0-20190523031839-1468ee3a76e8
 github.com/appscode/go/log
 github.com/appscode/go/version
+github.com/appscode/go/runtime
 github.com/appscode/go/flags
 github.com/appscode/go/types
 github.com/appscode/go/context
@@ -43,6 +44,8 @@ github.com/census-instrumentation/opencensus-proto/gen-go/trace/v1
 github.com/codegangsta/inject
 # github.com/codeskyblue/go-sh v0.0.0-20190412065543-76bd3d59ff27
 github.com/codeskyblue/go-sh
+# github.com/cpuguy83/go-md2man v1.0.10
+github.com/cpuguy83/go-md2man/md2man
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -163,9 +166,12 @@ github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
 # github.com/prometheus/procfs v0.0.0-20190523193104-a7aeb8df3389
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
+# github.com/russross/blackfriday v1.5.2
+github.com/russross/blackfriday
 # github.com/sergi/go-diff v1.0.0
 github.com/sergi/go-diff/diffmatchpatch
 # github.com/spf13/cobra v0.0.4
+github.com/spf13/cobra/doc
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.3
 github.com/spf13/pflag
