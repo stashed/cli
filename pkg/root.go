@@ -3,18 +3,17 @@ package pkg
 import (
 	"flag"
 
-	"github.com/appscode/go/flags"
 	v "github.com/appscode/go/version"
 	"github.com/spf13/cobra"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
+	cliflag "k8s.io/component-base/cli/flag"
+	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	"kmodules.xyz/client-go/logs"
 	"kmodules.xyz/client-go/tools/cli"
 	ocscheme "kmodules.xyz/openshift/client/clientset/versioned/scheme"
-	stash_cli "stash.appscode.dev/cli/pkg/cli"
-	"stash.appscode.dev/cli/pkg/docker"
 	"stash.appscode.dev/stash/apis"
 	"stash.appscode.dev/stash/client/clientset/versioned/scheme"
-	"stash.appscode.dev/stash/pkg/util"
 )
 
 func NewRootCmd() *cobra.Command {
@@ -24,7 +23,6 @@ func NewRootCmd() *cobra.Command {
 		Long:              `kubectl plugin for Stash by AppsCode. For more information, visit here: https://appscode.com/products/stash`,
 		DisableAutoGenTag: true,
 		PersistentPreRunE: func(c *cobra.Command, args []string) error {
-			flags.DumpAll(c.Flags())
 			cli.SendAnalytics(c, v.Version.Version)
 
 			err := scheme.AddToScheme(clientsetscheme.Scheme)
@@ -34,25 +32,31 @@ func NewRootCmd() *cobra.Command {
 			return ocscheme.AddToScheme(clientsetscheme.Scheme)
 		},
 	}
-	rootCmd.PersistentFlags().AddGoFlagSet(flag.CommandLine)
+
+	flags := rootCmd.PersistentFlags()
+	// Normalize all flags that are coming from other packages or pre-configurations
+	// a.k.a. change all "_" to "-". e.g. glog package
+	flags.SetNormalizeFunc(cliflag.WordSepNormalizeFunc)
+
+	kubeConfigFlags := genericclioptions.NewConfigFlags(true)
+	kubeConfigFlags.AddFlags(flags)
+	matchVersionKubeConfigFlags := cmdutil.NewMatchVersionFlags(kubeConfigFlags)
+	matchVersionKubeConfigFlags.AddFlags(flags)
+
+	flags.AddGoFlagSet(flag.CommandLine)
 	logs.ParseFlags()
-	rootCmd.PersistentFlags().StringVar(&util.ServiceName, "service-name", "stash-operator", "Stash service name.")
-	rootCmd.PersistentFlags().BoolVar(&cli.EnableAnalytics, "enable-analytics", cli.EnableAnalytics, "Send analytical events to Google Analytics")
-	rootCmd.PersistentFlags().BoolVar(&apis.EnableStatusSubresource, "enable-status-subresource", apis.EnableStatusSubresource, "If true, uses sub resource for crds.")
+	flags.BoolVar(&cli.EnableAnalytics, "enable-analytics", cli.EnableAnalytics, "Send analytical events to Google Analytics")
+	flags.BoolVar(&apis.EnableStatusSubresource, "enable-status-subresource", apis.EnableStatusSubresource, "If true, uses sub resource for crds.")
+
+	f := cmdutil.NewFactory(matchVersionKubeConfigFlags)
 
 	rootCmd.AddCommand(v.NewCmdVersion())
 
-	rootCmd.AddCommand(stash_cli.NewCopyRepositoryCmd())
-	rootCmd.AddCommand(stash_cli.NewUnlockRepositoryCmd())
-	rootCmd.AddCommand(stash_cli.NewUnlockLocalRepositoryCmd())
-	rootCmd.AddCommand(stash_cli.NewTriggerBackupCmd())
-	rootCmd.AddCommand(stash_cli.NewBackupPVCmd())
-	rootCmd.AddCommand(stash_cli.NewDownloadCmd())
-	rootCmd.AddCommand(stash_cli.NewDeleteSnapshotCmd())
-
-	rootCmd.AddCommand(docker.NewUnlockRepositoryCmd())
-	rootCmd.AddCommand(docker.NewDownloadCmd())
-	rootCmd.AddCommand(docker.NewDeleteSnapshotCmd())
+	rootCmd.AddCommand(NewCmdCopy(f))
+	rootCmd.AddCommand(NewCmdDelete(f))
+	rootCmd.AddCommand(NewCmdDownloadRepository(f))
+	rootCmd.AddCommand(NewCmdTriggerBackup(f))
+	rootCmd.AddCommand(NewCmdUnlockRepository(f))
 
 	return rootCmd
 }

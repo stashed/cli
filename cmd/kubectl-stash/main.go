@@ -1,8 +1,10 @@
 package main
 
 import (
+	"math/rand"
 	"os"
 	"runtime"
+	"time"
 
 	"github.com/appscode/go/log"
 	_ "k8s.io/client-go/kubernetes/fake"
@@ -13,6 +15,7 @@ import (
 )
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
