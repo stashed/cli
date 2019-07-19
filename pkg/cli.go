@@ -6,13 +6,7 @@ import (
 	"path/filepath"
 
 	core "k8s.io/api/core/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/util/homedir"
-	meta_util "kmodules.xyz/client-go/meta"
-	"kmodules.xyz/client-go/tools/clientcmd"
 	"stash.appscode.dev/cli/pkg/docker"
-	cs "stash.appscode.dev/stash/client/clientset/versioned"
 	docker_image "stash.appscode.dev/stash/pkg/docker"
 	"stash.appscode.dev/stash/pkg/restic"
 )
@@ -21,12 +15,6 @@ const (
 	secretDirName = "secret"
 	configDirName = "config"
 )
-
-type stashCLIController struct {
-	clientConfig *rest.Config
-	kubeClient   kubernetes.Interface
-	stashClient  cs.Interface
-}
 
 type cliLocalDirectories struct {
 	secretDir   string // temp dir
@@ -41,26 +29,6 @@ var (
 		Tag:      "latest", // TODO: update default release tag
 	}
 )
-
-func newStashCLIController(kubeConfig string) (*stashCLIController, error) {
-	var (
-		controller = &stashCLIController{}
-		err        error
-	)
-	if kubeConfig == "" && !meta_util.PossiblyInCluster() {
-		kubeConfig = filepath.Join(homedir.HomeDir(), "/.kube/config")
-	}
-	if controller.clientConfig, err = clientcmd.BuildConfigFromContext(kubeConfig, ""); err != nil {
-		return nil, err
-	}
-	if controller.kubeClient, err = kubernetes.NewForConfig(controller.clientConfig); err != nil {
-		return nil, err
-	}
-	if controller.stashClient, err = cs.NewForConfig(controller.clientConfig); err != nil {
-		return nil, err
-	}
-	return controller, nil
-}
 
 func (localDirs *cliLocalDirectories) prepareSecretDir(tempDir string, secret *core.Secret) error {
 	// write repository secrets in a sub-dir insider tempDir
