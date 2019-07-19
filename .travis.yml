@@ -5,6 +5,11 @@ go:
 
 go_import_path: stash.appscode.dev/cli
 
+env:
+  global:
+  - GOFLAGS=-mod=vendor
+  - GO111MODULE=on
+
 cache:
   directories:
   - $HOME/.cache/go-build

@@ -8,6 +8,8 @@ import (
 	"stash.appscode.dev/stash/pkg/restic"
 )
 
+// RemoveIt!
+// Deprecated
 func NewDownloadCmd() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:               "download-snapshots",
