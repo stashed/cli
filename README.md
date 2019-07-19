@@ -1,6 +1,7 @@
 [![Go Report Card](https://goreportcard.com/badge/stash.appscode.dev/cli)](https://goreportcard.com/report/stash.appscode.dev/cli)
 [![Build Status](https://travis-ci.org/stashed/cli.svg?branch=master)](https://travis-ci.org/stashed/cli)
-[![Docker Pulls](https://img.shields.io/docker/pulls/appscode/kubectl-stash.svg)](https://hub.docker.com/r/appscode/kubectl-stash/)
+[![Docker Pulls](https://img.shields.io/docker/pulls/appscode/stash.svg)](https://hub.docker.com/r/appscode/stash/)
+[![Github All Releases](https://img.shields.io/github/downloads/stashed/cli/total.svg)](https://github.com/stashed/cli/releases)
 [![Slack](https://slack.appscode.com/badge.svg)](https://slack.appscode.com)
 [![Twitter](https://img.shields.io/twitter/follow/appscodehq.svg?style=social&logo=twitter&label=Follow)](https://twitter.com/intent/follow?screen_name=AppsCodeHQ)
 
