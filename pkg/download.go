@@ -114,7 +114,7 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 	cmd.Flags().StringVar(&localDirs.downloadDir, "destination", localDirs.downloadDir, "Destination path where snapshot will be restored.")
 
 	cmd.Flags().StringVar(&restoreOpt.SourceHost, "host", restoreOpt.SourceHost, "Name of the source host machine")
-	cmd.Flags().StringSliceVar(&restoreOpt.RestoreDirs, "directories", restoreOpt.RestoreDirs, "List of directories to be restored")
+	cmd.Flags().StringSliceVar(&restoreOpt.RestorePaths, "paths", restoreOpt.RestorePaths, "List of directories to be restored")
 	cmd.Flags().StringSliceVar(&restoreOpt.Snapshots, "snapshots", restoreOpt.Snapshots, "List of snapshots to be restored")
 
 	cmd.Flags().StringVar(&imgRestic.Registry, "docker-registry", imgRestic.Registry, "Docker image registry for restic cli")
