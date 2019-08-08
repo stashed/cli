@@ -1,14 +1,15 @@
 package pkg
 
 import (
+	"fmt"
 	"io/ioutil"
+	core "k8s.io/api/core/v1"
 	"os"
 	"path/filepath"
-
-	core "k8s.io/api/core/v1"
 	"stash.appscode.dev/cli/pkg/docker"
 	docker_image "stash.appscode.dev/stash/pkg/docker"
 	"stash.appscode.dev/stash/pkg/restic"
+	"strings"
 )
 
 const (
@@ -26,7 +27,7 @@ var (
 	imgRestic = docker_image.Docker{
 		Registry: "restic",
 		Image:    "restic",
-		Tag:      "latest", // TODO: update default release tag
+		Tag:      "0.9.5", // TODO: update default release tag
 	}
 )
 
@@ -73,4 +74,30 @@ func (localDirs *cliLocalDirectories) prepareDownloadDir() (err error) {
 		}
 	}
 	return os.MkdirAll(localDirs.downloadDir, 0755)
+}
+
+
+func (localDirs *cliLocalDirectories) prepareDir(tempDir string, secret *core.Secret) error {
+	var dataString string
+
+	for key, value := range secret.Data {
+		val := strings.ReplaceAll(string(value), "\n", "")
+
+		if key == restic.GOOGLE_SERVICE_ACCOUNT_JSON_KEY {
+			path := filepath.Join(localDirs.secretDir,restic.GOOGLE_APPLICATION_CREDENTIALS)
+			if err := ioutil.WriteFile(path, []byte(val), 0755); err != nil {
+				return err
+			}
+			val = path
+			key = restic.GOOGLE_APPLICATION_CREDENTIALS
+		}
+		secretData := key + "=" + val
+		dataString = dataString + fmt.Sprintln(secretData)
+	}
+
+	if err := ioutil.WriteFile(filepath.Join(localDirs.secretDir,"env"), []byte(dataString), 0755); err != nil {
+		return err
+	}
+
+	return nil
 }
