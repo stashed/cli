@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"os/user"
@@ -66,6 +65,16 @@ func NewCmdUnlockRepositoryCrd(clientGetter genericclioptions.RESTClientGetter) 
 				return err
 			}
 
+			// write secret in a temp dir and
+			// cleanup whole tempDir dir at the end
+			tempDir := filepath.Join("/tmp")
+			defer os.RemoveAll(docker.SecretDir)
+
+			// prepare local dirs
+			if err = localDirs.prepareDir(tempDir, secret); err != nil {
+				return err
+			}
+
 			// configure restic wrapper
 			extraOpt := util.ExtraOptions{
 				SecretDir:   docker.SecretDir,
@@ -78,30 +87,12 @@ func NewCmdUnlockRepositoryCrd(clientGetter genericclioptions.RESTClientGetter) 
 				return fmt.Errorf("setup option for repository failed")
 			}
 
-			// write secret in a temp dir
-			// cleanup whole tempDir dir at the end
-			tempDir := filepath.Join("/tmp")
-			//defer os.RemoveAll(tempDir)
-
-			localDirs.secretDir = filepath.Join(tempDir, secretDirName)
-			if err := os.MkdirAll(localDirs.secretDir, 0755); err != nil {
-				return err
-			}
-
-			if err := ioutil.WriteFile(filepath.Join(localDirs.secretDir, restic.RESTIC_PASSWORD), []byte(restic.RESTIC_PASSWORD), 0755); err != nil {
-				return err
-			}
-
 			// init restic wrapper
 			resticWrapper, err := restic.NewResticWrapper(setupOpt)
 			if err != nil {
 				return err
 			}
 
-			// prepare local dirs
-			if err = localDirs.prepareDir(tempDir, secret); err != nil {
-				return err
-			}
 			// run unlock inside docker
 			if err = runUnlockRepoViaDocker(*localDirs, resticWrapper.GetRepo()); err != nil {
 				return err
@@ -125,9 +116,12 @@ func runUnlockRepoViaDocker(localDirs cliLocalDirectories, resticRepo string) er
 		"--rm",
 		"-u", currentUser.Uid,
 		"-v", localDirs.secretDir + ":" + docker.SecretDir,
+		"--env", "HTTP_PROXY=" + os.Getenv("HTTP_PROXY"),
+		"--env", "HTTPS_PROXY=" + os.Getenv("HTTPS_PROXY"),
 		"--env-file", filepath.Join(localDirs.secretDir, "env"),
 		imgRestic.ToContainerImage(),
 		"unlock",
+		"--no-cache",
 		"-r", resticRepo,
 	}
 	log.Infoln("Running docker with args:", args)

@@ -76,8 +76,17 @@ func (localDirs *cliLocalDirectories) prepareDownloadDir() (err error) {
 	return os.MkdirAll(localDirs.downloadDir, 0755)
 }
 
+//write repository secret credential in a sub-dir inside tempDir
+func (localDirs *cliLocalDirectories) prepareDir(temDir string, secret *core.Secret) error {
+	localDirs.secretDir = filepath.Join(temDir, secretDirName)
+	if err := os.MkdirAll(localDirs.secretDir, 0755); err != nil {
+		return err
+	}
 
-func (localDirs *cliLocalDirectories) prepareDir(tempDir string, secret *core.Secret) error {
+	if err := ioutil.WriteFile(filepath.Join(localDirs.secretDir, restic.RESTIC_PASSWORD), []byte(restic.RESTIC_PASSWORD), 0755); err != nil {
+		return err
+	}
+
 	var dataString string
 
 	for key, value := range secret.Data {
