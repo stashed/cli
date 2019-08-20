@@ -33,7 +33,7 @@ const (
 	unlockJobSecretVolume = "secret-volume"
 )
 
-func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
+func NewCmdUnlockRepositoryCrd(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	var (
 		localDirs = &cliLocalDirectories{}
 	)

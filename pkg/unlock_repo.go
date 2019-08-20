@@ -2,10 +2,13 @@ package pkg
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
+
+	"stash.appscode.dev/cli/pkg/docker"
 	"stash.appscode.dev/stash/pkg/restic"
 
 	"github.com/appscode/go/log"
@@ -14,17 +17,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
-	"stash.appscode.dev/cli/pkg/docker"
 	cs "stash.appscode.dev/stash/client/clientset/versioned"
 	"stash.appscode.dev/stash/pkg/util"
 )
 
-func NewCmdUnlockRepositoryCrd(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
+func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	var (
 		localDirs = &cliLocalDirectories{}
 	)
 	var cmd = &cobra.Command{
-		Use:               "unlock_repo",
+		Use:               "unlock",
 		Short:             `Unlock Restic Repository`,
 		Long:              `Unlock Restic Repository`,
 		DisableAutoGenTag: true,
@@ -65,19 +67,20 @@ func NewCmdUnlockRepositoryCrd(clientGetter genericclioptions.RESTClientGetter) 
 				return err
 			}
 
-			// write secret in a temp dir and
-			// cleanup whole tempDir dir at the end
-			tempDir := filepath.Join("/tmp")
-			defer os.RemoveAll(docker.SecretDir)
+			tempDir, err := ioutil.TempDir("", "stash-cli")
+			if err != nil {
+				return err
+			}
+			//defer os.RemoveAll(tempDir)
 
-			// prepare local dirs
-			if err = localDirs.prepareDir(tempDir, secret); err != nil {
+			// dump secret
+			if err = localDirs.dumpSecret(tempDir, secret); err != nil {
 				return err
 			}
 
 			// configure restic wrapper
 			extraOpt := util.ExtraOptions{
-				SecretDir:   docker.SecretDir,
+				SecretDir:   localDirs.secretDir,
 				EnableCache: false,
 				ScratchDir:  docker.ScratchDir,
 			}
@@ -93,8 +96,23 @@ func NewCmdUnlockRepositoryCrd(clientGetter genericclioptions.RESTClientGetter) 
 				return err
 			}
 
+			//get restic credential from ENV
+			dataString := resticWrapper.DumpEnv()
+			// prepare config dir
+			if err = localDirs.prepareConfDir(tempDir, dataString); err != nil {
+				return err
+			}
+
+			extraAgrs := []string{
+				"--no-cache",
+			}
+
+			if _, err := os.Stat(filepath.Join(localDirs.secretDir, restic.CA_CERT_DATA)); err == nil {
+				extraAgrs = append(extraAgrs, "--cacert", filepath.Join(localDirs.secretDir, restic.CA_CERT_DATA))
+			}
+
 			// run unlock inside docker
-			if err = runUnlockRepoViaDocker(*localDirs, resticWrapper.GetRepo()); err != nil {
+			if err = runCmdViaDocker(*localDirs, "unlock", extraAgrs); err != nil {
 				return err
 			}
 			log.Infof("Repository %s/%s unlocked", namespace, repositoryName)
@@ -105,7 +123,7 @@ func NewCmdUnlockRepositoryCrd(clientGetter genericclioptions.RESTClientGetter) 
 	return cmd
 }
 
-func runUnlockRepoViaDocker(localDirs cliLocalDirectories, resticRepo string) error {
+func runCmdViaDocker(localDirs cliLocalDirectories, command string, extraArgs []string) error {
 	// get current user
 	currentUser, err := user.Current()
 	if err != nil {
@@ -115,16 +133,15 @@ func runUnlockRepoViaDocker(localDirs cliLocalDirectories, resticRepo string) er
 		"run",
 		"--rm",
 		"-u", currentUser.Uid,
-		"-v", localDirs.secretDir + ":" + docker.SecretDir,
+		"-v", localDirs.secretDir + ":" + localDirs.secretDir,
 		"--env", "HTTP_PROXY=" + os.Getenv("HTTP_PROXY"),
 		"--env", "HTTPS_PROXY=" + os.Getenv("HTTPS_PROXY"),
-		"--env-file", filepath.Join(localDirs.secretDir, "env"),
+		"--env-file", filepath.Join(localDirs.configDir, "env"),
 		imgRestic.ToContainerImage(),
-		"unlock",
-		"--no-cache",
-		"-r", resticRepo,
+		command,
 	}
-	log.Infoln("Running docker with args:", args)
+
+	args = append(args, extraArgs...)
 	out, err := exec.Command("docker", args...).CombinedOutput()
 	log.Infoln("Output:", string(out))
 	return err

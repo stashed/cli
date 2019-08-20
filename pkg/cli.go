@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"fmt"
 	"io/ioutil"
 	core "k8s.io/api/core/v1"
 	"os"
@@ -9,7 +8,6 @@ import (
 	"stash.appscode.dev/cli/pkg/docker"
 	docker_image "stash.appscode.dev/stash/pkg/docker"
 	"stash.appscode.dev/stash/pkg/restic"
-	"strings"
 )
 
 const (
@@ -77,34 +75,28 @@ func (localDirs *cliLocalDirectories) prepareDownloadDir() (err error) {
 }
 
 //write repository secret credential in a sub-dir inside tempDir
-func (localDirs *cliLocalDirectories) prepareDir(temDir string, secret *core.Secret) error {
+func (localDirs *cliLocalDirectories) dumpSecret(temDir string, secret *core.Secret) error {
 	localDirs.secretDir = filepath.Join(temDir, secretDirName)
 	if err := os.MkdirAll(localDirs.secretDir, 0755); err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(filepath.Join(localDirs.secretDir, restic.RESTIC_PASSWORD), []byte(restic.RESTIC_PASSWORD), 0755); err != nil {
+	for key, val := range secret.Data {
+		if err := ioutil.WriteFile(filepath.Join(localDirs.secretDir,key), []byte(val), 0755); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (localDirs *cliLocalDirectories) prepareConfDir(temDir string, dataString string) error {
+	localDirs.configDir = filepath.Join(temDir, configDirName)
+	if err := os.MkdirAll(localDirs.configDir, 0755); err != nil {
 		return err
 	}
 
-	var dataString string
-
-	for key, value := range secret.Data {
-		val := strings.ReplaceAll(string(value), "\n", "")
-
-		if key == restic.GOOGLE_SERVICE_ACCOUNT_JSON_KEY {
-			path := filepath.Join(localDirs.secretDir,restic.GOOGLE_APPLICATION_CREDENTIALS)
-			if err := ioutil.WriteFile(path, []byte(val), 0755); err != nil {
-				return err
-			}
-			val = path
-			key = restic.GOOGLE_APPLICATION_CREDENTIALS
-		}
-		secretData := key + "=" + val
-		dataString = dataString + fmt.Sprintln(secretData)
-	}
-
-	if err := ioutil.WriteFile(filepath.Join(localDirs.secretDir,"env"), []byte(dataString), 0755); err != nil {
+	if err := ioutil.WriteFile(filepath.Join(localDirs.configDir, "env"), []byte(dataString), 0755); err != nil {
 		return err
 	}
 
