@@ -12,6 +12,5 @@ func NewCmdCopy(clientGetter genericclioptions.RESTClientGetter) *cobra.Command 
 		DisableAutoGenTag: true,
 	}
 	cmd.AddCommand(NewCmdCopyRepository(clientGetter))
-	cmd.AddCommand(NewCmdCopyRepo(clientGetter))
 	return cmd
 }

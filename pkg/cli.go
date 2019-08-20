@@ -13,6 +13,8 @@ import (
 const (
 	secretDirName = "secret"
 	configDirName = "config"
+	ResticEnvs = "restic-envs"
+
 )
 
 type cliLocalDirectories struct {
@@ -74,7 +76,7 @@ func (localDirs *cliLocalDirectories) prepareDownloadDir() (err error) {
 	return os.MkdirAll(localDirs.downloadDir, 0755)
 }
 
-//write repository secret credential in a sub-dir inside tempDir
+// Write Storage Secret credentials in secret dir inside tempDir
 func (localDirs *cliLocalDirectories) dumpSecret(temDir string, secret *core.Secret) error {
 	localDirs.secretDir = filepath.Join(temDir, secretDirName)
 	if err := os.MkdirAll(localDirs.secretDir, 0755); err != nil {
@@ -85,19 +87,6 @@ func (localDirs *cliLocalDirectories) dumpSecret(temDir string, secret *core.Sec
 		if err := ioutil.WriteFile(filepath.Join(localDirs.secretDir,key), []byte(val), 0755); err != nil {
 			return err
 		}
-	}
-
-	return nil
-}
-
-func (localDirs *cliLocalDirectories) prepareConfDir(temDir string, dataString string) error {
-	localDirs.configDir = filepath.Join(temDir, configDirName)
-	if err := os.MkdirAll(localDirs.configDir, 0755); err != nil {
-		return err
-	}
-
-	if err := ioutil.WriteFile(filepath.Join(localDirs.configDir, "env"), []byte(dataString), 0755); err != nil {
-		return err
 	}
 
 	return nil

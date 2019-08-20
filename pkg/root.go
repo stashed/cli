@@ -53,7 +53,6 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.AddCommand(v.NewCmdVersion())
 
 	rootCmd.AddCommand(NewCmdCopy(f))
-	rootCmd.AddCommand(NewCmdCreate(f))
 	rootCmd.AddCommand(NewCmdDelete(f))
 	rootCmd.AddCommand(NewCmdDownloadRepository(f))
 	rootCmd.AddCommand(NewCmdTriggerBackup(f))
