@@ -4,9 +4,6 @@ import (
 	shell "github.com/codeskyblue/go-sh"
 	ofst "kmodules.xyz/offshoot-api/api/v1"
 	"stash.appscode.dev/stash/apis/stash/v1alpha1"
-	//"io/ioutil"
-	//"path/filepath"
-	"fmt"
 )
 
 const (
@@ -104,16 +101,6 @@ func (w *ResticWrapper) HideCMD() {
 	if w.sh != nil {
 		w.sh.ShowCMD = false
 	}
-}
-
-func (w *ResticWrapper) DumpEnv() string{
-	var dataString string
-	if w.sh != nil {
-		for k,v:= range w.sh.Env{
-			dataString = dataString + fmt.Sprintln(k + "=" + v)
-		}
-	}
-	return dataString
 }
 
 func (w *ResticWrapper) GetRepo() string {

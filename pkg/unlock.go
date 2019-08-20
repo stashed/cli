@@ -73,7 +73,8 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 			}
 			defer os.RemoveAll(tempDir)
 
-			// dump secret
+			// dump secret into a temporary directory.
+			// we will pass the secret files into restic docker container.
 			if err = localDirs.dumpSecret(tempDir, secret); err != nil {
 				return err
 			}
@@ -94,9 +95,9 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 				return err
 			}
 
-			//configure config directory
 			localDirs.configDir = filepath.Join(tempDir, configDirName)
-			//get restic credential from ENV
+			// dump restic's environments into `restic-env` file.
+			// we will pass this env file to restic docker container.
 			err = resticWrapper.DumpEnv(localDirs.configDir, ResticEnvs)
 			if err != nil{
 				return err
@@ -107,6 +108,7 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 				"--no-cache",
 			}
 
+			// For TLS secured Minio/REST server, specify cert path
 			if _, err := os.Stat(filepath.Join(localDirs.secretDir, restic.CA_CERT_DATA)); err == nil {
 				extraAgrs = append(extraAgrs, "--cacert", filepath.Join(localDirs.secretDir, restic.CA_CERT_DATA))
 			}
