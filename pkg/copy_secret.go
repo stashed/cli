@@ -4,20 +4,14 @@ import (
 	"fmt"
 
 	"github.com/appscode/go/log"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	core_util "kmodules.xyz/client-go/core/v1"
-	core "k8s.io/api/core/v1"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/client-go/kubernetes"
+	"k8s.io/api/core/v1"
 )
 
-func NewCmdCopySecret(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
-	var (
-		toNamespace string
-	)
-
+func NewCmdCopySecret() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:               "secret",
 		Short:             `Copy Secret`,
@@ -31,51 +25,33 @@ func NewCmdCopySecret(clientGetter genericclioptions.RESTClientGetter) *cobra.Co
 
 			secretName := args[0]
 
-			cfg, err := clientGetter.ToRESTConfig()
-			if err != nil {
-				return errors.Wrap(err, "failed to read kubeconfig")
-			}
-
-			srcNamespace, _, err := clientGetter.ToRawKubeConfigLoader().Namespace()
-			if err != nil {
-				return err
-			}
-
-			kc, err := kubernetes.NewForConfig(cfg)
-			if err != nil {
-				return err
-			}
-
 			// get source secret
-			secret, err := kc.CoreV1().Secrets(srcNamespace).Get(secretName, metav1.GetOptions{})
+			secret, err := getSecret(srcNamespace, secretName)
 			if err != nil {
 				return err
 			}
 
-			// create/patch destination secret
-			// only copy data
-			err = createOrPatchSecretToNewNamespace(secret, toNamespace, kc)
+			// copy the secret to destination namespace
+			err = copySecret(secret)
 			if err != nil {
 				return err
 			}
 
-			log.Infof("Secret %s has been copied from namespace %s to %s successfully", secret.Name, srcNamespace, toNamespace)
+			log.Infof("Secret %s/%s has been copied to %s namespace successfully.", srcNamespace,secret.Name, dstNamespace)
 			return nil
 		},
 	}
-
-	cmd.Flags().StringVar(&toNamespace, "to-namespace", toNamespace, "Destination namespace.")
 
 	return cmd
 }
 
 // CreateOrPatch New Secret
-func createOrPatchSecretToNewNamespace(secret *core.Secret, toNamespace string, kc kubernetes.Interface) error{
+func copySecret(secret *core.Secret) error{
 	_, _, err := core_util.CreateOrPatchSecret(
 		kc,
 		metav1.ObjectMeta{
 			Name:      secret.Name,
-			Namespace: toNamespace,
+			Namespace: dstNamespace,
 		},
 		func(obj *core.Secret) *core.Secret {
 			obj.Data = secret.Data
@@ -83,4 +59,8 @@ func createOrPatchSecretToNewNamespace(secret *core.Secret, toNamespace string, 
 		},
 	)
 	return err
+}
+
+func getSecret(namespace string, name string) (secret *v1.Secret, err error) {
+	return kc.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
 }

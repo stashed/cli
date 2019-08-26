@@ -4,20 +4,13 @@ import (
 	"fmt"
 
 	"github.com/appscode/go/log"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/client-go/kubernetes"
 	"stash.appscode.dev/stash/apis/stash/v1alpha1"
-	cs "stash.appscode.dev/stash/client/clientset/versioned"
 	"stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1alpha1/util"
 )
 
-func NewCmdCopyRepository(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
-	var (
-		toNamespace string
-	)
+func NewCmdCopyRepository() *cobra.Command {
 
 	var cmd = &cobra.Command{
 		Use:               "repository",
@@ -27,74 +20,51 @@ func NewCmdCopyRepository(clientGetter genericclioptions.RESTClientGetter) *cobr
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			if len(args) == 0 || args[0] == "" {
-				return fmt.Errorf("Repository name not found")
+				return fmt.Errorf("repository name not found")
 			}
 
 			repositoryName := args[0]
 
-			cfg, err := clientGetter.ToRESTConfig()
-			if err != nil {
-				return errors.Wrap(err, "failed to read kubeconfig")
-			}
-
-			srcNamespace, _, err := clientGetter.ToRawKubeConfigLoader().Namespace()
-			if err != nil {
-				return err
-			}
-
-			kc, err := kubernetes.NewForConfig(cfg)
-			if err != nil {
-				return err
-			}
-			client, err := cs.NewForConfig(cfg)
-			if err != nil {
-				return err
-			}
 			// get source repository
-			repository, err := client.StashV1alpha1().Repositories(srcNamespace).Get(repositoryName, metav1.GetOptions{})
+			repository, err := getRepository(srcNamespace, repositoryName)
 			if err != nil {
 				return err
 			}
+
 			// get source repository secret
-			secret, err := kc.CoreV1().Secrets(srcNamespace).Get(repository.Spec.Backend.StorageSecretName, metav1.GetOptions{})
+			secret, err := getSecret(srcNamespace, repository.Spec.Backend.StorageSecretName)
 			if err != nil {
 				return err
 			}
 
-			// create/patch destination repository secret
-			// only copy data
-			err = createOrPatchSecretToNewNamespace(secret, toNamespace, kc)
+			log.Infof("Repository %s/%s uses Storage Secret %s/%s.\nCopying Storage Secret %s to %s namespace", repository.Namespace, repository.Name,secret.Namespace, secret.Name, srcNamespace, dstNamespace)
+			// copy the secret to destination namespace
+			err = copySecret(secret)
 			if err != nil {
 				return err
 			}
-			log.Infof("Secret %s has been copied from namespace %s to %s successfully for %s repository", secret.Name, srcNamespace, toNamespace, repository.Name)
+			log.Infof("Secret %s/%s has been copied to %s namespace successfully.", srcNamespace, secret.Name, dstNamespace)
 
-			// create/patch destination repository
-			// only copy spec
-			err = createOrPatchRepositortToNewNamespace(repository, toNamespace, client)
+			// copy the repository to destination namespace
+			err = copyRepository(repository)
 			if err != nil {
 				return err
 			}
-			if err != nil {
-				return err
-			}
-			log.Infof("Repository %s has been copied from namespace %s to %s successfully", repositoryName, srcNamespace, toNamespace)
+			log.Infof("Repository %s/%s has been copied to %s namespace successfully.", srcNamespace, repositoryName, dstNamespace)
 			return nil
 		},
 	}
-
-	cmd.Flags().StringVar(&toNamespace, "to-namespace", toNamespace, "Destination namespace.")
 
 	return cmd
 }
 
 // CreateOrPatch New Secret
-func createOrPatchRepositortToNewNamespace(repository *v1alpha1.Repository, toNamespace string, client cs.Interface) error{
+func copyRepository(repository *v1alpha1.Repository) error{
 	_, _, err := util.CreateOrPatchRepository(
 		client.StashV1alpha1(),
 		metav1.ObjectMeta{
 			Name:      repository.Name,
-			Namespace: toNamespace,
+			Namespace: dstNamespace,
 		},
 		func(obj *v1alpha1.Repository) *v1alpha1.Repository {
 			obj.Spec = repository.Spec
@@ -104,3 +74,7 @@ func createOrPatchRepositortToNewNamespace(repository *v1alpha1.Repository, toNa
 	return err
 }
 
+
+func getRepository(namespace string, name string) (repository *v1alpha1.Repository, err error) {
+	return client.StashV1alpha1().Repositories(namespace).Get(name, metav1.GetOptions{})
+}
