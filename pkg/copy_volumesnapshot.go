@@ -20,7 +20,7 @@ var json = jsoniter.ConfigFastest
 
 func NewCmdCopyVolumeSnapshot() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:               "vs",
+		Use:               "volumesnapshot",
 		Short:             `Copy VolumeSnapshot`,
 		Long:              `Copy VolumeSnapshot from one namespace to another namespace`,
 		DisableAutoGenTag: true,
@@ -30,10 +30,10 @@ func NewCmdCopyVolumeSnapshot() *cobra.Command {
 				return fmt.Errorf("volumeSnapshot name not found")
 			}
 
-			vsName := args[0]
+			volumeSnapshotName := args[0]
 
 			// get volumeSnapshot object
-			vs, err := vsClient.VolumesnapshotV1alpha1().VolumeSnapshots(srcNamespace).Get(vsName, v1.GetOptions{})
+			vs, err := vsClient.VolumesnapshotV1alpha1().VolumeSnapshots(srcNamespace).Get(volumeSnapshotName, v1.GetOptions{})
 			if err != nil {
 				return err
 			}
