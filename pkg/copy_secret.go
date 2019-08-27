@@ -8,7 +8,6 @@ import (
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	core_util "kmodules.xyz/client-go/core/v1"
-	"k8s.io/api/core/v1"
 )
 
 func NewCmdCopySecret() *cobra.Command {
@@ -25,30 +24,38 @@ func NewCmdCopySecret() *cobra.Command {
 
 			secretName := args[0]
 
-			// get source secret
-			secret, err := getSecret(srcNamespace, secretName)
-			if err != nil {
-				return err
-			}
+			// get source secret in current namespace
+			// if found then copy the secret to destination namespace
+			err := ensureSecret(secretName)
 
-			// copy the secret to destination namespace
-			err = copySecret(secret)
-			if err != nil {
-				return err
-			}
-
-			log.Infof("Secret %s/%s has been copied to %s namespace successfully.", srcNamespace,secret.Name, dstNamespace)
-			return nil
+			return err
 		},
 	}
 
 	return cmd
 }
 
-// CreateOrPatch New Secret
+func ensureSecret(name string) error {
+	// get source secret
+	secret,err := kubeClient.CoreV1().Secrets(srcNamespace).Get(name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Copying Storage Secret %s to %s namespace", secret.Namespace, dstNamespace)
+	// copy the secret to destination namespace
+	err = copySecret(secret)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Secret %s/%s has been copied to %s namespace successfully.", secret.Namespace, secret.Name, dstNamespace)
+	return  err
+}
+
 func copySecret(secret *core.Secret) error{
 	_, _, err := core_util.CreateOrPatchSecret(
-		kc,
+		kubeClient,
 		metav1.ObjectMeta{
 			Name:      secret.Name,
 			Namespace: dstNamespace,
@@ -59,8 +66,4 @@ func copySecret(secret *core.Secret) error{
 		},
 	)
 	return err
-}
-
-func getSecret(namespace string, name string) (secret *v1.Secret, err error) {
-	return kc.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
 }

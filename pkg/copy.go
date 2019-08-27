@@ -12,8 +12,8 @@ import (
 var (
 	dstNamespace string
 	srcNamespace string
-	kc *kubernetes.Clientset
-	client *cs.Clientset
+	kubeClient *kubernetes.Clientset
+	stashClient *cs.Clientset
 	vsClient *vs_cs.Clientset
 )
 
@@ -35,12 +35,12 @@ func NewCmdCopy(clientGetter genericclioptions.RESTClientGetter) *cobra.Command 
 				return err
 			}
 
-			kc, err = kubernetes.NewForConfig(cfg)
+			kubeClient, err = kubernetes.NewForConfig(cfg)
 			if err != nil {
 				return err
 			}
 
-			client, err = cs.NewForConfig(cfg)
+			stashClient, err = cs.NewForConfig(cfg)
 			if err != nil {
 				return err
 			}

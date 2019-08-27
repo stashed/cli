@@ -24,44 +24,42 @@ func NewCmdCopyRepository() *cobra.Command {
 			}
 
 			repositoryName := args[0]
+			// get source repository in current namespace
+			// if found then copy the repository to destination namespace
+			err := ensureRepository(repositoryName)
 
-			// get source repository
-			repository, err := getRepository(srcNamespace, repositoryName)
-			if err != nil {
-				return err
-			}
-
-			// get source repository secret
-			secret, err := getSecret(srcNamespace, repository.Spec.Backend.StorageSecretName)
-			if err != nil {
-				return err
-			}
-
-			log.Infof("Repository %s/%s uses Storage Secret %s/%s.\nCopying Storage Secret %s to %s namespace", repository.Namespace, repository.Name,secret.Namespace, secret.Name, srcNamespace, dstNamespace)
-			// copy the secret to destination namespace
-			err = copySecret(secret)
-			if err != nil {
-				return err
-			}
-			log.Infof("Secret %s/%s has been copied to %s namespace successfully.", srcNamespace, secret.Name, dstNamespace)
-
-			// copy the repository to destination namespace
-			err = copyRepository(repository)
-			if err != nil {
-				return err
-			}
-			log.Infof("Repository %s/%s has been copied to %s namespace successfully.", srcNamespace, repositoryName, dstNamespace)
-			return nil
+			return err
 		},
 	}
 
 	return cmd
 }
 
+func ensureRepository(name string) error {
+	// get source repository
+	repository, err := stashClient.StashV1alpha1().Repositories(srcNamespace).Get(name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Repository %s/%s uses Storage Secret %s/%s.", repository.Namespace, repository.Name, repository.Namespace, repository.Spec.Backend.StorageSecretName)
+	// ensure source repository secret
+	err = ensureSecret(repository.Spec.Backend.StorageSecretName)
+	if err != nil {
+		return err
+	}
+	err = copyRepository(repository)
+	if err != nil {
+		return err
+	}
+	log.Infof("Repository %s/%s has been copied to %s namespace successfully.", repository.Namespace, repository.Name, dstNamespace)
+	return err
+}
+
 // CreateOrPatch New Secret
 func copyRepository(repository *v1alpha1.Repository) error{
 	_, _, err := util.CreateOrPatchRepository(
-		client.StashV1alpha1(),
+		stashClient.StashV1alpha1(),
 		metav1.ObjectMeta{
 			Name:      repository.Name,
 			Namespace: dstNamespace,
@@ -72,9 +70,4 @@ func copyRepository(repository *v1alpha1.Repository) error{
 		},
 	)
 	return err
-}
-
-
-func getRepository(namespace string, name string) (repository *v1alpha1.Repository, err error) {
-	return client.StashV1alpha1().Repositories(namespace).Get(name, metav1.GetOptions{})
 }
