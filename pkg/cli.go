@@ -2,10 +2,9 @@ package pkg
 
 import (
 	"io/ioutil"
+	core "k8s.io/api/core/v1"
 	"os"
 	"path/filepath"
-
-	core "k8s.io/api/core/v1"
 	"stash.appscode.dev/cli/pkg/docker"
 	docker_image "stash.appscode.dev/stash/pkg/docker"
 	"stash.appscode.dev/stash/pkg/restic"
@@ -14,6 +13,8 @@ import (
 const (
 	secretDirName = "secret"
 	configDirName = "config"
+	ResticEnvs = "restic-envs"
+
 )
 
 type cliLocalDirectories struct {
@@ -26,7 +27,7 @@ var (
 	imgRestic = docker_image.Docker{
 		Registry: "restic",
 		Image:    "restic",
-		Tag:      "latest", // TODO: update default release tag
+		Tag:      "0.9.5", // TODO: update default release tag
 	}
 )
 
@@ -73,4 +74,20 @@ func (localDirs *cliLocalDirectories) prepareDownloadDir() (err error) {
 		}
 	}
 	return os.MkdirAll(localDirs.downloadDir, 0755)
+}
+
+// Write Storage Secret credentials in secret dir inside tempDir
+func (localDirs *cliLocalDirectories) dumpSecret(temDir string, secret *core.Secret) error {
+	localDirs.secretDir = filepath.Join(temDir, secretDirName)
+	if err := os.MkdirAll(localDirs.secretDir, 0755); err != nil {
+		return err
+	}
+
+	for key, val := range secret.Data {
+		if err := ioutil.WriteFile(filepath.Join(localDirs.secretDir,key), []byte(val), 0755); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

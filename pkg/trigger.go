@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/appscode/go/log"
 	"github.com/pkg/errors"
@@ -52,7 +53,7 @@ func NewCmdTriggerBackup(clientGetter genericclioptions.RESTClientGetter) *cobra
 			// create backupSession for backupConfig
 			backupSession := &v1beta1.BackupSession{
 				ObjectMeta: metav1.ObjectMeta{
-					GenerateName: backupConfigName + "-",
+					Name: fmt.Sprintf("%s-%d", backupConfigName, time.Now().Unix()),
 					Namespace:    namespace,
 					Labels: map[string]string{
 						util.LabelApp:                 util.AppLabelStash,
@@ -79,7 +80,7 @@ func NewCmdTriggerBackup(clientGetter genericclioptions.RESTClientGetter) *cobra
 				return err
 			}
 
-			log.Infof("BackupSession %s/%s created", backupSession.Namespace, backupSession.Name)
+			log.Infof("BackupConfiguration %s/%s has been triggered successfully by BackupSession %s/%s", backupConfig.Namespace, backupConfig.Name, backupSession.Namespace, backupSession.Name)
 			return nil
 		},
 	}
