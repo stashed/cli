@@ -20,15 +20,13 @@ func NewCmdCopyRepository() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			if len(args) == 0 || args[0] == "" {
-				return fmt.Errorf("repository name not found")
+				return fmt.Errorf("repository name is not provided")
 			}
 
 			repositoryName := args[0]
-			// get source repository in current namespace
-			// if found then copy the repository to destination namespace
-			err := ensureRepository(repositoryName)
-
-			return err
+			// get source Repository in current namespace
+			// if found then copy the Repository to destination namespace
+			return  ensureRepository(repositoryName)
 		},
 	}
 
@@ -36,14 +34,14 @@ func NewCmdCopyRepository() *cobra.Command {
 }
 
 func ensureRepository(name string) error {
-	// get source repository
+	// get source Repository
 	repository, err := stashClient.StashV1alpha1().Repositories(srcNamespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
 	log.Infof("Repository %s/%s uses Storage Secret %s/%s.", repository.Namespace, repository.Name, repository.Namespace, repository.Spec.Backend.StorageSecretName)
-	// ensure source repository secret
+	// ensure source Repository Secret
 	err = ensureSecret(repository.Spec.Backend.StorageSecretName)
 	if err != nil {
 		return err
@@ -58,15 +56,16 @@ func ensureRepository(name string) error {
 
 // CreateOrPatch New Secret
 func copyRepository(repository *v1alpha1.Repository) error{
+	meta := metav1.ObjectMeta{
+		Name:      repository.Name,
+		Namespace: dstNamespace,
+	}
 	_, _, err := util.CreateOrPatchRepository(
 		stashClient.StashV1alpha1(),
-		metav1.ObjectMeta{
-			Name:      repository.Name,
-			Namespace: dstNamespace,
-		},
-		func(obj *v1alpha1.Repository) *v1alpha1.Repository {
-			obj.Spec = repository.Spec
-			return obj
+		meta,
+		func(in *v1alpha1.Repository) *v1alpha1.Repository {
+			in.Spec = repository.Spec
+			return in
 		},
 	)
 	return err

@@ -19,16 +19,14 @@ func NewCmdCopySecret() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			if len(args) == 0 || args[0] == "" {
-				return fmt.Errorf("secret name not found")
+				return fmt.Errorf("secret name is not provided")
 			}
 
 			secretName := args[0]
 
 			// get source secret in current namespace
 			// if found then copy the secret to destination namespace
-			err := ensureSecret(secretName)
-
-			return err
+			return ensureSecret(secretName)
 		},
 	}
 
@@ -36,14 +34,14 @@ func NewCmdCopySecret() *cobra.Command {
 }
 
 func ensureSecret(name string) error {
-	// get source secret
+	// get source Secret
 	secret,err := kubeClient.CoreV1().Secrets(srcNamespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
 	log.Infof("Copying Storage Secret %s to %s namespace", secret.Namespace, dstNamespace)
-	// copy the secret to destination namespace
+	// copy the Secret to destination namespace
 	err = copySecret(secret)
 	if err != nil {
 		return err
@@ -54,15 +52,16 @@ func ensureSecret(name string) error {
 }
 
 func copySecret(secret *core.Secret) error{
+	meta := metav1.ObjectMeta{
+		Name:      secret.Name,
+		Namespace: dstNamespace,
+	}
 	_, _, err := core_util.CreateOrPatchSecret(
 		kubeClient,
-		metav1.ObjectMeta{
-			Name:      secret.Name,
-			Namespace: dstNamespace,
-		},
-		func(obj *core.Secret) *core.Secret {
-			obj.Data = secret.Data
-			return obj
+		meta,
+		func(in *core.Secret) *core.Secret {
+			in.Data = secret.Data
+			return in
 		},
 	)
 	return err
