@@ -56,10 +56,7 @@ func copySecret(secret *core.Secret) error{
 		Name:      secret.Name,
 		Namespace: dstNamespace,
 	}
-	_, _, err := core_util.CreateOrPatchSecret(
-		kubeClient,
-		meta,
-		func(in *core.Secret) *core.Secret {
+	_, _, err := core_util.CreateOrPatchSecret(kubeClient, meta, func(in *core.Secret) *core.Secret {
 			in.Data = secret.Data
 			return in
 		},

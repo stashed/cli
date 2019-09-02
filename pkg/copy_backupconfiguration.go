@@ -62,10 +62,7 @@ func  copyBackupConfiguration(bc *v1beta1.BackupConfiguration) error {
 		Name: bc.Name,
 		Namespace: dstNamespace,
 	}
-	_, _ , err := v1beta1_util.CreateOrPatchBackupConfiguration(
-		stashClient.StashV1beta1(),
-		meta,
-		func(in *v1beta1.BackupConfiguration) *v1beta1.BackupConfiguration {
+	_, _ , err := v1beta1_util.CreateOrPatchBackupConfiguration(stashClient.StashV1beta1(), meta, func(in *v1beta1.BackupConfiguration) *v1beta1.BackupConfiguration {
 			in.Spec = bc.Spec
 			return in
 		},

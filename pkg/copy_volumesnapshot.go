@@ -54,10 +54,7 @@ func copyVolumeSnapshot(vs *vs_v1alpha1.VolumeSnapshot) error{
 		Name: vs.Name,
 		Namespace: dstNamespace,
 	}
-	_, _, err := CreateOrPatchVolumeSnapshot(
-		vsClient.VolumesnapshotV1alpha1(),
-		meta,
-		func(in *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot{
+	_, _, err := CreateOrPatchVolumeSnapshot(vsClient.VolumesnapshotV1alpha1(), meta, func(in *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot{
 			in.Spec = vs.Spec
 			return in
 		},
