@@ -20,7 +20,7 @@ func NewCmdCopyRepository() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			if len(args) == 0 || args[0] == "" {
-				return fmt.Errorf("repository name is not provided")
+				return fmt.Errorf("Repository name is not provided")
 			}
 
 			repositoryName := args[0]
@@ -60,10 +60,7 @@ func copyRepository(repository *v1alpha1.Repository) error{
 		Name:      repository.Name,
 		Namespace: dstNamespace,
 	}
-	_, _, err := util.CreateOrPatchRepository(
-		stashClient.StashV1alpha1(),
-		meta,
-		func(in *v1alpha1.Repository) *v1alpha1.Repository {
+	_, _, err := util.CreateOrPatchRepository(stashClient.StashV1alpha1(), meta, func(in *v1alpha1.Repository) *v1alpha1.Repository {
 			in.Spec = repository.Spec
 			return in
 		},
