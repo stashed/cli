@@ -19,15 +19,13 @@ func NewCmdCopyBackupConfiguration() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			if len(args) == 0 || args[0] == "" {
-				return fmt.Errorf("backupconfiguration name not found")
+				return fmt.Errorf("BackupConfiguration name is not provided")
 			}
 
 			backupConfigName := args[0]
-			// get source backupconfiguration and respective repository and secret in current namespace
-			// if found then Copy the BackupConfiguration, repository and secret to destination namespace
-			err := ensureBackupConfiguration(backupConfigName)
-
-			return err
+			// get source BackupConfiguration and respective Repository and Secret in current namespace
+			// if found then copy the BackupConfiguration, Repository and Secret to destination namespace
+			return  ensureBackupConfiguration(backupConfigName)
 		},
 	}
 
@@ -35,27 +33,19 @@ func NewCmdCopyBackupConfiguration() *cobra.Command {
 }
 
 func ensureBackupConfiguration(name string) error {
-	// get resource backupconfiguration
+	// get resource BackupConfiguration
 	backupConfig, err := stashClient.StashV1beta1().BackupConfigurations(srcNamespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
-
+    // Repository holds the backend information, In Restic driver mechanism, Repository is used to backup.
+    // For that need to insure Repository and Secret
 	if backupConfig.Spec.Driver != v1beta1.VolumeSnapshotter {
-		// get source repository
-		repository, err := stashClient.StashV1alpha1().Repositories(backupConfig.Namespace).Get(backupConfig.Spec.Repository.Name, metav1.GetOptions{})
+		// ensure Repository and Secret
+		err = ensureRepository(backupConfig.Spec.Repository.Name)
 		if err != nil {
 			return err
 		}
-
-		// get source repository
-		_, err = kubeClient.CoreV1().Secrets(backupConfig.Namespace).Get(repository.Spec.Backend.StorageSecretName, metav1.GetOptions{})
-		if err != nil {
-			return err
-		}
-
-		// ensure repository and secret
-		err = ensureRepository(repository.Name)
 	}
 
 	err = copyBackupConfiguration(backupConfig)
@@ -68,16 +58,16 @@ func ensureBackupConfiguration(name string) error {
 }
 
 func  copyBackupConfiguration(bc *v1beta1.BackupConfiguration) error {
-
+	meta := metav1.ObjectMeta{
+		Name: bc.Name,
+		Namespace: dstNamespace,
+	}
 	_, _ , err := v1beta1_util.CreateOrPatchBackupConfiguration(
 		stashClient.StashV1beta1(),
-		metav1.ObjectMeta{
-			Name: bc.Name,
-			Namespace: dstNamespace,
-		},
-		func(obj *v1beta1.BackupConfiguration) *v1beta1.BackupConfiguration {
-			obj.Spec = bc.Spec
-			return obj
+		meta,
+		func(in *v1beta1.BackupConfiguration) *v1beta1.BackupConfiguration {
+			in.Spec = bc.Spec
+			return in
 		},
 	)
 	return err
