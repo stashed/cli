@@ -21,7 +21,7 @@ var (
 		# Create a RestoreSession
 		# stash create restore --namespace=demo <restore session name> [Flag]
         # For Restic driver
-         stash create restoresession ss-restore --namespace=demo --repository=gcs-repo --target-apiversion=apps/v1 --target-kind=StatefulSet --target-name=stash-recovered-adv --paths=/source/data --volume-mounts=source-data:/source/data
+         stash create restoresession ss-restore --namespace=demo --repository=gcs-repo --target-apiversion=apps/v1 --target-kind=StatefulSet --target-name=stash-recovered --paths=/source/data --volume-mounts=source-data:/source/data
         # For VolumeSnapshotter driver
          stash create restoresession restore-pvc --namespace=demo --driver=VolumeSnapshotter --replica=3 --claim.name=restore-data-restore-demo-${POD_ORDINAL} --claim.access-modes=ReadWriteOnce --claim.storageclass=standard --claim.size=1Gi --claim.datasource=source-data-stash-demo-0-1567146010`)
 
@@ -40,7 +40,7 @@ type restoreSessionOption struct {
 	task                string
 	replica             int32
 
-	rule                rule
+	rule                v1beta1.Rule
 	volumeClaimTemplate volumeclaimTemplate
 }
 
@@ -52,17 +52,11 @@ type volumeclaimTemplate struct {
 	dataSource   string
 }
 
-type rule struct {
-	sourceHost string
-	snapshots  []string
-	paths      []string
-}
-
 func NewCmdCreateRestoreSession() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:               "restoresession",
 		Short:             `Create a new RestoreSession`,
-		Long:              `Create a new RestoreSession using target resource or PVC Template`,
+		Long:              `Create a new RestoreSession to restore backed up data`,
 		Example:           createRestoreSessionExample,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -92,9 +86,9 @@ func NewCmdCreateRestoreSession() *cobra.Command {
 	cmd.Flags().Int32Var(&restoreSessionOpt.replica, "replica", restoreSessionOpt.replica, "Replica specifies the number of replicas whose data should be backed up")
 
 	cmd.Flags().StringSliceVar(&restoreSessionOpt.volumeMounts, "volume-mounts", restoreSessionOpt.volumeMounts, "List of volumes and their mountPaths")
-	cmd.Flags().StringSliceVar(&restoreSessionOpt.rule.paths, "paths", restoreSessionOpt.rule.paths, "List of paths to backup")
-	cmd.Flags().StringSliceVar(&restoreSessionOpt.rule.snapshots, "snapshots", restoreSessionOpt.rule.snapshots, "Name of the Snapshot(single)")
-	cmd.Flags().StringVar(&restoreSessionOpt.rule.sourceHost, "host", restoreSessionOpt.rule.sourceHost, "Name of the Source host")
+	cmd.Flags().StringSliceVar(&restoreSessionOpt.rule.Paths, "paths", restoreSessionOpt.rule.Paths, "List of paths to backup")
+	cmd.Flags().StringSliceVar(&restoreSessionOpt.rule.Snapshots, "snapshots", restoreSessionOpt.rule.Snapshots, "Name of the Snapshot(single)")
+	cmd.Flags().StringVar(&restoreSessionOpt.rule.SourceHost, "host", restoreSessionOpt.rule.SourceHost, "Name of the Source host")
 	cmd.Flags().StringVar(&restoreSessionOpt.volumeClaimTemplate.name, "claim.name", restoreSessionOpt.volumeClaimTemplate.name, "Name of the VolumeClaimTemplate")
 	cmd.Flags().StringSliceVar(&restoreSessionOpt.volumeClaimTemplate.accessModes, "claim.access-modes", restoreSessionOpt.volumeClaimTemplate.accessModes, "Access mode of the VolumeClaimTemplates")
 	cmd.Flags().StringVar(&restoreSessionOpt.volumeClaimTemplate.storageClass, "claim.storageclass", restoreSessionOpt.volumeClaimTemplate.storageClass, "Name of the Storage secret for VolumeClaimTemplate")
@@ -107,66 +101,43 @@ func NewCmdCreateRestoreSession() *cobra.Command {
 func createRestoreSession(name string) (restoreSession *v1beta1.RestoreSession, err error) {
 
 	restoreSession = &v1beta1.RestoreSession{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       v1beta1.ResourceKindRestoreSession,
-			APIVersion: v1beta1.SchemeGroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
 	}
 
-	err = setRestoreTarget(restoreSession)
-	if err != nil {
-		return restoreSession, err
+	if v1beta1.Snapshotter(restoreSessionOpt.driver) == v1beta1.VolumeSnapshotter {
+         restoreSession.Spec.Driver = v1beta1.Snapshotter(restoreSessionOpt.driver)
+	} else {
+		restoreSession.Spec = v1beta1.RestoreSessionSpec{
+			Task:       v1beta1.TaskRef{Name: restoreSessionOpt.task},
+			Rules:      append(make([]v1beta1.Rule, 0), restoreSessionOpt.rule),
+			Repository: core.LocalObjectReference{Name: restoreSessionOpt.repository},
+		}
 	}
 
-	restoreSession, _, err = v1beta1_util.CreateOrPatchRestoreSession(stashClient.StashV1beta1(), restoreSession.ObjectMeta, func(obj *v1beta1.RestoreSession) *v1beta1.RestoreSession {
-		obj.Spec = restoreSession.Spec
-		return obj
+	err = setRestoreTarget(restoreSession)
+	if err != nil {
+		return nil, err
+	}
+
+	restoreSession, _, err = v1beta1_util.CreateOrPatchRestoreSession(stashClient.StashV1beta1(), restoreSession.ObjectMeta, func(in *v1beta1.RestoreSession) *v1beta1.RestoreSession {
+		in.Spec = restoreSession.Spec
+		return in
 	})
 	return restoreSession, err
 
 }
 
 func setRestoreTarget(restoreSession *v1beta1.RestoreSession) error {
-	// if driver is VolumeSnapshotter then configure the Driver, Replica and VolumeClaimTemplates field
-	// otherwise configure the TargetRef, Rules field of the RestoreSession.
+	// if driver is VolumeSnapshotter then configure the Replica and VolumeClaimTemplates field
+	// otherwise configure the TargetRef and replica field of the RestoreSession.
 	if v1beta1.Snapshotter(restoreSessionOpt.driver) == v1beta1.VolumeSnapshotter {
-		restoreSession.Spec = v1beta1.RestoreSessionSpec {
-			Driver: v1beta1.Snapshotter(restoreSessionOpt.driver),
-			Target: &v1beta1.RestoreTarget{
-				Replicas: &restoreSessionOpt.replica,
-				VolumeClaimTemplates: []core.PersistentVolumeClaim {
-					{
-						ObjectMeta: metav1.ObjectMeta {
-							Name:      restoreSessionOpt.volumeClaimTemplate.name,
-							Namespace: namespace,
-							CreationTimestamp: metav1.Time {
-								Time: time.Now(),
-							},
-						},
-						Spec: core.PersistentVolumeClaimSpec {
-							AccessModes:      setPVAccessModes(restoreSessionOpt.volumeClaimTemplate.accessModes),
-							StorageClassName: &restoreSessionOpt.volumeClaimTemplate.storageClass,
-							Resources: core.ResourceRequirements {
-								Requests: core.ResourceList {
-									core.ResourceName(core.ResourceStorage): resource.MustParse(restoreSessionOpt.volumeClaimTemplate.size),
-								},
-							},
-							DataSource: &core.TypedLocalObjectReference {
-								Kind:     "VolumeSnapshot",
-								Name:     restoreSessionOpt.volumeClaimTemplate.dataSource,
-								APIGroup: types.StringP(vs.GroupName),
-							},
-						},
-					},
-				},
-			},
+		restoreSession.Spec.Target = &v1beta1.RestoreTarget{
+			VolumeClaimTemplates: getRestoredPVCTemplates(),
 		}
 	} else {
-		restoreSession.Spec.Repository = core.LocalObjectReference{Name: restoreSessionOpt.repository}
 		restoreSession.Spec.Target = &v1beta1.RestoreTarget{
 			Ref: restoreSessionOpt.targetRef,
 		}
@@ -174,27 +145,42 @@ func setRestoreTarget(restoreSession *v1beta1.RestoreSession) error {
 		if err != nil {
 			return err
 		}
-		restoreSession.Spec.Task = v1beta1.TaskRef{Name: restoreSessionOpt.task}
-		rule := make([]v1beta1.Rule, 0)
-		if restoreSessionOpt.rule.sourceHost != "" {
-			if len(restoreSessionOpt.rule.snapshots) > 0 {
-				rule = append(rule, v1beta1.Rule{SourceHost: restoreSessionOpt.rule.sourceHost, Snapshots: restoreSessionOpt.rule.snapshots})
-			} else {
-				rule = append(rule, v1beta1.Rule{SourceHost: restoreSessionOpt.rule.sourceHost, Paths: restoreSessionOpt.rule.paths})
-			}
-		} else {
-			if len(restoreSessionOpt.rule.snapshots) > 0 {
-				rule = append(rule, v1beta1.Rule{Snapshots: restoreSessionOpt.rule.snapshots})
-			} else {
-				rule = append(rule, v1beta1.Rule{Paths: restoreSessionOpt.rule.paths})
-			}
-		}
-		restoreSession.Spec.Rules = rule
+	}
+	if restoreSessionOpt.replica > 0 {
+		restoreSession.Spec.Target.Replicas = &restoreSessionOpt.replica
 	}
 	return nil
 }
 
-func setPVAccessModes(acModes []string) []core.PersistentVolumeAccessMode {
+func getRestoredPVCTemplates() []core.PersistentVolumeClaim {
+	return []core.PersistentVolumeClaim{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      restoreSessionOpt.volumeClaimTemplate.name,
+				Namespace: namespace,
+				CreationTimestamp: metav1.Time{
+					Time: time.Now(),
+				},
+			},
+			Spec: core.PersistentVolumeClaimSpec{
+				AccessModes:      getPVAccessModes(restoreSessionOpt.volumeClaimTemplate.accessModes),
+				StorageClassName: &restoreSessionOpt.volumeClaimTemplate.storageClass,
+				Resources: core.ResourceRequirements{
+					Requests: core.ResourceList{
+						core.ResourceName(core.ResourceStorage): resource.MustParse(restoreSessionOpt.volumeClaimTemplate.size),
+					},
+				},
+				DataSource: &core.TypedLocalObjectReference{
+					Kind:     "VolumeSnapshot",
+					Name:     restoreSessionOpt.volumeClaimTemplate.dataSource,
+					APIGroup: types.StringP(vs.GroupName),
+				},
+			},
+		},
+	}
+}
+
+func getPVAccessModes(acModes []string) []core.PersistentVolumeAccessMode {
 	accessModes := make([]core.PersistentVolumeAccessMode, 0)
 	for _, am := range acModes {
 		accessModes = append(accessModes, core.PersistentVolumeAccessMode(am))

@@ -66,31 +66,28 @@ func NewCmdCreateRepository() *cobra.Command {
 func createRepository(name string) (repository *v1alpha1.Repository, err error) {
 
 	repository = &v1alpha1.Repository{
-		TypeMeta: metav1.TypeMeta{
-			Kind: v1alpha1.ResourceKindRepository,
-			APIVersion: v1alpha1.SchemeGroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
+		Spec: v1alpha1.RepositorySpec{
+			Backend: repoOpt.getBackendInfo(),
+		},
 	}
 
-    repoOpt.setBackendInfo(repository)
-
-	repository, _, err = util.CreateOrPatchRepository(stashClient.StashV1alpha1(), repository.ObjectMeta, func(obj *v1alpha1.Repository) *v1alpha1.Repository {
-			obj.TypeMeta = repository.TypeMeta
-			obj.Spec = repository.Spec
-			return obj
+	repository, _, err = util.CreateOrPatchRepository(stashClient.StashV1alpha1(), repository.ObjectMeta, func(in *v1alpha1.Repository) *v1alpha1.Repository {
+			in.Spec = repository.Spec
+			return in
 		},
 	)
 	return repository, err
 }
 
-func (repoOpt repositoryOption)setBackendInfo(repository *v1alpha1.Repository) {
+func (repoOpt repositoryOption)getBackendInfo() v1.Backend {
+	var backend v1.Backend
 	switch repoOpt.provider {
 	case restic.ProviderGCS:
-		repository.Spec.Backend = v1.Backend{
+		backend = v1.Backend{
 			GCS: &v1.GCSSpec{
 				Bucket:         repoOpt.bucket,
 				Prefix:         repoOpt.prefix,
@@ -98,7 +95,7 @@ func (repoOpt repositoryOption)setBackendInfo(repository *v1alpha1.Repository) {
 			},
 		}
 	case restic.ProviderAzure:
-		repository.Spec.Backend = v1.Backend{
+		backend = v1.Backend{
 			Azure: &v1.AzureSpec{
 				Container:      repoOpt.bucket,
 				Prefix:         repoOpt.prefix,
@@ -106,7 +103,7 @@ func (repoOpt repositoryOption)setBackendInfo(repository *v1alpha1.Repository) {
 			},
 		}
 	case restic.ProviderS3:
-		repository.Spec.Backend = v1.Backend{
+		backend = v1.Backend{
 			S3: &v1.S3Spec{
 				Bucket:    repoOpt.bucket,
 				Prefix:   repoOpt.prefix,
@@ -114,7 +111,7 @@ func (repoOpt repositoryOption)setBackendInfo(repository *v1alpha1.Repository) {
 			},
 		}
 	case restic.ProviderB2:
-		repository.Spec.Backend = v1.Backend{
+		backend = v1.Backend{
 			B2: &v1.B2Spec{
 				Bucket:         repoOpt.bucket,
 				Prefix:          repoOpt.prefix,
@@ -122,18 +119,19 @@ func (repoOpt repositoryOption)setBackendInfo(repository *v1alpha1.Repository) {
 			},
 		}
 	case restic.ProviderSwift:
-		repository.Spec.Backend = v1.Backend{
+		backend = v1.Backend{
 			Swift: &v1.SwiftSpec{
 				Container:repoOpt.bucket,
 				Prefix:     repoOpt.prefix,
 			},
 		}
 	case restic.ProviderRest:
-		repository.Spec.Backend = v1.Backend{
+		backend = v1.Backend{
 			Rest: &v1.RestServerSpec{
 				URL: repoOpt.endpoint,
 			},
 		}
 	}
-	repository.Spec.Backend.StorageSecretName = repoOpt.secret
+	backend.StorageSecretName = repoOpt.secret
+	return backend
 }

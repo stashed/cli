@@ -18,9 +18,9 @@ var (
 		# Create a new BackupConfiguration
 		# stash create backupconfig --namespace=<namespace> gcs-repo [Flag]
         # For Restic driver
-        stash create backupconfig ss-backup --namespace=demo --repository=gcs-repo --schedule="*/4 * * * *" --target-apiversion=apps/v1 --target-kind=StatefulSet --target-name=stash-demo --paths=/source/data --volume-mounts=source-data:/source/data --retention-name=keep-last-5 --retention-keep-last=5 --retention-prune=true
+        stash create backupconfig ss-backup --namespace=demo --repository=gcs-repo --schedule="*/4 * * * *" --target-apiversion=apps/v1 --target-kind=StatefulSet --target-name=stash-demo --paths=/source/data --volume-mounts=source-data:/source/data --keep-last=5 --prune=true
         # For VolumeSnapshotter driver
-         stash create backupconfig statefulset-volume-snapshot --namespace=demo --driver=VolumeSnapshotter --schedule="*/4 * * * *" --target-apiversion=apps/v1 --target-kind=StatefulSet --target-name=stash-demo --replica=1 --volumesnpashotclass=default-snapshot-class --retention-name=keep-last-5 --retention-keep-last=5 --retention-prune=true`)
+         stash create backupconfig statefulset-volume-snapshot --namespace=demo --driver=VolumeSnapshotter --schedule="*/4 * * * *" --target-apiversion=apps/v1 --target-kind=StatefulSet --target-name=stash-demo --replica=1 --volumesnpashotclass=default-snapshot-class --keep-last=5 --prune=true`)
 
 	backupConfigOpt = backupConfigOption{}
 )
@@ -43,7 +43,7 @@ func NewCmdCreateBackupConfiguration() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:               "backupconfig",
 		Short:             `Create a new BackupConfiguration`,
-		Long:              `Create a new BackupConfiguration using Backend Repository and target resource`,
+		Long:              `Create a new BackupConfiguration to backup a target`,
 		Example:           createBackupConfigExample,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -73,16 +73,14 @@ func NewCmdCreateBackupConfiguration() *cobra.Command {
 	cmd.Flags().StringVar(&backupConfigOpt.volumesnpashotclass, "volumesnpashotclass", backupConfigOpt.volumesnpashotclass, "Name of the VolumeSnapshotClass")
 	cmd.Flags().Int32Var(&backupConfigOpt.replica, "replica", backupConfigOpt.replica, "Replica specifies the number of replicas whose data should be backed up")
 
-	cmd.Flags().StringVar(&backupConfigOpt.retentionPolicy.Name, "retention-name", backupConfigOpt.retentionPolicy.Name, "Specify name for retention strategy")
-	cmd.Flags().IntVar(&backupConfigOpt.retentionPolicy.KeepLast, "retention-keep-last", backupConfigOpt.retentionPolicy.KeepLast, "Specify value for retention strategy")
-	cmd.Flags().IntVar(&backupConfigOpt.retentionPolicy.KeepHourly, "retention-keep-hourly", backupConfigOpt.retentionPolicy.KeepHourly, "Specify value for retention strategy")
-	cmd.Flags().IntVar(&backupConfigOpt.retentionPolicy.KeepDaily, "retention-keep-daily", backupConfigOpt.retentionPolicy.KeepDaily, "Specify value for retention strategy")
-	cmd.Flags().IntVar(&backupConfigOpt.retentionPolicy.KeepWeekly, "retention-keep-weekly", backupConfigOpt.retentionPolicy.KeepWeekly, "Specify value for retention strategy")
-	cmd.Flags().IntVar(&backupConfigOpt.retentionPolicy.KeepMonthly, "retention-keep-monthly", backupConfigOpt.retentionPolicy.KeepMonthly, "Specify value for retention strategy")
-	cmd.Flags().IntVar(&backupConfigOpt.retentionPolicy.KeepYearly, "retention-keep-yearly", backupConfigOpt.retentionPolicy.KeepYearly, "Specify value for retention strategy")
-	cmd.Flags().StringSliceVar(&backupConfigOpt.retentionPolicy.KeepTags, "retention-keep-tags", backupConfigOpt.retentionPolicy.KeepTags, "Specify value for retention strategy")
-	cmd.Flags().BoolVar(&backupConfigOpt.retentionPolicy.Prune, "retention-prune", backupConfigOpt.retentionPolicy.Prune, "Specify whether to prune old snapshot data")
-	cmd.Flags().BoolVar(&backupConfigOpt.retentionPolicy.DryRun, "retention-dry-run", backupConfigOpt.retentionPolicy.DryRun, "Specify whether to test retention policy without deleting actual data")
+	cmd.Flags().IntVar(&backupConfigOpt.retentionPolicy.KeepLast, "keep-last", backupConfigOpt.retentionPolicy.KeepLast, "Specify value for retention strategy")
+	cmd.Flags().IntVar(&backupConfigOpt.retentionPolicy.KeepHourly, "keep-hourly", backupConfigOpt.retentionPolicy.KeepHourly, "Specify value for retention strategy")
+	cmd.Flags().IntVar(&backupConfigOpt.retentionPolicy.KeepDaily, "keep-daily", backupConfigOpt.retentionPolicy.KeepDaily, "Specify value for retention strategy")
+	cmd.Flags().IntVar(&backupConfigOpt.retentionPolicy.KeepWeekly, "keep-weekly", backupConfigOpt.retentionPolicy.KeepWeekly, "Specify value for retention strategy")
+	cmd.Flags().IntVar(&backupConfigOpt.retentionPolicy.KeepMonthly, "keep-monthly", backupConfigOpt.retentionPolicy.KeepMonthly, "Specify value for retention strategy")
+	cmd.Flags().IntVar(&backupConfigOpt.retentionPolicy.KeepYearly, "keep-yearly", backupConfigOpt.retentionPolicy.KeepYearly, "Specify value for retention strategy")
+	cmd.Flags().BoolVar(&backupConfigOpt.retentionPolicy.Prune, "prune", backupConfigOpt.retentionPolicy.Prune, "Specify whether to prune old snapshot data")
+	cmd.Flags().BoolVar(&backupConfigOpt.retentionPolicy.DryRun, "dry-run", backupConfigOpt.retentionPolicy.DryRun, "Specify whether to test retention policy without deleting actual data")
 
 	cmd.Flags().StringSliceVar(&backupConfigOpt.paths, "paths", backupConfigOpt.paths, "List of paths to backup")
 	cmd.Flags().StringSliceVar(&backupConfigOpt.volumeMounts, "volume-mounts", backupConfigOpt.volumeMounts, "List of volumes and their mountPaths")
@@ -93,17 +91,13 @@ func NewCmdCreateBackupConfiguration() *cobra.Command {
 func createBackupConfiguration(name string) (backupConfig *v1beta1.BackupConfiguration, err error) {
 
 	backupConfig = &v1beta1.BackupConfiguration{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       v1beta1.ResourceKindBackupConfiguration,
-			APIVersion: v1beta1.SchemeGroupVersion.String(),
-		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
 		Spec: v1beta1.BackupConfigurationSpec{
 			Schedule:        backupConfigOpt.schedule,
-			RetentionPolicy: backupConfigOpt.retentionPolicy,
+			RetentionPolicy: getRetentionPolicy(),
 		},
 	}
 
@@ -116,7 +110,7 @@ func createBackupConfiguration(name string) (backupConfig *v1beta1.BackupConfigu
 
 	err = setBackupTarget(backupConfig)
 	if err != nil {
-		return backupConfig, err
+		return nil, err
 	}
 
 	backupConfig, _, err = v1beta1_util.CreateOrPatchBackupConfiguration(stashClient.StashV1beta1(), backupConfig.ObjectMeta, func(in *v1beta1.BackupConfiguration) *v1beta1.BackupConfiguration {
@@ -158,8 +152,10 @@ func setBackupTarget(backupConfig *v1beta1.BackupConfiguration) error {
 	if v1beta1.Snapshotter(backupConfigOpt.driver) == v1beta1.VolumeSnapshotter {
 		backupConfig.Spec.Target = &v1beta1.BackupTarget{
 			Ref:                     backupConfigOpt.targetRef,
-			Replicas:                &backupConfigOpt.replica,
 			VolumeSnapshotClassName: backupConfigOpt.volumesnpashotclass,
+		}
+		if backupConfigOpt.replica > 0 {
+			backupConfig.Spec.Target.Replicas = &backupConfigOpt.replica
 		}
 
 	} else {
@@ -174,4 +170,28 @@ func setBackupTarget(backupConfig *v1beta1.BackupConfiguration) error {
 		}
 	}
 	return nil
+}
+
+
+func getRetentionPolicy() v1alpha1.RetentionPolicy{
+	retentionPolicy := backupConfigOpt.retentionPolicy
+	if retentionPolicy.KeepLast > 0 {
+		retentionPolicy.Name = fmt.Sprintf("%s-%d","keep-last", backupConfigOpt.retentionPolicy.KeepLast)
+	}
+	if retentionPolicy.KeepDaily > 0 {
+		retentionPolicy.Name = fmt.Sprintf("%s-%d","keep-daily", backupConfigOpt.retentionPolicy.KeepDaily)
+	}
+	if retentionPolicy.KeepHourly > 0 {
+		retentionPolicy.Name = fmt.Sprintf("%s-%d","keep-hourly", backupConfigOpt.retentionPolicy.KeepHourly)
+	}
+	if retentionPolicy.KeepWeekly > 0 {
+		retentionPolicy.Name = fmt.Sprintf("%s-%d","keep-weekly", backupConfigOpt.retentionPolicy.KeepWeekly)
+	}
+	if retentionPolicy.KeepMonthly > 0 {
+		retentionPolicy.Name = fmt.Sprintf("%s-%d","keep-monthly", backupConfigOpt.retentionPolicy.KeepMonthly)
+	}
+	if retentionPolicy.KeepYearly > 0 {
+		retentionPolicy.Name = fmt.Sprintf("%s-%d","keep-yearly", backupConfigOpt.retentionPolicy.KeepYearly)
+	}
+	return retentionPolicy
 }
