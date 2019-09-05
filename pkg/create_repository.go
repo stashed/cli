@@ -44,7 +44,7 @@ func NewCmdCreateRepository() *cobra.Command {
 
 			repositoryName := args[0]
 
-			repository, err := createRepository(repositoryName)
+			repository, err := createRepository(repositoryName, namespace)
 			if err != nil {
 				return err
 			}
@@ -63,7 +63,7 @@ func NewCmdCreateRepository() *cobra.Command {
 	return cmd
 }
 
-func createRepository(name string) (repository *v1alpha1.Repository, err error) {
+func createRepository(name string, namespace string) (repository *v1alpha1.Repository, err error) {
 
 	repository = &v1alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{

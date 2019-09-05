@@ -10,6 +10,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	vs "github.com/kubernetes-csi/external-snapshotter/pkg/client/clientset/versioned/typed/volumesnapshot/v1alpha1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
+	"fmt"
+	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"stash.appscode.dev/stash/apis/stash/v1beta1"
+	"time"
+)
+
+const (
+	PullInterval = time.Second * 2
+	WaitTimeOut  = time.Minute * 10
 )
 
 func CreateOrPatchVolumeSnapshot(c vs.VolumesnapshotV1alpha1Interface, meta metav1.ObjectMeta, transform func(alert *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot) (*vs_api.VolumeSnapshot, kutil.VerbType, error) {
@@ -55,4 +65,35 @@ func PatchVolumesnapshotObject(c vs.VolumesnapshotV1alpha1Interface, cur, mod *v
 	glog.V(3).Infof("Patching VolumeSnapshot %s/%s with %s.", cur.Namespace, cur.Name, string(patch))
 	out, err := c.VolumeSnapshots(cur.Namespace).Patch(cur.Name, types.MergePatchType, patch)
 	return out, kutil.VerbPatched, err
+}
+
+func WaitUntilBackupSessionSucceed(name string, namespace string) error {
+	return wait.PollImmediate(PullInterval, WaitTimeOut, func() (done bool, err error) {
+		backupSessionList, err := stashClient.StashV1beta1().BackupSessions(namespace).List(metav1.ListOptions{LabelSelector: fmt.Sprintf("stash.appscode.com/backup-configuration=%s", name)})
+		if err == nil {
+			for _, backupSession := range backupSessionList.Items {
+				if backupSession.Status.Phase == v1beta1.BackupSessionSucceeded {
+					return true, nil
+				}
+
+			}
+		}
+		return false, nil
+	})
+}
+
+func WaitUntilRestoreSessionSucceed(name string, namespace string) error {
+	return wait.PollImmediate(PullInterval, WaitTimeOut, func() (done bool, err error) {
+		restoreSession, err := stashClient.StashV1beta1().RestoreSessions(namespace).Get(name, metav1.GetOptions{})
+		if err == nil {
+			if restoreSession.Status.Phase == v1beta1.RestoreSessionSucceeded {
+				return true, nil
+			}
+		}
+		return false, nil
+	})
+}
+
+func quantityTypePointer(q resource.Quantity) *resource.Quantity {
+	return &q
 }

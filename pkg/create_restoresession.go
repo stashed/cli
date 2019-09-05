@@ -13,6 +13,7 @@ import (
 	"stash.appscode.dev/stash/apis/stash/v1alpha1"
 	"stash.appscode.dev/stash/apis/stash/v1beta1"
 	v1beta1_util "stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1beta1/util"
+	"strings"
 	"time"
 )
 
@@ -66,7 +67,7 @@ func NewCmdCreateRestoreSession() *cobra.Command {
 
 			restoresessionName := args[0]
 
-			restoreSession, err := createRestoreSession(restoresessionName)
+			restoreSession, err := createRestoreSession(restoresessionName, namespace)
 			if err != nil {
 				return err
 			}
@@ -98,7 +99,7 @@ func NewCmdCreateRestoreSession() *cobra.Command {
 	return cmd
 }
 
-func createRestoreSession(name string) (restoreSession *v1beta1.RestoreSession, err error) {
+func createRestoreSession(name string, namespace string) (restoreSession *v1beta1.RestoreSession, err error) {
 
 	restoreSession = &v1beta1.RestoreSession{
 		ObjectMeta: metav1.ObjectMeta{
@@ -130,6 +131,24 @@ func createRestoreSession(name string) (restoreSession *v1beta1.RestoreSession, 
 
 }
 
+func setRestoreVolumeMounts(target *v1beta1.RestoreTarget) error {
+	// extract volume and mount information
+	// then configure the volumeMounts of the target
+	volMounts := make([]core.VolumeMount, 0)
+	for _, m := range restoreSessionOpt.volumeMounts {
+		vol := strings.Split(m, ":")
+		if len(vol) == 3 {
+			volMounts = append(volMounts, core.VolumeMount{Name: vol[0], MountPath: vol[1], SubPath: vol[2]})
+		} else if len(vol) == 2 {
+			volMounts = append(volMounts, core.VolumeMount{Name: vol[0], MountPath: vol[1]})
+		} else {
+			return fmt.Errorf("invalid volume-mounts. use either 'volName:mountPath' or 'volName:mountPath:subPath' format")
+		}
+	}
+	target.VolumeMounts = volMounts
+	return nil
+}
+
 func setRestoreTarget(restoreSession *v1beta1.RestoreSession) error {
 	// if driver is VolumeSnapshotter then configure the Replica and VolumeClaimTemplates field
 	// otherwise configure the TargetRef and replica field of the RestoreSession.
@@ -140,8 +159,9 @@ func setRestoreTarget(restoreSession *v1beta1.RestoreSession) error {
 	} else {
 		restoreSession.Spec.Target = &v1beta1.RestoreTarget{
 			Ref: restoreSessionOpt.targetRef,
+			VolumeClaimTemplates: getRestoredPVCTemplates(),
 		}
-		err := setVolumeMounts(restoreSession.Spec.Target)
+		err := setRestoreVolumeMounts(restoreSession.Spec.Target)
 		if err != nil {
 			return err
 		}

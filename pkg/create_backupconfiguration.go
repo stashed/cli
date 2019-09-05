@@ -53,7 +53,7 @@ func NewCmdCreateBackupConfiguration() *cobra.Command {
 
 			backupConfigName := args[0]
 
-			backupConfig, err := createBackupConfiguration(backupConfigName)
+			backupConfig, err := createBackupConfiguration(backupConfigName, namespace)
 			if err != nil {
 				return err
 			}
@@ -88,7 +88,7 @@ func NewCmdCreateBackupConfiguration() *cobra.Command {
 	return cmd
 }
 
-func createBackupConfiguration(name string) (backupConfig *v1beta1.BackupConfiguration, err error) {
+func createBackupConfiguration(name string, namespace string) (backupConfig *v1beta1.BackupConfiguration, err error) {
 
 	backupConfig = &v1beta1.BackupConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
@@ -121,7 +121,7 @@ func createBackupConfiguration(name string) (backupConfig *v1beta1.BackupConfigu
 
 }
 
-func setVolumeMounts(target interface{}) error {
+func setBackupVolumeMounts(target *v1beta1.BackupTarget) error {
 	// extract volume and mount information
 	// then configure the volumeMounts of the target
 	volMounts := make([]core.VolumeMount, 0)
@@ -135,15 +135,7 @@ func setVolumeMounts(target interface{}) error {
 			return fmt.Errorf("invalid volume-mounts. use either 'volName:mountPath' or 'volName:mountPath:subPath' format")
 		}
 	}
-
-	switch target.(type) {
-	case *v1beta1.BackupTarget:
-		t := target.(*v1beta1.BackupTarget)
-		t.VolumeMounts = volMounts
-	case *v1beta1.RestoreTarget:
-		t := target.(*v1beta1.RestoreTarget)
-		t.VolumeMounts = volMounts
-	}
+	target.VolumeMounts = volMounts
 	return nil
 }
 
@@ -164,7 +156,7 @@ func setBackupTarget(backupConfig *v1beta1.BackupConfiguration) error {
 			Paths: backupConfigOpt.paths,
 		}
 		// Configure VolumeMounts
-		err := setVolumeMounts(backupConfig.Spec.Target)
+		err := setBackupVolumeMounts(backupConfig.Spec.Target)
 		if err != nil {
 			return err
 		}
