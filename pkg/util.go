@@ -94,6 +94,6 @@ func WaitUntilRestoreSessionSucceed(name string, namespace string) error {
 	})
 }
 
-func quantityTypePointer(q resource.Quantity) *resource.Quantity {
+func getQuantityTypePointer(q resource.Quantity) *resource.Quantity {
 	return &q
 }

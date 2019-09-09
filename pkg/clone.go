@@ -9,11 +9,6 @@ import (
 	cs "stash.appscode.dev/stash/client/clientset/versioned"
 )
 
-var (
-	dstNamespace string
-	srcNamespace string
-)
-
 func NewCmdClone(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "clone",

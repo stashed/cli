@@ -10,8 +10,6 @@ import (
 
 var (
 	namespace   string
-	kubeClient  *kubernetes.Clientset
-	stashClient *cs.Clientset
 )
 
 func NewCmdCreate(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {

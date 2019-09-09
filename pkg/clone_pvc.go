@@ -15,7 +15,7 @@ var (
 
 	cloneExample = templates.Examples(`
 		# Clone PVC
-		stash clone pvc source-data -n demo --to-namespace=demo-1 --secret=gcs-secret --bucket=appscode-qa --prefix=/source/data --provider=gcs`)
+		stash clone pvc source -n demo --to-namespace=demo-1 --secret=<secret> --bucket=<bucket> --prefix=<prefix> --provider=<provider>`)
 )
 
 
@@ -23,7 +23,7 @@ func NewCmdClonePVC() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:               "pvc",
 		Short:             `Clone PVC`,
-		Long:              ``,
+		Long:              `Use Backup and Restore process for cloning PVC`,
 		Example:           cloneExample,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -38,30 +38,41 @@ func NewCmdClonePVC() *cobra.Command {
 				return err
 			}
 
-			// Cloning a PVC into a destination namespace, At first, need to create a Repository using backend credential
-			// then take backup of the source PVC then restore the backed up data into VolumeClaimTemplate.
+			// cloning a PVC into a destination namespace, At first, need to create a Repository
+			// and BackupConfiguration to take backup of the source PVC in the source namespace
+			// then restore the backed up data into VolumeClaimTemplate in the destination namespace.
             repoName := fmt.Sprintf("%s-%s",repoOpt.provider, "repo")
-			log.Infof("Creating Repository %s to %s namespace", repoName, dstNamespace)
+			log.Infof("Creating Repository to source Namespace....")
 			repository, err := createRepository(repoName, srcNamespace)
 			if err != nil {
 				return err
 			}
 			log.Infof("Repository %s/%s has been created successfully.", repository.Namespace, repository.Name)
 
-			log.Infof("Repository are used to take backup of the source %s PVC\nTaking backup...", pvcName)
-
-			err = backup(pvcName, repoName)
+			log.Infof("Repository are used by the BackupConfiguration to take backup of the source %s PVC\nStart backup process...", pvcName)
+			err = backupPVC(pvcName, repoName)
 			if err != nil {
 				return err
 			}
 			log.Infof("The PVC %s/%s data has been backed up successfully", pvc.Namespace, pvc.Name)
 
-			log.Infof("Cloning PVC to new namespace...")
-			err = clonePVC(pvc, repoName)
+			// copy repository and secret to the destination namespace
+			err = ensureRepository(repoName)
 			if err != nil {
 				return err
 			}
-			log.Infof("Cloning PVC has been performed successfully")
+
+			log.Infof("Start Cloning Process...")
+			err = restorePVC(pvc, repoName)
+			if err != nil {
+				return err
+			}
+			// delete all repository
+			err = cleanupRepository(repoName)
+			if err != nil {
+
+			}
+			log.Infof("PVC has been cloned successfully!!")
 
             return nil
 		},
@@ -75,26 +86,29 @@ func NewCmdClonePVC() *cobra.Command {
 	return cmd
 }
 
-func backup(pvcName string, repoName string) error {
-	// Take Backup
-	configureBackupConfiguration(pvcName, repoName)
+// at first, create BackupConfiguration to take backup
+// then after successful taking backup, delete the BackupConfiguration to stop taking backup
+func backupPVC(pvcName string, repoName string) error {
+	// configure the BackupConfiguration
+	setBackupConfiguration(pvcName, repoName)
+
 	backupConfig, err := createBackupConfiguration(fmt.Sprintf("%s-%s", pvcName, "backup"), srcNamespace)
 	if err != nil {
 		return err
 	}
 	log.Infof("BackupConfiguration %s/%s has been created successfully.", backupConfig.Namespace, backupConfig.Name)
 	log.Infof("Waiting for backup success...")
-	err = ensureBackup(backupConfig.Name, backupConfig.Namespace)
+	err = WaitUntilBackupSessionSucceed(backupConfig.Name, backupConfig.Namespace)
 	if err != nil {
 		return err
 	}
-	// Delete BackupConfiguration to stop taking backup
+	// delete the BackupConfiguration to stop taking backup
 	return stashClient.StashV1beta1().BackupConfigurations(srcNamespace).Delete(backupConfig.Name, &metav1.DeleteOptions{})
 }
 
-func configureBackupConfiguration(pvcName string, repoName string)  {
+func setBackupConfiguration(pvcName string, repoName string)  {
 	backupConfigOpt.task = "pvc-backup"
-	backupConfigOpt.schedule = "*/1 * * * *"
+	backupConfigOpt.schedule = "*/3 * * * *"
 	backupConfigOpt.repository = repoName
 	backupConfigOpt.retentionPolicy.KeepLast = 5
 	backupConfigOpt.retentionPolicy.Prune = true
@@ -103,49 +117,40 @@ func configureBackupConfiguration(pvcName string, repoName string)  {
 		Kind: apis.KindPersistentVolumeClaim,
 		APIVersion: core.SchemeGroupVersion.String(),
 	}
-	backupConfigOpt.volumeMounts = []string{"source-data:/source/data"}
-	backupConfigOpt.paths = []string{"/source/data"}
 }
 
-func ensureBackup(name string, namespace string) error{
-  return WaitUntilBackupSessionSucceed(name, namespace)
-}
+// create RestoreSession to create a new PVC in the destination namespace
+// then restore the backed up data into the PVC
+func restorePVC(pvc *core.PersistentVolumeClaim, repoName string) error {
+	// configure the RestoreSession
+	setRestoreSession(pvc, repoName)
 
-func clonePVC(pvc *core.PersistentVolumeClaim, repoName string) error {
-
-	// create RestoreSession to create a new PVC in the destination namespace
-	// then restore the backed up data into the PVC
-	configureRestoreSession(pvc, repoName)
-
-	restoreSession, err := createRestoreSession(fmt.Sprintf("%s-%s", pvc.Name, "restore"), srcNamespace)
+	restoreSession, err := createRestoreSession(fmt.Sprintf("%s-%s", pvc.Name, "restore"), dstNamespace)
 	if err != nil {
 		return err
 	}
 	log.Infof("RestoreSession %s/%s has been created successfully", restoreSession.Namespace, restoreSession.Name)
 	log.Infof("Waiting for restore success...")
-	err = ensureClonePVC(restoreSession.Name, restoreSession.Namespace)
+	err = WaitUntilRestoreSessionSucceed(restoreSession.Name, restoreSession.Namespace)
 	if err != nil {
 		return err
 	}
 
-	// Delete Repository
-	return stashClient.StashV1alpha1().Repositories(srcNamespace).Delete(repoName, &metav1.DeleteOptions{})
+	// delete RestoreSession
+	return stashClient.StashV1beta1().RestoreSessions(dstNamespace).Delete(restoreSession.Name, &metav1.DeleteOptions{})
 }
 
-func configureRestoreSession(pvc *core.PersistentVolumeClaim, repoName string) {
+func setRestoreSession(pvc *core.PersistentVolumeClaim, repoName string) {
 	restoreSessionOpt.repository = repoName
+	restoreSessionOpt.task = "pvc-restore"
 	restoreSessionOpt.volumeClaimTemplate =  volumeclaimTemplate{
 		accessModes: getPVCAccessModesAsStrings(pvc.Spec.AccessModes),
 		storageClass: *pvc.Spec.StorageClassName,
-		size: quantityTypePointer(pvc.Spec.Resources.Requests[core.ResourceStorage]).String(),
-		name: "restore-data",
+		size: getQuantityTypePointer(pvc.Spec.Resources.Requests[core.ResourceStorage]).String(),
+		name: pvc.Name,
 	}
-	restoreSessionOpt.rule.Paths = []string{"/source/data"}
-	restoreSessionOpt.volumeMounts = []string{"restore-data:/source/data"}
-}
-
-func ensureClonePVC(name string, namespace string) error {
-	return WaitUntilRestoreSessionSucceed(name, namespace)
+	restoreSessionOpt.rule.Snapshots = []string{"latest"}
+	namespace = dstNamespace
 }
 
 func getPVCAccessModesAsStrings(acMode []core.PersistentVolumeAccessMode) []string {
@@ -156,3 +161,10 @@ func getPVCAccessModesAsStrings(acMode []core.PersistentVolumeAccessMode) []stri
 	return accessModes
 }
 
+func cleanupRepository(repoName string) error {
+	err := stashClient.StashV1alpha1().Repositories(srcNamespace).Delete(repoName, &metav1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
+	return stashClient.StashV1alpha1().Repositories(dstNamespace).Delete(repoName, &metav1.DeleteOptions{})
+}
