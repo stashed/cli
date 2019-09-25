@@ -21,8 +21,6 @@ var (
         stash create backupconfig ss-backup --namespace=demo --repository=gcs-repo --schedule="*/4 * * * *" --target-apiversion=apps/v1 --target-kind=StatefulSet --target-name=stash-demo --paths=/source/data --volume-mounts=source-data:/source/data --keep-last=5 --prune=true
         # For VolumeSnapshotter driver
          stash create backupconfig statefulset-volume-snapshot --namespace=demo --driver=VolumeSnapshotter --schedule="*/4 * * * *" --target-apiversion=apps/v1 --target-kind=StatefulSet --target-name=stash-demo --replica=1 --volumesnpashotclass=default-snapshot-class --keep-last=5 --prune=true`)
-
-	backupConfigOpt = backupConfigOption{}
 )
 
 type backupConfigOption struct {
@@ -40,6 +38,7 @@ type backupConfigOption struct {
 }
 
 func NewCmdCreateBackupConfiguration() *cobra.Command {
+	var backupConfigOpt = backupConfigOption{}
 	var cmd = &cobra.Command{
 		Use:               "backupconfig",
 		Short:             `Create a new BackupConfiguration`,
@@ -53,7 +52,11 @@ func NewCmdCreateBackupConfiguration() *cobra.Command {
 
 			backupConfigName := args[0]
 
-			backupConfig, err := createBackupConfiguration(backupConfigName)
+			backupConfig, err := getBackupConfiguration(backupConfigOpt, backupConfigName, namespace)
+			if err != nil {
+				return err
+			}
+			_, err = createBackupConfiguration(backupConfig)
 			if err != nil {
 				return err
 			}
@@ -88,44 +91,46 @@ func NewCmdCreateBackupConfiguration() *cobra.Command {
 	return cmd
 }
 
-func createBackupConfiguration(name string) (backupConfig *v1beta1.BackupConfiguration, err error) {
+func getBackupConfiguration(opt backupConfigOption, name string, namespace string) (*v1beta1.BackupConfiguration, error) {
 
-	backupConfig = &v1beta1.BackupConfiguration{
+	backupConfig := &v1beta1.BackupConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
 		Spec: v1beta1.BackupConfigurationSpec{
-			Schedule:        backupConfigOpt.schedule,
-			RetentionPolicy: getRetentionPolicy(),
+			Schedule:        opt.schedule,
+			RetentionPolicy: getRetentionPolicy(opt),
 		},
 	}
 
-	if v1beta1.Snapshotter(backupConfigOpt.driver) == v1beta1.VolumeSnapshotter {
-		backupConfig.Spec.Driver = v1beta1.Snapshotter(backupConfigOpt.driver)
+	if v1beta1.Snapshotter(opt.driver) == v1beta1.VolumeSnapshotter {
+		backupConfig.Spec.Driver = v1beta1.Snapshotter(opt.driver)
 	} else {
-		backupConfig.Spec.Repository = core.LocalObjectReference{Name: backupConfigOpt.repository}
-		backupConfig.Spec.Task = v1beta1.TaskRef{Name: backupConfigOpt.task}
+		backupConfig.Spec.Repository = core.LocalObjectReference{Name: opt.repository}
+		backupConfig.Spec.Task = v1beta1.TaskRef{Name: opt.task}
 	}
 
-	err = setBackupTarget(backupConfig)
+	err := opt.setBackupTarget(backupConfig)
 	if err != nil {
 		return nil, err
 	}
+	return backupConfig, nil
+}
 
-	backupConfig, _, err = v1beta1_util.CreateOrPatchBackupConfiguration(stashClient.StashV1beta1(), backupConfig.ObjectMeta, func(in *v1beta1.BackupConfiguration) *v1beta1.BackupConfiguration {
+func createBackupConfiguration(backupConfig *v1beta1.BackupConfiguration) (*v1beta1.BackupConfiguration, error) {
+	backupConfig, _, err := v1beta1_util.CreateOrPatchBackupConfiguration(stashClient.StashV1beta1(), backupConfig.ObjectMeta, func(in *v1beta1.BackupConfiguration) *v1beta1.BackupConfiguration {
 		in.Spec = backupConfig.Spec
 		return in
 	})
 	return backupConfig, err
-
 }
 
-func setVolumeMounts(target interface{}) error {
+func (opt backupConfigOption) setBackupVolumeMounts(target *v1beta1.BackupTarget) error {
 	// extract volume and mount information
 	// then configure the volumeMounts of the target
 	volMounts := make([]core.VolumeMount, 0)
-	for _, m := range backupConfigOpt.volumeMounts {
+	for _, m := range opt.volumeMounts {
 		vol := strings.Split(m, ":")
 		if len(vol) == 3 {
 			volMounts = append(volMounts, core.VolumeMount{Name: vol[0], MountPath: vol[1], SubPath: vol[2]})
@@ -135,36 +140,28 @@ func setVolumeMounts(target interface{}) error {
 			return fmt.Errorf("invalid volume-mounts. use either 'volName:mountPath' or 'volName:mountPath:subPath' format")
 		}
 	}
-
-	switch target.(type) {
-	case *v1beta1.BackupTarget:
-		t := target.(*v1beta1.BackupTarget)
-		t.VolumeMounts = volMounts
-	case *v1beta1.RestoreTarget:
-		t := target.(*v1beta1.RestoreTarget)
-		t.VolumeMounts = volMounts
-	}
+	target.VolumeMounts = volMounts
 	return nil
 }
 
-func setBackupTarget(backupConfig *v1beta1.BackupConfiguration) error {
+func (opt backupConfigOption) setBackupTarget(backupConfig *v1beta1.BackupConfiguration) error {
 
-	if v1beta1.Snapshotter(backupConfigOpt.driver) == v1beta1.VolumeSnapshotter {
+	if v1beta1.Snapshotter(opt.driver) == v1beta1.VolumeSnapshotter {
 		backupConfig.Spec.Target = &v1beta1.BackupTarget{
-			Ref:                     backupConfigOpt.targetRef,
-			VolumeSnapshotClassName: backupConfigOpt.volumesnpashotclass,
+			Ref:                     opt.targetRef,
+			VolumeSnapshotClassName: opt.volumesnpashotclass,
 		}
-		if backupConfigOpt.replica > 0 {
-			backupConfig.Spec.Target.Replicas = &backupConfigOpt.replica
+		if opt.replica > 0 {
+			backupConfig.Spec.Target.Replicas = &opt.replica
 		}
 
 	} else {
 		backupConfig.Spec.Target = &v1beta1.BackupTarget{
-			Ref:   backupConfigOpt.targetRef,
-			Paths: backupConfigOpt.paths,
+			Ref:   opt.targetRef,
+			Paths: opt.paths,
 		}
 		// Configure VolumeMounts
-		err := setVolumeMounts(backupConfig.Spec.Target)
+		err := opt.setBackupVolumeMounts(backupConfig.Spec.Target)
 		if err != nil {
 			return err
 		}
@@ -172,26 +169,25 @@ func setBackupTarget(backupConfig *v1beta1.BackupConfiguration) error {
 	return nil
 }
 
-
-func getRetentionPolicy() v1alpha1.RetentionPolicy{
-	retentionPolicy := backupConfigOpt.retentionPolicy
+func getRetentionPolicy(opt backupConfigOption) v1alpha1.RetentionPolicy {
+	retentionPolicy := opt.retentionPolicy
 	if retentionPolicy.KeepLast > 0 {
-		retentionPolicy.Name = fmt.Sprintf("%s-%d","keep-last", backupConfigOpt.retentionPolicy.KeepLast)
+		retentionPolicy.Name = fmt.Sprintf("%s-%d", "keep-last", opt.retentionPolicy.KeepLast)
 	}
 	if retentionPolicy.KeepDaily > 0 {
-		retentionPolicy.Name = fmt.Sprintf("%s-%d","keep-daily", backupConfigOpt.retentionPolicy.KeepDaily)
+		retentionPolicy.Name = fmt.Sprintf("%s-%d", "keep-daily", opt.retentionPolicy.KeepDaily)
 	}
 	if retentionPolicy.KeepHourly > 0 {
-		retentionPolicy.Name = fmt.Sprintf("%s-%d","keep-hourly", backupConfigOpt.retentionPolicy.KeepHourly)
+		retentionPolicy.Name = fmt.Sprintf("%s-%d", "keep-hourly", opt.retentionPolicy.KeepHourly)
 	}
 	if retentionPolicy.KeepWeekly > 0 {
-		retentionPolicy.Name = fmt.Sprintf("%s-%d","keep-weekly", backupConfigOpt.retentionPolicy.KeepWeekly)
+		retentionPolicy.Name = fmt.Sprintf("%s-%d", "keep-weekly", opt.retentionPolicy.KeepWeekly)
 	}
 	if retentionPolicy.KeepMonthly > 0 {
-		retentionPolicy.Name = fmt.Sprintf("%s-%d","keep-monthly", backupConfigOpt.retentionPolicy.KeepMonthly)
+		retentionPolicy.Name = fmt.Sprintf("%s-%d", "keep-monthly", opt.retentionPolicy.KeepMonthly)
 	}
 	if retentionPolicy.KeepYearly > 0 {
-		retentionPolicy.Name = fmt.Sprintf("%s-%d","keep-yearly", backupConfigOpt.retentionPolicy.KeepYearly)
+		retentionPolicy.Name = fmt.Sprintf("%s-%d", "keep-yearly", opt.retentionPolicy.KeepYearly)
 	}
 	return retentionPolicy
 }
