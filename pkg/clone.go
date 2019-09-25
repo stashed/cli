@@ -1,4 +1,3 @@
-
 package pkg
 
 import (
@@ -12,7 +11,7 @@ import (
 func NewCmdClone(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "clone",
-		Short:             `clone kubernetes resources`,
+		Short:             `Clone Kubernetes resources`,
 		DisableAutoGenTag: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 

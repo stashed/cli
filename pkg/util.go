@@ -1,18 +1,18 @@
 package pkg
 
 import (
+	"fmt"
 	"github.com/evanphx/json-patch"
 	"github.com/golang/glog"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/clientcmd/api"
-	"kmodules.xyz/client-go"
 	vs_api "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	vs "github.com/kubernetes-csi/external-snapshotter/pkg/client/clientset/versioned/typed/volumesnapshot/v1alpha1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
-	"fmt"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/tools/clientcmd/api"
+	"kmodules.xyz/client-go"
 	"stash.appscode.dev/stash/apis/stash/v1beta1"
 	"time"
 )
@@ -67,7 +67,7 @@ func PatchVolumesnapshotObject(c vs.VolumesnapshotV1alpha1Interface, cur, mod *v
 	return out, kutil.VerbPatched, err
 }
 
-func WaitUntilBackupSessionSucceed(name string, namespace string) error {
+func WaitUntilBackupSessionCompleted(name string, namespace string) error {
 	return wait.PollImmediate(PullInterval, WaitTimeOut, func() (done bool, err error) {
 		backupSessionList, err := stashClient.StashV1beta1().BackupSessions(namespace).List(metav1.ListOptions{LabelSelector: fmt.Sprintf("stash.appscode.com/backup-configuration=%s", name)})
 		if err == nil {
@@ -75,19 +75,24 @@ func WaitUntilBackupSessionSucceed(name string, namespace string) error {
 				if backupSession.Status.Phase == v1beta1.BackupSessionSucceeded {
 					return true, nil
 				}
-
+				if backupSession.Status.Phase == v1beta1.BackupSessionFailed {
+					return true, fmt.Errorf("BackupSession has been failed")
+				}
 			}
 		}
 		return false, nil
 	})
 }
 
-func WaitUntilRestoreSessionSucceed(name string, namespace string) error {
+func WaitUntilRestoreSessionCompleted(name string, namespace string) error {
 	return wait.PollImmediate(PullInterval, WaitTimeOut, func() (done bool, err error) {
 		restoreSession, err := stashClient.StashV1beta1().RestoreSessions(namespace).Get(name, metav1.GetOptions{})
 		if err == nil {
 			if restoreSession.Status.Phase == v1beta1.RestoreSessionSucceeded {
 				return true, nil
+			}
+			if restoreSession.Status.Phase == v1beta1.RestoreSessionFailed {
+				return true, fmt.Errorf("RestoreSession has been failed")
 			}
 		}
 		return false, nil

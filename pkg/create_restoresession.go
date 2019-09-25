@@ -25,8 +25,6 @@ var (
          stash create restoresession ss-restore --namespace=demo --repository=gcs-repo --target-apiversion=apps/v1 --target-kind=StatefulSet --target-name=stash-recovered --paths=/source/data --volume-mounts=source-data:/source/data
         # For VolumeSnapshotter driver
          stash create restoresession restore-pvc --namespace=demo --driver=VolumeSnapshotter --replica=3 --claim.name=restore-data-restore-demo-${POD_ORDINAL} --claim.access-modes=ReadWriteOnce --claim.storageclass=standard --claim.size=1Gi --claim.datasource=source-data-stash-demo-0-1567146010`)
-
-	restoreSessionOpt = restoreSessionOption{}
 )
 
 type restoreSessionOption struct {
@@ -54,6 +52,7 @@ type volumeclaimTemplate struct {
 }
 
 func NewCmdCreateRestoreSession() *cobra.Command {
+	var restoreSessionOpt = restoreSessionOption{}
 	var cmd = &cobra.Command{
 		Use:               "restoresession",
 		Short:             `Create a new RestoreSession`,
@@ -67,7 +66,12 @@ func NewCmdCreateRestoreSession() *cobra.Command {
 
 			restoresessionName := args[0]
 
-			restoreSession, err := createRestoreSession(restoresessionName, namespace)
+			restoreSession, err := getRestoreSession(restoreSessionOpt, restoresessionName, namespace)
+			if err != nil {
+				return nil
+			}
+
+			restoreSession, err = createRestoreSession(restoreSession)
 			if err != nil {
 				return err
 			}
@@ -99,43 +103,44 @@ func NewCmdCreateRestoreSession() *cobra.Command {
 	return cmd
 }
 
-func createRestoreSession(name string, namespace string) (restoreSession *v1beta1.RestoreSession, err error) {
-
-	restoreSession = &v1beta1.RestoreSession{
+func getRestoreSession(opt restoreSessionOption, name string, namespace string) (*v1beta1.RestoreSession, error) {
+	restoreSession := &v1beta1.RestoreSession{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: namespace,
 		},
 	}
 
-	if v1beta1.Snapshotter(restoreSessionOpt.driver) == v1beta1.VolumeSnapshotter {
-         restoreSession.Spec.Driver = v1beta1.Snapshotter(restoreSessionOpt.driver)
+	if v1beta1.Snapshotter(opt.driver) == v1beta1.VolumeSnapshotter {
+		restoreSession.Spec.Driver = v1beta1.Snapshotter(opt.driver)
 	} else {
 		restoreSession.Spec = v1beta1.RestoreSessionSpec{
-			Task:       v1beta1.TaskRef{Name: restoreSessionOpt.task},
-			Rules:      append(make([]v1beta1.Rule, 0), restoreSessionOpt.rule),
-			Repository: core.LocalObjectReference{Name: restoreSessionOpt.repository},
+			Task:       v1beta1.TaskRef{Name: opt.task},
+			Rules:      append(make([]v1beta1.Rule, 0), opt.rule),
+			Repository: core.LocalObjectReference{Name: opt.repository},
 		}
 	}
 
-	err = setRestoreTarget(restoreSession)
+	err := opt.setRestoreTarget(restoreSession)
 	if err != nil {
 		return nil, err
 	}
+	return restoreSession, nil
+}
 
-	restoreSession, _, err = v1beta1_util.CreateOrPatchRestoreSession(stashClient.StashV1beta1(), restoreSession.ObjectMeta, func(in *v1beta1.RestoreSession) *v1beta1.RestoreSession {
+func createRestoreSession(restoreSession *v1beta1.RestoreSession) (*v1beta1.RestoreSession, error) {
+	restoreSession, _, err := v1beta1_util.CreateOrPatchRestoreSession(stashClient.StashV1beta1(), restoreSession.ObjectMeta, func(in *v1beta1.RestoreSession) *v1beta1.RestoreSession {
 		in.Spec = restoreSession.Spec
 		return in
 	})
 	return restoreSession, err
-
 }
 
-func setRestoreVolumeMounts(target *v1beta1.RestoreTarget) error {
+func (opt restoreSessionOption) setRestoreVolumeMounts(target *v1beta1.RestoreTarget) error {
 	// extract volume and mount information
 	// then configure the volumeMounts of the target
 	volMounts := make([]core.VolumeMount, 0)
-	for _, m := range restoreSessionOpt.volumeMounts {
+	for _, m := range opt.volumeMounts {
 		vol := strings.Split(m, ":")
 		if len(vol) == 3 {
 			volMounts = append(volMounts, core.VolumeMount{Name: vol[0], MountPath: vol[1], SubPath: vol[2]})
@@ -149,50 +154,50 @@ func setRestoreVolumeMounts(target *v1beta1.RestoreTarget) error {
 	return nil
 }
 
-func setRestoreTarget(restoreSession *v1beta1.RestoreSession) error {
+func (opt restoreSessionOption) setRestoreTarget(restoreSession *v1beta1.RestoreSession) error {
 	// if driver is VolumeSnapshotter then configure the Replica and VolumeClaimTemplates field
 	// otherwise configure the TargetRef and replica field of the RestoreSession.
-	if v1beta1.Snapshotter(restoreSessionOpt.driver) == v1beta1.VolumeSnapshotter {
+	if v1beta1.Snapshotter(opt.driver) == v1beta1.VolumeSnapshotter {
 		restoreSession.Spec.Target = &v1beta1.RestoreTarget{
-			VolumeClaimTemplates: getRestoredPVCTemplates(),
+			VolumeClaimTemplates: getRestoredPVCTemplates(opt),
 		}
 	} else {
 		restoreSession.Spec.Target = &v1beta1.RestoreTarget{
-			Ref: restoreSessionOpt.targetRef,
-			VolumeClaimTemplates: getRestoredPVCTemplates(),
+			Ref:                  opt.targetRef,
+			VolumeClaimTemplates: getRestoredPVCTemplates(opt),
 		}
-		err := setRestoreVolumeMounts(restoreSession.Spec.Target)
+		err := opt.setRestoreVolumeMounts(restoreSession.Spec.Target)
 		if err != nil {
 			return err
 		}
 	}
-	if restoreSessionOpt.replica > 0 {
-		restoreSession.Spec.Target.Replicas = &restoreSessionOpt.replica
+	if opt.replica > 0 {
+		restoreSession.Spec.Target.Replicas = &opt.replica
 	}
 	return nil
 }
 
-func getRestoredPVCTemplates() []core.PersistentVolumeClaim {
+func getRestoredPVCTemplates(opt restoreSessionOption) []core.PersistentVolumeClaim {
 	return []core.PersistentVolumeClaim{
 		{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      restoreSessionOpt.volumeClaimTemplate.name,
+				Name:      opt.volumeClaimTemplate.name,
 				Namespace: namespace,
 				CreationTimestamp: metav1.Time{
 					Time: time.Now(),
 				},
 			},
 			Spec: core.PersistentVolumeClaimSpec{
-				AccessModes:      getPVAccessModes(restoreSessionOpt.volumeClaimTemplate.accessModes),
-				StorageClassName: &restoreSessionOpt.volumeClaimTemplate.storageClass,
+				AccessModes:      getPVAccessModes(opt.volumeClaimTemplate.accessModes),
+				StorageClassName: &opt.volumeClaimTemplate.storageClass,
 				Resources: core.ResourceRequirements{
 					Requests: core.ResourceList{
-						core.ResourceName(core.ResourceStorage): resource.MustParse(restoreSessionOpt.volumeClaimTemplate.size),
+						core.ResourceName(core.ResourceStorage): resource.MustParse(opt.volumeClaimTemplate.size),
 					},
 				},
 				DataSource: &core.TypedLocalObjectReference{
 					Kind:     "VolumeSnapshot",
-					Name:     restoreSessionOpt.volumeClaimTemplate.dataSource,
+					Name:     opt.volumeClaimTemplate.dataSource,
 					APIGroup: types.StringP(vs.GroupName),
 				},
 			},
