@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/appscode/go/log"
 	"stash.appscode.dev/stash/apis/stash/v1beta1"
-	v1beta1_util "stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1beta1/util"
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,9 +22,9 @@ func NewCmdCopyBackupConfiguration() *cobra.Command {
 			}
 
 			backupConfigName := args[0]
-			// get source BackupConfiguration and respective Repository and Secret in current namespace
-			// if found then copy the BackupConfiguration, Repository and Secret to destination namespace
-			return  ensureBackupConfiguration(backupConfigName)
+			// get source BackupConfiguration and respective Repository and Secret from current namespace
+			// if found then copy the BackupConfiguration, Repository and Secret to the destination namespace
+			return ensureBackupConfiguration(backupConfigName)
 		},
 	}
 
@@ -38,8 +37,8 @@ func ensureBackupConfiguration(name string) error {
 	if err != nil {
 		return err
 	}
-    // Repository holds the backend information, In Restic driver mechanism, Repository is used to backup.
-    // For that need to insure Repository and Secret
+	// Repository holds the backend information, In Restic driver mechanism, Repository is used to backup.
+	// For that need to insure Repository and Secret
 	if backupConfig.Spec.Driver != v1beta1.VolumeSnapshotter {
 		// ensure Repository and Secret
 		err = ensureRepository(backupConfig.Spec.Repository.Name)
@@ -47,8 +46,14 @@ func ensureBackupConfiguration(name string) error {
 			return err
 		}
 	}
-
-	err = copyBackupConfiguration(backupConfig)
+	// copy the BackupConfiguration to the destination namespace
+	meta := metav1.ObjectMeta{
+		Name:        backupConfig.Name,
+		Namespace:   dstNamespace,
+		Labels:      backupConfig.Labels,
+		Annotations: backupConfig.Annotations,
+	}
+	_, err = createBackupConfiguration(backupConfig, meta)
 	if err != nil {
 		return err
 	}
@@ -56,18 +61,3 @@ func ensureBackupConfiguration(name string) error {
 	log.Infof("BackupConfiguration %s/%s has been copied to %s namespace successfully.", srcNamespace, backupConfig.Name, dstNamespace)
 	return err
 }
-
-func  copyBackupConfiguration(bc *v1beta1.BackupConfiguration) error {
-	meta := metav1.ObjectMeta{
-		Name: bc.Name,
-		Namespace: dstNamespace,
-	}
-	_, _ , err := v1beta1_util.CreateOrPatchBackupConfiguration(stashClient.StashV1beta1(), meta, func(in *v1beta1.BackupConfiguration) *v1beta1.BackupConfiguration {
-			in.Spec = bc.Spec
-			return in
-		},
-	)
-	return err
-}
-
-

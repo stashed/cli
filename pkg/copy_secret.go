@@ -24,8 +24,8 @@ func NewCmdCopySecret() *cobra.Command {
 
 			secretName := args[0]
 
-			// get source secret in current namespace
-			// if found then copy the secret to destination namespace
+			// get source secret from current namespace
+			// if found then copy the secret to the destination namespace
 			return ensureSecret(secretName)
 		},
 	}
@@ -41,8 +41,14 @@ func ensureSecret(name string) error {
 	}
 
 	log.Infof("Copying Storage Secret %s to %s namespace", secret.Namespace, dstNamespace)
-	// copy the Secret to destination namespace
-	err = copySecret(secret)
+	// copy the Secret to the destination namespace
+	meta := metav1.ObjectMeta{
+		Name:        secret.Name,
+		Namespace:   dstNamespace,
+		Labels:      secret.Labels,
+		Annotations: secret.Annotations,
+	}
+	_, err = createSecret(secret, meta)
 	if err != nil {
 		return err
 	}
@@ -51,15 +57,10 @@ func ensureSecret(name string) error {
 	return err
 }
 
-func copySecret(secret *core.Secret) error {
-	meta := metav1.ObjectMeta{
-		Name:      secret.Name,
-		Namespace: dstNamespace,
-	}
-	_, _, err := core_util.CreateOrPatchSecret(kubeClient, meta, func(in *core.Secret) *core.Secret {
+func createSecret(secret *core.Secret, meta metav1.ObjectMeta) (*core.Secret, error) {
+	secret, _, err := core_util.CreateOrPatchSecret(kubeClient, meta, func(in *core.Secret) *core.Secret {
 		in.Data = secret.Data
 		return in
-	},
-	)
-	return err
+	})
+	return secret, err
 }

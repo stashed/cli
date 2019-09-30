@@ -13,7 +13,7 @@ import (
 	"stash.appscode.dev/stash/apis/stash/v1alpha1"
 	"stash.appscode.dev/stash/apis/stash/v1beta1"
 	v1beta1_util "stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1beta1/util"
-	"strings"
+	"stash.appscode.dev/stash/pkg/util"
 	"time"
 )
 
@@ -66,7 +66,7 @@ func NewCmdCreateRestoreSession() *cobra.Command {
 
 			restoresessionName := args[0]
 
-			restoreSession, err := getRestoreSession(restoreSessionOpt, restoresessionName, namespace)
+			restoreSession, err := restoreSessionOpt.newRestoreSession(restoresessionName, namespace)
 			if err != nil {
 				return nil
 			}
@@ -103,7 +103,7 @@ func NewCmdCreateRestoreSession() *cobra.Command {
 	return cmd
 }
 
-func getRestoreSession(opt restoreSessionOption, name string, namespace string) (*v1beta1.RestoreSession, error) {
+func (opt restoreSessionOption) newRestoreSession(name string, namespace string) (*v1beta1.RestoreSession, error) {
 	restoreSession := &v1beta1.RestoreSession{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -136,39 +136,35 @@ func createRestoreSession(restoreSession *v1beta1.RestoreSession) (*v1beta1.Rest
 	return restoreSession, err
 }
 
-func (opt restoreSessionOption) setRestoreVolumeMounts(target *v1beta1.RestoreTarget) error {
-	// extract volume and mount information
-	// then configure the volumeMounts of the target
-	volMounts := make([]core.VolumeMount, 0)
-	for _, m := range opt.volumeMounts {
-		vol := strings.Split(m, ":")
-		if len(vol) == 3 {
-			volMounts = append(volMounts, core.VolumeMount{Name: vol[0], MountPath: vol[1], SubPath: vol[2]})
-		} else if len(vol) == 2 {
-			volMounts = append(volMounts, core.VolumeMount{Name: vol[0], MountPath: vol[1]})
-		} else {
-			return fmt.Errorf("invalid volume-mounts. use either 'volName:mountPath' or 'volName:mountPath:subPath' format")
-		}
-	}
-	target.VolumeMounts = volMounts
-	return nil
-}
-
 func (opt restoreSessionOption) setRestoreTarget(restoreSession *v1beta1.RestoreSession) error {
-	// if driver is VolumeSnapshotter then configure the Replica and VolumeClaimTemplates field
-	// otherwise configure the TargetRef and replica field of the RestoreSession.
+	// if driver is VolumeSnapshotter then configure the VolumeClaimTemplates
+	// otherwise configure the TargetRef for sidecar model or configure the volumeClaimTemplates for cronJob model
 	if v1beta1.Snapshotter(opt.driver) == v1beta1.VolumeSnapshotter {
 		restoreSession.Spec.Target = &v1beta1.RestoreTarget{
-			VolumeClaimTemplates: getRestoredPVCTemplates(opt),
+			VolumeClaimTemplates: opt.getRestoredPVCTemplates(),
+		}
+		restoreSession.Spec.Target.VolumeClaimTemplates[0].Spec.DataSource = &core.TypedLocalObjectReference{
+			Kind:     "VolumeSnapshot",
+			Name:     opt.volumeClaimTemplate.dataSource,
+			APIGroup: types.StringP(vs.GroupName),
 		}
 	} else {
-		restoreSession.Spec.Target = &v1beta1.RestoreTarget{
-			Ref:                  opt.targetRef,
-			VolumeClaimTemplates: getRestoredPVCTemplates(opt),
+		if opt.targetRef.Kind != "" && util.BackupModel(opt.targetRef.Kind) == util.ModelSidecar {
+			restoreSession.Spec.Target = &v1beta1.RestoreTarget{
+				Ref: opt.targetRef,
+			}
+
+		} else {
+			restoreSession.Spec.Target = &v1beta1.RestoreTarget{
+				VolumeClaimTemplates: opt.getRestoredPVCTemplates(),
+			}
 		}
-		err := opt.setRestoreVolumeMounts(restoreSession.Spec.Target)
-		if err != nil {
-			return err
+		if len(opt.volumeMounts) > 0 {
+			volumeMounts, err := getVolumeMounts(opt.volumeMounts)
+			if err != nil {
+				return err
+			}
+			restoreSession.Spec.Target.VolumeMounts = volumeMounts
 		}
 	}
 	if opt.replica > 0 {
@@ -177,8 +173,8 @@ func (opt restoreSessionOption) setRestoreTarget(restoreSession *v1beta1.Restore
 	return nil
 }
 
-func getRestoredPVCTemplates(opt restoreSessionOption) []core.PersistentVolumeClaim {
-	return []core.PersistentVolumeClaim{
+func (opt restoreSessionOption) getRestoredPVCTemplates() []core.PersistentVolumeClaim {
+	pvcs := []core.PersistentVolumeClaim{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      opt.volumeClaimTemplate.name,
@@ -190,19 +186,15 @@ func getRestoredPVCTemplates(opt restoreSessionOption) []core.PersistentVolumeCl
 			Spec: core.PersistentVolumeClaimSpec{
 				AccessModes:      getPVAccessModes(opt.volumeClaimTemplate.accessModes),
 				StorageClassName: &opt.volumeClaimTemplate.storageClass,
-				Resources: core.ResourceRequirements{
-					Requests: core.ResourceList{
-						core.ResourceName(core.ResourceStorage): resource.MustParse(opt.volumeClaimTemplate.size),
-					},
-				},
-				DataSource: &core.TypedLocalObjectReference{
-					Kind:     "VolumeSnapshot",
-					Name:     opt.volumeClaimTemplate.dataSource,
-					APIGroup: types.StringP(vs.GroupName),
-				},
 			},
 		},
 	}
+	if opt.volumeClaimTemplate.size != "" {
+		pvcs[0].Spec.Resources.Requests = core.ResourceList{
+			core.ResourceName(core.ResourceStorage): resource.MustParse(opt.volumeClaimTemplate.size),
+		}
+	}
+	return pvcs
 }
 
 func getPVAccessModes(acModes []string) []core.PersistentVolumeAccessMode {

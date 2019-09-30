@@ -49,7 +49,7 @@ func NewCmdTriggerBackup(clientGetter genericclioptions.RESTClientGetter) *cobra
 				return err
 			}
 
-			err = ensureInstantBackup(backupConfig, client)
+			_, err = triggerBackup(backupConfig, client)
 			return err
 		},
 	}
@@ -57,7 +57,7 @@ func NewCmdTriggerBackup(clientGetter genericclioptions.RESTClientGetter) *cobra
 	return cmd
 }
 
-func ensureInstantBackup(backupConfig *v1beta1.BackupConfiguration, client cs.Interface) error {
+func triggerBackup(backupConfig *v1beta1.BackupConfiguration, client cs.Interface) (*v1beta1.BackupSession, error) {
 
 	// create backupSession for backupConfig
 	backupSession := &v1beta1.BackupSession{
@@ -79,15 +79,15 @@ func ensureInstantBackup(backupConfig *v1beta1.BackupConfiguration, client cs.In
 	// set backupConfig as backupSession's owner
 	ref, err := reference.GetReference(stash_scheme.Scheme, backupConfig)
 	if err != nil {
-		return err
+		return backupSession, err
 	}
 	core_util.EnsureOwnerReference(&backupSession.ObjectMeta, ref)
 
 	// don't use createOrPatch here
 	backupSession, err = client.StashV1beta1().BackupSessions(backupSession.Namespace).Create(backupSession)
 	if err != nil {
-		return err
+		return backupSession, err
 	}
 	log.Infof("BackupSession %s/%s has been created successfully", backupSession.Namespace, backupSession.Name)
-	return nil
+	return backupSession, nil
 }

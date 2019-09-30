@@ -52,11 +52,11 @@ func NewCmdCreateBackupConfiguration() *cobra.Command {
 
 			backupConfigName := args[0]
 
-			backupConfig, err := getBackupConfiguration(backupConfigOpt, backupConfigName, namespace)
+			backupConfig, err := backupConfigOpt.newBackupConfiguration(backupConfigName, namespace)
 			if err != nil {
 				return err
 			}
-			_, err = createBackupConfiguration(backupConfig)
+			_, err = createBackupConfiguration(backupConfig, backupConfig.ObjectMeta)
 			if err != nil {
 				return err
 			}
@@ -91,7 +91,7 @@ func NewCmdCreateBackupConfiguration() *cobra.Command {
 	return cmd
 }
 
-func getBackupConfiguration(opt backupConfigOption, name string, namespace string) (*v1beta1.BackupConfiguration, error) {
+func (opt backupConfigOption) newBackupConfiguration(name string, namespace string) (*v1beta1.BackupConfiguration, error) {
 
 	backupConfig := &v1beta1.BackupConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
@@ -118,30 +118,12 @@ func getBackupConfiguration(opt backupConfigOption, name string, namespace strin
 	return backupConfig, nil
 }
 
-func createBackupConfiguration(backupConfig *v1beta1.BackupConfiguration) (*v1beta1.BackupConfiguration, error) {
-	backupConfig, _, err := v1beta1_util.CreateOrPatchBackupConfiguration(stashClient.StashV1beta1(), backupConfig.ObjectMeta, func(in *v1beta1.BackupConfiguration) *v1beta1.BackupConfiguration {
+func createBackupConfiguration(backupConfig *v1beta1.BackupConfiguration, meta metav1.ObjectMeta) (*v1beta1.BackupConfiguration, error) {
+	backupConfig, _, err := v1beta1_util.CreateOrPatchBackupConfiguration(stashClient.StashV1beta1(), meta, func(in *v1beta1.BackupConfiguration) *v1beta1.BackupConfiguration {
 		in.Spec = backupConfig.Spec
 		return in
 	})
 	return backupConfig, err
-}
-
-func (opt backupConfigOption) setBackupVolumeMounts(target *v1beta1.BackupTarget) error {
-	// extract volume and mount information
-	// then configure the volumeMounts of the target
-	volMounts := make([]core.VolumeMount, 0)
-	for _, m := range opt.volumeMounts {
-		vol := strings.Split(m, ":")
-		if len(vol) == 3 {
-			volMounts = append(volMounts, core.VolumeMount{Name: vol[0], MountPath: vol[1], SubPath: vol[2]})
-		} else if len(vol) == 2 {
-			volMounts = append(volMounts, core.VolumeMount{Name: vol[0], MountPath: vol[1]})
-		} else {
-			return fmt.Errorf("invalid volume-mounts. use either 'volName:mountPath' or 'volName:mountPath:subPath' format")
-		}
-	}
-	target.VolumeMounts = volMounts
-	return nil
 }
 
 func (opt backupConfigOption) setBackupTarget(backupConfig *v1beta1.BackupConfiguration) error {
@@ -151,22 +133,40 @@ func (opt backupConfigOption) setBackupTarget(backupConfig *v1beta1.BackupConfig
 			Ref:                     opt.targetRef,
 			VolumeSnapshotClassName: opt.volumesnpashotclass,
 		}
-		if opt.replica > 0 {
-			backupConfig.Spec.Target.Replicas = &opt.replica
-		}
-
 	} else {
 		backupConfig.Spec.Target = &v1beta1.BackupTarget{
 			Ref:   opt.targetRef,
 			Paths: opt.paths,
 		}
 		// Configure VolumeMounts
-		err := opt.setBackupVolumeMounts(backupConfig.Spec.Target)
+		volumeMounts, err := getVolumeMounts(opt.volumeMounts)
 		if err != nil {
 			return err
 		}
+		backupConfig.Spec.Target.VolumeMounts = volumeMounts
+	}
+	if opt.replica > 0 {
+		backupConfig.Spec.Target.Replicas = &opt.replica
 	}
 	return nil
+}
+
+func getVolumeMounts(volumeMounts []string) ([]core.VolumeMount, error) {
+	// extract volume and mount information
+	// then return the volumeMounts of the target
+	volMounts := make([]core.VolumeMount, 0)
+	for _, m := range volumeMounts {
+		vol := strings.Split(m, ":")
+		if len(vol) == 3 {
+			volMounts = append(volMounts, core.VolumeMount{Name: vol[0], MountPath: vol[1], SubPath: vol[2]})
+		} else if len(vol) == 2 {
+			volMounts = append(volMounts, core.VolumeMount{Name: vol[0], MountPath: vol[1]})
+		} else {
+			return volMounts, fmt.Errorf("invalid volume-mounts. use either 'volName:mountPath' or 'volName:mountPath:subPath' format")
+		}
+	}
+
+	return volMounts, nil
 }
 
 func getRetentionPolicy(opt backupConfigOption) v1alpha1.RetentionPolicy {

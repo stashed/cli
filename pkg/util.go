@@ -7,7 +7,6 @@ import (
 	vs_api "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1alpha1"
 	vs "github.com/kubernetes-csi/external-snapshotter/pkg/client/clientset/versioned/typed/volumesnapshot/v1alpha1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -69,15 +68,13 @@ func PatchVolumesnapshotObject(c vs.VolumesnapshotV1alpha1Interface, cur, mod *v
 
 func WaitUntilBackupSessionCompleted(name string, namespace string) error {
 	return wait.PollImmediate(PullInterval, WaitTimeOut, func() (done bool, err error) {
-		backupSessionList, err := stashClient.StashV1beta1().BackupSessions(namespace).List(metav1.ListOptions{LabelSelector: fmt.Sprintf("stash.appscode.com/backup-configuration=%s", name)})
+		backupSession, err := stashClient.StashV1beta1().BackupSessions(namespace).Get(name, metav1.GetOptions{})
 		if err == nil {
-			for _, backupSession := range backupSessionList.Items {
-				if backupSession.Status.Phase == v1beta1.BackupSessionSucceeded {
-					return true, nil
-				}
-				if backupSession.Status.Phase == v1beta1.BackupSessionFailed {
-					return true, fmt.Errorf("BackupSession has been failed")
-				}
+			if backupSession.Status.Phase == v1beta1.BackupSessionSucceeded {
+				return true, nil
+			}
+			if backupSession.Status.Phase == v1beta1.BackupSessionFailed {
+				return true, fmt.Errorf("BackupSession has been failed")
 			}
 		}
 		return false, nil
@@ -97,8 +94,4 @@ func WaitUntilRestoreSessionCompleted(name string, namespace string) error {
 		}
 		return false, nil
 	})
-}
-
-func getQuantityTypePointer(q resource.Quantity) *resource.Quantity {
-	return &q
 }

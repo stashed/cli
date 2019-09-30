@@ -34,7 +34,13 @@ func NewCmdCopyVolumeSnapshot() *cobra.Command {
 			}
 
 			// copy the VolumeSnapshot to new namespace
-			err = copyVolumeSnapshot(vs)
+			meta := metav1.ObjectMeta{
+				Name:        vs.Name,
+				Namespace:   dstNamespace,
+				Labels:      vs.Labels,
+				Annotations: vs.Annotations,
+			}
+			vs, err = createVolumeSnapshot(vs, meta)
 			if err != nil {
 				return err
 			}
@@ -47,19 +53,10 @@ func NewCmdCopyVolumeSnapshot() *cobra.Command {
 	return cmd
 }
 
-// Copy VolumeSnapshot
-func copyVolumeSnapshot(vs *vs_v1alpha1.VolumeSnapshot) error{
-
-	meta := metav1.ObjectMeta{
-		Name: vs.Name,
-		Namespace: dstNamespace,
-	}
-	_, _, err := CreateOrPatchVolumeSnapshot(vsClient.VolumesnapshotV1alpha1(), meta, func(in *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot{
-			in.Spec = vs.Spec
-			return in
-		},
-	)
-	return err
+func createVolumeSnapshot(vs *vs_v1alpha1.VolumeSnapshot, meta metav1.ObjectMeta) (*vs_v1alpha1.VolumeSnapshot, error) {
+	vs, _, err := CreateOrPatchVolumeSnapshot(vsClient.VolumesnapshotV1alpha1(), meta, func(in *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot {
+		in.Spec = vs.Spec
+		return in
+	})
+	return vs, err
 }
-
-

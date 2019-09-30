@@ -6,8 +6,6 @@ import (
 	"github.com/appscode/go/log"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"stash.appscode.dev/stash/apis/stash/v1alpha1"
-	"stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1alpha1/util"
 )
 
 func NewCmdCopyRepository() *cobra.Command {
@@ -24,8 +22,8 @@ func NewCmdCopyRepository() *cobra.Command {
 			}
 
 			repositoryName := args[0]
-			// get source Repository in current namespace
-			// if found then copy the Repository to destination namespace
+			// get source Repository from current namespace
+			// if found then copy the Repository to the destination namespace
 			return  ensureRepository(repositoryName)
 		},
 	}
@@ -46,24 +44,17 @@ func ensureRepository(name string) error {
 	if err != nil {
 		return err
 	}
-	err = copyRepository(repository)
+	// copy the Repository to the destination namespace
+	meta := metav1.ObjectMeta{
+		Name: repository.Name,
+		Namespace: dstNamespace,
+		Labels: repository.Labels,
+		Annotations: repository.Annotations,
+	}
+	_, err = createRepository(repository, meta)
 	if err != nil {
 		return err
 	}
 	log.Infof("Repository %s/%s has been copied to %s namespace successfully.", repository.Namespace, repository.Name, dstNamespace)
-	return err
-}
-
-// CreateOrPatch New Secret
-func copyRepository(repository *v1alpha1.Repository) error{
-	meta := metav1.ObjectMeta{
-		Name:      repository.Name,
-		Namespace: dstNamespace,
-	}
-	_, _, err := util.CreateOrPatchRepository(stashClient.StashV1alpha1(), meta, func(in *v1alpha1.Repository) *v1alpha1.Repository {
-			in.Spec = repository.Spec
-			return in
-		},
-	)
 	return err
 }

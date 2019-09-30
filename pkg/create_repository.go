@@ -43,9 +43,9 @@ func NewCmdCreateRepository() *cobra.Command {
 
 			repositoryName := args[0]
 
-			repository := getRepository(repoOpt, repositoryName, namespace)
+			repository := newRepository(repoOpt, repositoryName, namespace)
 
-			repository, err := createRepository(repository)
+			repository, err := createRepository(repository, repository.ObjectMeta)
 			if err != nil {
 				return err
 			}
@@ -64,7 +64,7 @@ func NewCmdCreateRepository() *cobra.Command {
 	return cmd
 }
 
-func getRepository(opt repositoryOption, name string, namespace string) *v1alpha1.Repository {
+func newRepository(opt repositoryOption, name string, namespace string) *v1alpha1.Repository {
 	repository := &v1alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -77,8 +77,9 @@ func getRepository(opt repositoryOption, name string, namespace string) *v1alpha
 	return repository
 }
 
-func createRepository(repository *v1alpha1.Repository) (*v1alpha1.Repository, error) {
-	repository, _, err := util.CreateOrPatchRepository(stashClient.StashV1alpha1(), repository.ObjectMeta, func(in *v1alpha1.Repository) *v1alpha1.Repository {
+// CreateOrPatch New Secret
+func createRepository(repository *v1alpha1.Repository, meta metav1.ObjectMeta) (*v1alpha1.Repository, error) {
+	repository, _, err := util.CreateOrPatchRepository(stashClient.StashV1alpha1(), meta, func(in *v1alpha1.Repository) *v1alpha1.Repository {
 		in.Spec = repository.Spec
 		return in
 	},
