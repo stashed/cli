@@ -95,7 +95,7 @@ func backupPVC(pvcName string, repoName string) error {
 	// configure BackupConfiguration
 	opt := backupConfigOption{
 		task:       "pvc-backup",
-		schedule:   "*/59 * * * *", // we have to set the schedule for every 59 minutes to trigger an instant backup
+		schedule:   "*/59 * * * *", // we have to set a large value then trigger an instant backup immediately.
 		repository: repoName,
 		retentionPolicy: v1alpha1.RetentionPolicy{
 			Name:     "keep-last-5",
