@@ -3,12 +3,11 @@ package pkg
 import (
 	"fmt"
 
-	storage "kmodules.xyz/objectstore-api/api/v1"
-
 	"github.com/appscode/go/log"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kubernetes/pkg/kubectl/util/templates"
+	storage "kmodules.xyz/objectstore-api/api/v1"
 	"stash.appscode.dev/stash/apis/stash/v1alpha1"
 	"stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1alpha1/util"
 )

@@ -3,9 +3,8 @@ package pkg
 import (
 	"fmt"
 
-	jsoniter "github.com/json-iterator/go"
-
 	"github.com/appscode/go/log"
+	jsoniter "github.com/json-iterator/go"
 	vs_api "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1alpha1"
 	vs_v1alpha1 "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1alpha1"
 	"github.com/spf13/cobra"
