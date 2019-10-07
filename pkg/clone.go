@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	vs_cs "github.com/kubernetes-csi/external-snapshotter/pkg/client/clientset/versioned"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -9,18 +8,10 @@ import (
 	cs "stash.appscode.dev/stash/client/clientset/versioned"
 )
 
-var (
-	dstNamespace string
-	srcNamespace string
-	kubeClient *kubernetes.Clientset
-	stashClient *cs.Clientset
-	vsClient *vs_cs.Clientset
-)
-
-func NewCmdCopy(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
+func NewCmdClone(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:               "cp",
-		Short:             `Copy stash resources from one namespace to another namespace`,
+		Use:               "clone",
+		Short:             `Clone Kubernetes resources`,
 		DisableAutoGenTag: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 
@@ -30,7 +21,6 @@ func NewCmdCopy(clientGetter genericclioptions.RESTClientGetter) *cobra.Command 
 			}
 
 			srcNamespace, _, err = clientGetter.ToRawKubeConfigLoader().Namespace()
-
 			if err != nil {
 				return err
 			}
@@ -45,20 +35,12 @@ func NewCmdCopy(clientGetter genericclioptions.RESTClientGetter) *cobra.Command 
 				return err
 			}
 
-			vsClient, err = vs_cs.NewForConfig(cfg)
-			if err != nil{
-				return err
-			}
-
 			return nil
 		},
 	}
-
-	cmd.AddCommand(NewCmdCopyRepository())
-	cmd.AddCommand(NewCmdCopySecret())
-	cmd.AddCommand(NewCmdCopyVolumeSnapshot())
-	cmd.AddCommand(NewCmdCopyBackupConfiguration())
+	cmd.AddCommand(NewCmdClonePVC())
 
 	cmd.PersistentFlags().StringVar(&dstNamespace, "to-namespace", dstNamespace, "Destination namespace.")
+
 	return cmd
 }

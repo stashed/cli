@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/appscode/go/log"
 	"github.com/pkg/errors"
@@ -50,40 +49,45 @@ func NewCmdTriggerBackup(clientGetter genericclioptions.RESTClientGetter) *cobra
 				return err
 			}
 
-			// create backupSession for backupConfig
-			backupSession := &v1beta1.BackupSession{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: fmt.Sprintf("%s-%d", backupConfigName, time.Now().Unix()),
-					Namespace:    namespace,
-					Labels: map[string]string{
-						util.LabelApp:                 util.AppLabelStash,
-						util.LabelBackupConfiguration: backupConfigName,
-					},
-				},
-				Spec: v1beta1.BackupSessionSpec{
-					BackupConfiguration: v1.LocalObjectReference{
-						Name: backupConfigName,
-					},
-				},
-			}
-
-			// set backupConfig as backupSession's owner
-			ref, err := reference.GetReference(stash_scheme.Scheme, backupConfig)
-			if err != nil {
-				return err
-			}
-			core_util.EnsureOwnerReference(&backupSession.ObjectMeta, ref)
-
-			// don't use createOrPatch here
-			backupSession, err = client.StashV1beta1().BackupSessions(namespace).Create(backupSession)
-			if err != nil {
-				return err
-			}
-
-			log.Infof("BackupConfiguration %s/%s has been triggered successfully by BackupSession %s/%s", backupConfig.Namespace, backupConfig.Name, backupSession.Namespace, backupSession.Name)
-			return nil
+			_, err = triggerBackup(backupConfig, client)
+			return err
 		},
 	}
 
 	return cmd
+}
+
+func triggerBackup(backupConfig *v1beta1.BackupConfiguration, client cs.Interface) (*v1beta1.BackupSession, error) {
+
+	// create backupSession for backupConfig
+	backupSession := &v1beta1.BackupSession{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: backupConfig.Name + "-",
+			Namespace:    backupConfig.Namespace,
+			Labels: map[string]string{
+				util.LabelApp:                 util.AppLabelStash,
+				util.LabelBackupConfiguration: backupConfig.Name,
+			},
+		},
+		Spec: v1beta1.BackupSessionSpec{
+			BackupConfiguration: v1.LocalObjectReference{
+				Name: backupConfig.Name,
+			},
+		},
+	}
+
+	// set backupConfig as backupSession's owner
+	ref, err := reference.GetReference(stash_scheme.Scheme, backupConfig)
+	if err != nil {
+		return backupSession, err
+	}
+	core_util.EnsureOwnerReference(&backupSession.ObjectMeta, ref)
+
+	// don't use createOrPatch here
+	backupSession, err = client.StashV1beta1().BackupSessions(backupSession.Namespace).Create(backupSession)
+	if err != nil {
+		return backupSession, err
+	}
+	log.Infof("BackupSession %s/%s has been created successfully", backupSession.Namespace, backupSession.Name)
+	return backupSession, nil
 }
