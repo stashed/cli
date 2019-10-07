@@ -2,7 +2,8 @@ package pkg
 
 import (
 	"fmt"
-	"github.com/json-iterator/go"
+
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/appscode/go/log"
 	vs_api "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1alpha1"

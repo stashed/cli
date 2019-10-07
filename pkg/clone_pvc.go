@@ -49,7 +49,7 @@ func NewCmdClonePVC() *cobra.Command {
 			repoName := fmt.Sprintf("%s-%s-%d", repoOpt.provider, "repo", time.Now().Unix())
 			log.Infof("Creating Repository: %s to the Namespace: %s", repoName, srcNamespace)
 			repository := newRepository(repoOpt, repoName, srcNamespace)
-			repository, err = createRepository(repository, repository.ObjectMeta)
+			_, err = createRepository(repository, repository.ObjectMeta)
 			if err != nil {
 				return err
 			}
@@ -74,7 +74,7 @@ func NewCmdClonePVC() *cobra.Command {
 			// delete all repository
 			err = cleanupRepository(repoName)
 			if err != nil {
-
+				return err
 			}
 			log.Infof("PVC has been cloned successfully!!")
 

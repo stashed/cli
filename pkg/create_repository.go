@@ -2,7 +2,8 @@ package pkg
 
 import (
 	"fmt"
-	"kmodules.xyz/objectstore-api/api/v1"
+
+	storage "kmodules.xyz/objectstore-api/api/v1"
 
 	"github.com/appscode/go/log"
 	"github.com/spf13/cobra"
@@ -87,51 +88,51 @@ func createRepository(repository *v1alpha1.Repository, meta metav1.ObjectMeta) (
 	return repository, err
 }
 
-func (opt repositoryOption) getBackendInfo() v1.Backend {
-	var backend v1.Backend
+func (opt repositoryOption) getBackendInfo() storage.Backend {
+	var backend storage.Backend
 	switch opt.provider {
-	case v1.ProviderGCS:
-		backend = v1.Backend{
-			GCS: &v1.GCSSpec{
+	case storage.ProviderGCS:
+		backend = storage.Backend{
+			GCS: &storage.GCSSpec{
 				Bucket:         opt.bucket,
 				Prefix:         opt.prefix,
 				MaxConnections: opt.maxConnections,
 			},
 		}
-	case v1.ProviderAzure:
-		backend = v1.Backend{
-			Azure: &v1.AzureSpec{
+	case storage.ProviderAzure:
+		backend = storage.Backend{
+			Azure: &storage.AzureSpec{
 				Container:      opt.bucket,
 				Prefix:         opt.prefix,
 				MaxConnections: opt.maxConnections,
 			},
 		}
-	case v1.ProviderS3:
-		backend = v1.Backend{
-			S3: &v1.S3Spec{
+	case storage.ProviderS3:
+		backend = storage.Backend{
+			S3: &storage.S3Spec{
 				Bucket:   opt.bucket,
 				Prefix:   opt.prefix,
 				Endpoint: opt.endpoint,
 			},
 		}
-	case v1.ProviderB2:
-		backend = v1.Backend{
-			B2: &v1.B2Spec{
+	case storage.ProviderB2:
+		backend = storage.Backend{
+			B2: &storage.B2Spec{
 				Bucket:         opt.bucket,
 				Prefix:         opt.prefix,
 				MaxConnections: opt.maxConnections,
 			},
 		}
-	case v1.ProviderSwift:
-		backend = v1.Backend{
-			Swift: &v1.SwiftSpec{
+	case storage.ProviderSwift:
+		backend = storage.Backend{
+			Swift: &storage.SwiftSpec{
 				Container: opt.bucket,
 				Prefix:    opt.prefix,
 			},
 		}
-	case v1.ProviderRest:
-		backend = v1.Backend{
-			Rest: &v1.RestServerSpec{
+	case storage.ProviderRest:
+		backend = storage.Backend{
+			Rest: &storage.RestServerSpec{
 				URL: opt.endpoint,
 			},
 		}
