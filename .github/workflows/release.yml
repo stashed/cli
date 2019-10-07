@@ -34,3 +34,8 @@ jobs:
         APPSCODE_ENV: prod
       run: |
         make release
+
+    - uses: actions/upload-artifact@master
+      with:
+        name: stash-cli-binaries
+        path:  bin
