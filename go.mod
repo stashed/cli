@@ -25,7 +25,7 @@ require (
 	kmodules.xyz/client-go v0.0.0-20191006173540-91f8ee6b6b4b
 	kmodules.xyz/objectstore-api v0.0.0-20191006080053-fc8b57fadcf0
 	kmodules.xyz/openshift v0.0.0-20190808144841-c8f9a927f1d1
-	stash.appscode.dev/stash v0.9.0-rc.1
+	stash.appscode.dev/stash v0.9.0-rc.1.0.20191007102408-f5a271be821a
 )
 
 replace (
