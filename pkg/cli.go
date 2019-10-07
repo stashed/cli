@@ -2,9 +2,10 @@ package pkg
 
 import (
 	"io/ioutil"
-	core "k8s.io/api/core/v1"
 	"os"
 	"path/filepath"
+
+	core "k8s.io/api/core/v1"
 	"stash.appscode.dev/cli/pkg/docker"
 	docker_image "stash.appscode.dev/stash/pkg/docker"
 	"stash.appscode.dev/stash/pkg/restic"
@@ -13,8 +14,7 @@ import (
 const (
 	secretDirName = "secret"
 	configDirName = "config"
-	ResticEnvs = "restic-envs"
-
+	ResticEnvs    = "restic-envs"
 )
 
 type cliLocalDirectories struct {
@@ -84,7 +84,7 @@ func (localDirs *cliLocalDirectories) dumpSecret(temDir string, secret *core.Sec
 	}
 
 	for key, val := range secret.Data {
-		if err := ioutil.WriteFile(filepath.Join(localDirs.secretDir,key), []byte(val), 0755); err != nil {
+		if err := ioutil.WriteFile(filepath.Join(localDirs.secretDir, key), []byte(val), 0755); err != nil {
 			return err
 		}
 	}

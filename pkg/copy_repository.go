@@ -24,7 +24,7 @@ func NewCmdCopyRepository() *cobra.Command {
 			repositoryName := args[0]
 			// get source Repository from current namespace
 			// if found then copy the Repository to the destination namespace
-			return  ensureRepository(repositoryName)
+			return ensureRepository(repositoryName)
 		},
 	}
 
@@ -46,9 +46,9 @@ func ensureRepository(name string) error {
 	}
 	// copy the Repository to the destination namespace
 	meta := metav1.ObjectMeta{
-		Name: repository.Name,
-		Namespace: dstNamespace,
-		Labels: repository.Labels,
+		Name:        repository.Name,
+		Namespace:   dstNamespace,
+		Labels:      repository.Labels,
 		Annotations: repository.Annotations,
 	}
 	_, err = createRepository(repository, meta)

@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	namespace   string
+	namespace string
 )
 
 func NewCmdCreate(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {

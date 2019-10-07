@@ -2,6 +2,8 @@ package pkg
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/appscode/go/log"
 	"github.com/appscode/go/types"
 	vs "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1alpha1"
@@ -14,7 +16,6 @@ import (
 	"stash.appscode.dev/stash/apis/stash/v1beta1"
 	v1beta1_util "stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1beta1/util"
 	"stash.appscode.dev/stash/pkg/util"
-	"time"
 )
 
 var (

@@ -2,6 +2,8 @@ package pkg
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/evanphx/json-patch"
 	"github.com/golang/glog"
 	vs_api "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1alpha1"
@@ -11,9 +13,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/clientcmd/api"
-	"kmodules.xyz/client-go"
+	kutil "kmodules.xyz/client-go"
 	"stash.appscode.dev/stash/apis/stash/v1beta1"
-	"time"
 )
 
 const (
