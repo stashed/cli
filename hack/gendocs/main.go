@@ -47,9 +47,8 @@ product_name: stash
 section_menu_id: guides
 menu_name: product_stash_{{ "{{.version}}" }}
 {{- if .RootCmd }}
-url: /products/stash/{{ "{{.version}}" }}/reference/cli/
 aliases:
-  - /products/stash/{{ "{{.version}}" }}/reference/cli/cli/
+  - /products/stash/{{ "{{.version}}" }}/guides/latest/cli/reference/{{ "{{ .subproject_version }}" }}
 {{ end }}
 ---
 `))
