@@ -57,8 +57,8 @@ create stash resources
 
 ### SEE ALSO
 
-* [kubectl-stash](/docs/kubectl-stash.md)	 - kubectl plugin for Stash by AppsCode
-* [kubectl-stash create backupconfig](/docs/kubectl-stash_create_backupconfig.md)	 - Create a new BackupConfiguration
-* [kubectl-stash create repository](/docs/kubectl-stash_create_repository.md)	 - Create a new repository
-* [kubectl-stash create restoresession](/docs/kubectl-stash_create_restoresession.md)	 - Create a new RestoreSession
+* [kubectl-stash](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash.md)	 - kubectl plugin for Stash by AppsCode
+* [kubectl-stash create backupconfig](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_create_backupconfig.md)	 - Create a new BackupConfiguration
+* [kubectl-stash create repository](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_create_repository.md)	 - Create a new repository
+* [kubectl-stash create restoresession](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_create_restoresession.md)	 - Create a new RestoreSession
 

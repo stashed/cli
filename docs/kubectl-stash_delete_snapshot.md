@@ -63,5 +63,5 @@ kubectl-stash delete snapshot [flags]
 
 ### SEE ALSO
 
-* [kubectl-stash delete](/docs/kubectl-stash_delete.md)	 - Delete stash resources
+* [kubectl-stash delete](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_delete.md)	 - Delete stash resources
 

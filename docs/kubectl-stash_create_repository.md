@@ -75,5 +75,5 @@ kubectl-stash create repository [flags]
 
 ### SEE ALSO
 
-* [kubectl-stash create](/docs/kubectl-stash_create.md)	 - create stash resources
+* [kubectl-stash create](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_create.md)	 - create stash resources
 

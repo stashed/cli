@@ -63,5 +63,5 @@ kubectl-stash version [flags]
 
 ### SEE ALSO
 
-* [kubectl-stash](/docs/kubectl-stash.md)	 - kubectl plugin for Stash by AppsCode
+* [kubectl-stash](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash.md)	 - kubectl plugin for Stash by AppsCode
 

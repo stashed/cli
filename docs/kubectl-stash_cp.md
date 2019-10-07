@@ -58,9 +58,9 @@ Copy stash resources from one namespace to another namespace
 
 ### SEE ALSO
 
-* [kubectl-stash](/docs/kubectl-stash.md)	 - kubectl plugin for Stash by AppsCode
-* [kubectl-stash cp backupconfig](/docs/kubectl-stash_cp_backupconfig.md)	 - Copy BackupConfiguration from one namespace to another namespace
-* [kubectl-stash cp repository](/docs/kubectl-stash_cp_repository.md)	 - Copy Repository and Secret
-* [kubectl-stash cp secret](/docs/kubectl-stash_cp_secret.md)	 - Copy Secret
-* [kubectl-stash cp volumesnapshot](/docs/kubectl-stash_cp_volumesnapshot.md)	 - Copy VolumeSnapshot
+* [kubectl-stash](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash.md)	 - kubectl plugin for Stash by AppsCode
+* [kubectl-stash cp backupconfig](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_cp_backupconfig.md)	 - Copy BackupConfiguration from one namespace to another namespace
+* [kubectl-stash cp repository](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_cp_repository.md)	 - Copy Repository and Secret
+* [kubectl-stash cp secret](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_cp_secret.md)	 - Copy Secret
+* [kubectl-stash cp volumesnapshot](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_cp_volumesnapshot.md)	 - Copy VolumeSnapshot
 

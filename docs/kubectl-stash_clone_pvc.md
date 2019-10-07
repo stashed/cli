@@ -75,5 +75,5 @@ kubectl-stash clone pvc [flags]
 
 ### SEE ALSO
 
-* [kubectl-stash clone](/docs/kubectl-stash_clone.md)	 - Clone Kubernetes resources
+* [kubectl-stash clone](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_clone.md)	 - Clone Kubernetes resources
 

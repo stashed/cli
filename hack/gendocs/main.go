@@ -15,10 +15,6 @@ import (
 	"stash.appscode.dev/cli/pkg"
 )
 
-const (
-	version = "v0.1.0"
-)
-
 var (
 	tplFrontMatter = template.Must(template.New("index").Parse(`---
 title: Stash kubectl plugin
@@ -26,7 +22,7 @@ description: Stash kubectl plugin Reference
 menu:
   product_stash_{{ "{{.version}}" }}:
     identifier: stash-cli-references-{{ "{{ .subproject_version }}" }}
-    name: Stash
+    name: {{ "{{ .subproject_version }}" }}
     parent: stash-cli-references
     weight: 20
 menu_name: product_stash_{{ "{{.version}}" }}
@@ -79,12 +75,10 @@ func main() {
 		data := struct {
 			ID      string
 			Name    string
-			Version string
 			RootCmd bool
 		}{
 			strings.Replace(base, "_", "-", -1),
 			name,
-			version,
 			!strings.ContainsRune(base, '_'),
 		}
 		var buf bytes.Buffer
@@ -95,7 +89,7 @@ func main() {
 	}
 
 	linkHandler := func(name string) string {
-		return "/docs/" + name
+		return `/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/` + name
 	}
 	err = doc.GenMarkdownTreeCustom(rootCmd, dir, filePrepender, linkHandler)
 	if err != nil {
@@ -107,7 +101,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	err = tplFrontMatter.ExecuteTemplate(f, "index", struct{ Version string }{version})
+	err = tplFrontMatter.ExecuteTemplate(f, "index", struct{ Version string }{""})
 	if err != nil {
 		log.Fatalln(err)
 	}

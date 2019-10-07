@@ -57,6 +57,6 @@ Delete stash resources
 
 ### SEE ALSO
 
-* [kubectl-stash](/docs/kubectl-stash.md)	 - kubectl plugin for Stash by AppsCode
-* [kubectl-stash delete snapshot](/docs/kubectl-stash_delete_snapshot.md)	 - Delete a snapshot from repository backend
+* [kubectl-stash](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash.md)	 - kubectl plugin for Stash by AppsCode
+* [kubectl-stash delete snapshot](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_delete_snapshot.md)	 - Delete a snapshot from repository backend
 

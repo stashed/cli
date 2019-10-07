@@ -62,5 +62,5 @@ kubectl-stash cp backupconfig [flags]
 
 ### SEE ALSO
 
-* [kubectl-stash cp](/docs/kubectl-stash_cp.md)	 - Copy stash resources from one namespace to another namespace
+* [kubectl-stash cp](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_cp.md)	 - Copy stash resources from one namespace to another namespace
 

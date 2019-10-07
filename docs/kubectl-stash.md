@@ -56,12 +56,12 @@ kubectl plugin for Stash by AppsCode. For more information, visit here: https://
 
 ### SEE ALSO
 
-* [kubectl-stash clone](/docs/kubectl-stash_clone.md)	 - Clone Kubernetes resources
-* [kubectl-stash cp](/docs/kubectl-stash_cp.md)	 - Copy stash resources from one namespace to another namespace
-* [kubectl-stash create](/docs/kubectl-stash_create.md)	 - create stash resources
-* [kubectl-stash delete](/docs/kubectl-stash_delete.md)	 - Delete stash resources
-* [kubectl-stash download](/docs/kubectl-stash_download.md)	 - Download snapshots
-* [kubectl-stash trigger](/docs/kubectl-stash_trigger.md)	 - Trigger a backup
-* [kubectl-stash unlock](/docs/kubectl-stash_unlock.md)	 - Unlock Restic Repository
-* [kubectl-stash version](/docs/kubectl-stash_version.md)	 - Prints binary version number.
+* [kubectl-stash clone](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_clone.md)	 - Clone Kubernetes resources
+* [kubectl-stash cp](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_cp.md)	 - Copy stash resources from one namespace to another namespace
+* [kubectl-stash create](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_create.md)	 - create stash resources
+* [kubectl-stash delete](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_delete.md)	 - Delete stash resources
+* [kubectl-stash download](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_download.md)	 - Download snapshots
+* [kubectl-stash trigger](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_trigger.md)	 - Trigger a backup
+* [kubectl-stash unlock](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_unlock.md)	 - Unlock Restic Repository
+* [kubectl-stash version](/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/kubectl-stash_version.md)	 - Prints binary version number.
 
