@@ -2,6 +2,8 @@ package pkg
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/appscode/go/log"
 	"github.com/spf13/cobra"
 	core "k8s.io/api/core/v1"
@@ -10,7 +12,6 @@ import (
 	"stash.appscode.dev/stash/apis/stash/v1alpha1"
 	"stash.appscode.dev/stash/apis/stash/v1beta1"
 	v1beta1_util "stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1beta1/util"
-	"strings"
 )
 
 var (

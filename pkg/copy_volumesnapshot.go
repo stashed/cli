@@ -2,12 +2,12 @@ package pkg
 
 import (
 	"fmt"
+
 	"github.com/appscode/go/log"
-	"github.com/json-iterator/go"
+	jsoniter "github.com/json-iterator/go"
 	vs_api "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1alpha1"
 	vs_v1alpha1 "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1alpha1"
 	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,7 +28,7 @@ func NewCmdCopyVolumeSnapshot() *cobra.Command {
 			volumeSnapshotName := args[0]
 
 			// get source VolumeSnapshot object
-			vs, err := vsClient.VolumesnapshotV1alpha1().VolumeSnapshots(srcNamespace).Get(volumeSnapshotName, v1.GetOptions{})
+			vs, err := vsClient.SnapshotV1alpha1().VolumeSnapshots(srcNamespace).Get(volumeSnapshotName, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
@@ -54,7 +54,7 @@ func NewCmdCopyVolumeSnapshot() *cobra.Command {
 }
 
 func createVolumeSnapshot(vs *vs_v1alpha1.VolumeSnapshot, meta metav1.ObjectMeta) (*vs_v1alpha1.VolumeSnapshot, error) {
-	vs, _, err := CreateOrPatchVolumeSnapshot(vsClient.VolumesnapshotV1alpha1(), meta, func(in *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot {
+	vs, _, err := CreateOrPatchVolumeSnapshot(vsClient.SnapshotV1alpha1(), meta, func(in *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot {
 		in.Spec = vs.Spec
 		return in
 	})

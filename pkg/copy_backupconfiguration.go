@@ -2,11 +2,11 @@ package pkg
 
 import (
 	"fmt"
-	"github.com/appscode/go/log"
-	"stash.appscode.dev/stash/apis/stash/v1beta1"
 
+	"github.com/appscode/go/log"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"stash.appscode.dev/stash/apis/stash/v1beta1"
 )
 
 func NewCmdCopyBackupConfiguration() *cobra.Command {

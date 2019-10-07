@@ -8,8 +8,6 @@ import (
 	"os/user"
 	"path/filepath"
 
-	"stash.appscode.dev/stash/pkg/restic"
-
 	"github.com/appscode/go/log"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -17,8 +15,8 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	cs "stash.appscode.dev/stash/client/clientset/versioned"
+	"stash.appscode.dev/stash/pkg/restic"
 	"stash.appscode.dev/stash/pkg/util"
-
 )
 
 func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
@@ -81,7 +79,7 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 
 			// configure restic wrapper
 			extraOpt := util.ExtraOptions{
-				SecretDir:   localDirs.secretDir,
+				SecretDir: localDirs.secretDir,
 			}
 			// configure setupOption
 			setupOpt, err := util.SetupOptionsForRepository(*repository, extraOpt)
@@ -99,10 +97,9 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 			// dump restic's environments into `restic-env` file.
 			// we will pass this env file to restic docker container.
 			err = resticWrapper.DumpEnv(localDirs.configDir, ResticEnvs)
-			if err != nil{
+			if err != nil {
 				return err
 			}
-
 
 			extraAgrs := []string{
 				"--no-cache",

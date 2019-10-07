@@ -2,6 +2,8 @@ package pkg
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/appscode/go/log"
 	"github.com/spf13/cobra"
 	core "k8s.io/api/core/v1"
@@ -10,7 +12,6 @@ import (
 	"stash.appscode.dev/stash/apis"
 	"stash.appscode.dev/stash/apis/stash/v1alpha1"
 	"stash.appscode.dev/stash/apis/stash/v1beta1"
-	"time"
 )
 
 var (
@@ -48,7 +49,7 @@ func NewCmdClonePVC() *cobra.Command {
 			repoName := fmt.Sprintf("%s-%s-%d", repoOpt.provider, "repo", time.Now().Unix())
 			log.Infof("Creating Repository: %s to the Namespace: %s", repoName, srcNamespace)
 			repository := newRepository(repoOpt, repoName, srcNamespace)
-			repository, err = createRepository(repository, repository.ObjectMeta)
+			_, err = createRepository(repository, repository.ObjectMeta)
 			if err != nil {
 				return err
 			}
@@ -73,7 +74,7 @@ func NewCmdClonePVC() *cobra.Command {
 			// delete all repository
 			err = cleanupRepository(repoName)
 			if err != nil {
-
+				return err
 			}
 			log.Infof("PVC has been cloned successfully!!")
 
