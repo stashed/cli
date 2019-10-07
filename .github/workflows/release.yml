@@ -1,10 +1,8 @@
-name: Go
+name: Release
 
 on:
   push:
-    branches-ignore:
-      - 'release-*'
-    tags-ignore:
+    tags:
       - '*.*'
 
 jobs:
@@ -14,17 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Set up Go 1.12
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.12
-      id: go
-
     - name: Check out code into the Go module directory
       uses: actions/checkout@v1
 
-    # - name: Build
-    #   run: make ci
+    - name: Print version info
+      id: semver
+      run: |
+        make version
 
     - name: Set up Docker Buildx
       id: buildx
@@ -37,11 +31,6 @@ jobs:
 
     - name: Build
       env:
-        APPSCODE_ENV: dev
+        APPSCODE_ENV: prod
       run: |
-        make qa
-
-    - uses: actions/upload-artifact@master
-      with:
-        name: stash-cli-binaries
-        path:  bin
+        make release
