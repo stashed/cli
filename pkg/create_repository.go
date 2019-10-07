@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	"kmodules.xyz/objectstore-api/api/v1"
 
 	"github.com/appscode/go/log"
 	"github.com/spf13/cobra"
@@ -9,7 +10,6 @@ import (
 	"k8s.io/kubernetes/pkg/kubectl/util/templates"
 	"stash.appscode.dev/stash/apis/stash/v1alpha1"
 	"stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1alpha1/util"
-	"stash.appscode.dev/stash/pkg/restic"
 )
 
 var (
@@ -90,7 +90,7 @@ func createRepository(repository *v1alpha1.Repository, meta metav1.ObjectMeta) (
 func (opt repositoryOption) getBackendInfo() v1.Backend {
 	var backend v1.Backend
 	switch opt.provider {
-	case restic.ProviderGCS:
+	case v1.ProviderGCS:
 		backend = v1.Backend{
 			GCS: &v1.GCSSpec{
 				Bucket:         opt.bucket,
@@ -98,7 +98,7 @@ func (opt repositoryOption) getBackendInfo() v1.Backend {
 				MaxConnections: opt.maxConnections,
 			},
 		}
-	case restic.ProviderAzure:
+	case v1.ProviderAzure:
 		backend = v1.Backend{
 			Azure: &v1.AzureSpec{
 				Container:      opt.bucket,
@@ -106,7 +106,7 @@ func (opt repositoryOption) getBackendInfo() v1.Backend {
 				MaxConnections: opt.maxConnections,
 			},
 		}
-	case restic.ProviderS3:
+	case v1.ProviderS3:
 		backend = v1.Backend{
 			S3: &v1.S3Spec{
 				Bucket:   opt.bucket,
@@ -114,7 +114,7 @@ func (opt repositoryOption) getBackendInfo() v1.Backend {
 				Endpoint: opt.endpoint,
 			},
 		}
-	case restic.ProviderB2:
+	case v1.ProviderB2:
 		backend = v1.Backend{
 			B2: &v1.B2Spec{
 				Bucket:         opt.bucket,
@@ -122,14 +122,14 @@ func (opt repositoryOption) getBackendInfo() v1.Backend {
 				MaxConnections: opt.maxConnections,
 			},
 		}
-	case restic.ProviderSwift:
+	case v1.ProviderSwift:
 		backend = v1.Backend{
 			Swift: &v1.SwiftSpec{
 				Container: opt.bucket,
 				Prefix:    opt.prefix,
 			},
 		}
-	case restic.ProviderRest:
+	case v1.ProviderRest:
 		backend = v1.Backend{
 			Rest: &v1.RestServerSpec{
 				URL: opt.endpoint,

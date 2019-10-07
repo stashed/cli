@@ -22,7 +22,7 @@ const (
 	WaitTimeOut  = time.Minute * 10
 )
 
-func CreateOrPatchVolumeSnapshot(c vs.VolumesnapshotV1alpha1Interface, meta metav1.ObjectMeta, transform func(alert *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot) (*vs_api.VolumeSnapshot, kutil.VerbType, error) {
+func CreateOrPatchVolumeSnapshot(c vs.SnapshotV1alpha1Interface, meta metav1.ObjectMeta, transform func(alert *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot) (*vs_api.VolumeSnapshot, kutil.VerbType, error) {
 	cur, err := c.VolumeSnapshots(meta.Namespace).Get(meta.Name, metav1.GetOptions{})
 	if kerr.IsNotFound(err) {
 		glog.V(3).Infof("Creating VolumeSnapshot %s/%s.", meta.Namespace, meta.Name)
@@ -40,11 +40,11 @@ func CreateOrPatchVolumeSnapshot(c vs.VolumesnapshotV1alpha1Interface, meta meta
 	return PatchVolumeSnapshot(c, cur, transform)
 }
 
-func PatchVolumeSnapshot(c vs.VolumesnapshotV1alpha1Interface, cur *vs_api.VolumeSnapshot, transform func(alert *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot) (*vs_api.VolumeSnapshot, kutil.VerbType, error) {
+func PatchVolumeSnapshot(c vs.SnapshotV1alpha1Interface, cur *vs_api.VolumeSnapshot, transform func(alert *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot) (*vs_api.VolumeSnapshot, kutil.VerbType, error) {
 	return PatchVolumesnapshotObject(c, cur, transform(cur.DeepCopy()))
 }
 
-func PatchVolumesnapshotObject(c vs.VolumesnapshotV1alpha1Interface, cur, mod *vs_api.VolumeSnapshot) (*vs_api.VolumeSnapshot, kutil.VerbType, error) {
+func PatchVolumesnapshotObject(c vs.SnapshotV1alpha1Interface, cur, mod *vs_api.VolumeSnapshot) (*vs_api.VolumeSnapshot, kutil.VerbType, error) {
 	curJson, err := json.Marshal(cur)
 	if err != nil {
 		return nil, kutil.VerbUnchanged, err
