@@ -22,34 +22,34 @@ const (
 var (
 	tplFrontMatter = template.Must(template.New("index").Parse(`---
 title: Stash kubectl plugin
-description: tash kubectl plugin Reference
+description: Stash kubectl plugin Reference
 menu:
-  product_stash_{{ .Version }}:
-    identifier: stash-cli
+  product_stash_{{ "{{.version}}" }}:
+    identifier: stash-cli-references-{{ "{{ .subproject_version }}" }}
     name: Stash
-    parent: reference
+    parent: stash-cli-references
     weight: 20
-menu_name: product_stash_{{ .Version }}
+menu_name: product_stash_{{ "{{.version}}" }}
 ---
 `))
 
 	_ = template.Must(tplFrontMatter.New("cmd").Parse(`---
 title: {{ .Name }}
 menu:
-  product_stash_{{ .Version }}:
-    identifier: {{ .ID }}
+  product_stash_{{ "{{.version}}" }}:
+    identifier: {{ .ID }}-{{ "{{ .subproject_version }}" }}
     name: {{ .Name }}
-    parent: stash-cli
+    parent: stash-cli-references-{{ "{{ .subproject_version }}" }}
 {{- if .RootCmd }}
     weight: 0
-{{ end }}
+{{- end }}
 product_name: stash
-section_menu_id: reference
-menu_name: product_stash_{{ .Version }}
+section_menu_id: guides
+menu_name: product_stash_{{ "{{.version}}" }}
 {{- if .RootCmd }}
-url: /products/stash/{{ .Version }}/reference/cli/
+url: /products/stash/{{ "{{.version}}" }}/reference/cli/
 aliases:
-  - /products/stash/{{ .Version }}/reference/cli/cli/
+  - /products/stash/{{ "{{.version}}" }}/reference/cli/cli/
 {{ end }}
 ---
 `))
@@ -58,7 +58,7 @@ aliases:
 // ref: https://github.com/spf13/cobra/blob/master/doc/md_docs.md
 func main() {
 	rootCmd := pkg.NewRootCmd()
-	dir := runtime.GOPath() + "/src/stash.appscode.dev/docs/docs/reference/cli"
+	dir := runtime.GOPath() + "/src/stash.appscode.dev/cli/docs/"
 	fmt.Printf("Generating cli markdown tree in: %v\n", dir)
 	err := os.RemoveAll(dir)
 	if err != nil {
@@ -96,7 +96,7 @@ func main() {
 	}
 
 	linkHandler := func(name string) string {
-		return "/docs/reference/stash/" + name
+		return "/docs/" + name
 	}
 	err = doc.GenMarkdownTreeCustom(rootCmd, dir, filePrepender, linkHandler)
 	if err != nil {
