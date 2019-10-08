@@ -5,6 +5,7 @@ import (
 
 	v "github.com/appscode/go/version"
 	"github.com/spf13/cobra"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 	cliflag "k8s.io/component-base/cli/flag"
@@ -22,14 +23,11 @@ func NewRootCmd() *cobra.Command {
 		Short:             `kubectl plugin for Stash by AppsCode`,
 		Long:              `kubectl plugin for Stash by AppsCode. For more information, visit here: https://appscode.com/products/stash`,
 		DisableAutoGenTag: true,
-		PersistentPreRunE: func(c *cobra.Command, args []string) error {
+		PersistentPreRun: func(c *cobra.Command, args []string) {
 			cli.SendAnalytics(c, v.Version.Version)
 
-			err := scheme.AddToScheme(clientsetscheme.Scheme)
-			if err != nil {
-				return err
-			}
-			return ocscheme.AddToScheme(clientsetscheme.Scheme)
+			utilruntime.Must(scheme.AddToScheme(clientsetscheme.Scheme))
+			utilruntime.Must(ocscheme.AddToScheme(clientsetscheme.Scheme))
 		},
 	}
 
