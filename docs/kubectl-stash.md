@@ -34,7 +34,6 @@ kubectl plugin for Stash by AppsCode. For more information, visit here: https://
       --cluster string                   The name of the kubeconfig cluster to use
       --context string                   The name of the kubeconfig context to use
       --enable-analytics                 Send analytical events to Google Analytics (default true)
-      --enable-status-subresource        If true, uses sub resource for crds.
   -h, --help                             help for kubectl-stash
       --insecure-skip-tls-verify         If true, the server's certificate will not be checked for validity. This will make your HTTPS connections insecure
       --kubeconfig string                Path to the kubeconfig file to use for CLI requests.
