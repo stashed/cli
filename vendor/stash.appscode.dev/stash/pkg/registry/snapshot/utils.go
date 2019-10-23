@@ -10,6 +10,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"stash.appscode.dev/stash/apis/repositories"
+	stash "stash.appscode.dev/stash/apis/stash/v1alpha1"
+	"stash.appscode.dev/stash/pkg/cli"
+	"stash.appscode.dev/stash/pkg/restic"
+	"stash.appscode.dev/stash/pkg/util"
+
 	"github.com/appscode/go/log"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,11 +23,6 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
 	core_util "kmodules.xyz/client-go/core/v1"
-	"stash.appscode.dev/stash/apis/repositories"
-	stash "stash.appscode.dev/stash/apis/stash/v1alpha1"
-	"stash.appscode.dev/stash/pkg/cli"
-	"stash.appscode.dev/stash/pkg/restic"
-	"stash.appscode.dev/stash/pkg/util"
 )
 
 const (
@@ -43,6 +44,9 @@ func (r *REST) getSnapshots(repository *stash.Repository, snapshotIDs []string) 
 		Name: info.WorkloadName,
 	}
 	hostName, smartPrefix, err := workload.HostnamePrefix(info.PodName, info.NodeName)
+	if err != nil {
+		return nil, err
+	}
 
 	secret, err := r.kubeClient.CoreV1().Secrets(repository.Namespace).Get(backend.StorageSecretName, metav1.GetOptions{})
 	if err != nil {
@@ -51,12 +55,12 @@ func (r *REST) getSnapshots(repository *stash.Repository, snapshotIDs []string) 
 
 	backend = util.FixBackendPrefix(backend, smartPrefix)
 
-	cli := cli.New("/tmp", false, hostName)
-	if _, err = cli.SetupEnv(*backend, secret, smartPrefix); err != nil {
+	wrapper := cli.New("/tmp", false, hostName)
+	if _, err = wrapper.SetupEnv(*backend, secret, smartPrefix); err != nil {
 		return nil, err
 	}
 
-	results, err := cli.ListSnapshots(snapshotIDs)
+	results, err := wrapper.ListSnapshots(snapshotIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -102,6 +106,9 @@ func (r *REST) forgetSnapshots(repository *stash.Repository, snapshotIDs []strin
 		Name: info.WorkloadName,
 	}
 	hostName, smartPrefix, err := workload.HostnamePrefix(info.PodName, info.NodeName)
+	if err != nil {
+		return err
+	}
 
 	secret, err := r.kubeClient.CoreV1().Secrets(repository.Namespace).Get(backend.StorageSecretName, metav1.GetOptions{})
 	if err != nil {
@@ -110,12 +117,12 @@ func (r *REST) forgetSnapshots(repository *stash.Repository, snapshotIDs []strin
 
 	backend = util.FixBackendPrefix(backend, smartPrefix)
 
-	cli := cli.New("/tmp", false, hostName)
-	if _, err = cli.SetupEnv(*backend, secret, smartPrefix); err != nil {
+	wrapper := cli.New("/tmp", false, hostName)
+	if _, err = wrapper.SetupEnv(*backend, secret, smartPrefix); err != nil {
 		return err
 	}
 
-	err = cli.DeleteSnapshots(snapshotIDs)
+	err = wrapper.DeleteSnapshots(snapshotIDs)
 	if err != nil {
 		return err
 	}

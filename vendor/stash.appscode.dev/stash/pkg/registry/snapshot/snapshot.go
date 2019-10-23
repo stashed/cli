@@ -3,6 +3,12 @@ package snapshot
 import (
 	"context"
 
+	"stash.appscode.dev/stash/apis/repositories"
+	repov1alpha1 "stash.appscode.dev/stash/apis/repositories/v1alpha1"
+	stash "stash.appscode.dev/stash/apis/stash/v1alpha1"
+	"stash.appscode.dev/stash/client/clientset/versioned"
+	"stash.appscode.dev/stash/pkg/util"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -15,11 +21,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	restconfig "k8s.io/client-go/rest"
 	core_util "kmodules.xyz/client-go/core/v1"
-	"stash.appscode.dev/stash/apis/repositories"
-	repov1alpha1 "stash.appscode.dev/stash/apis/repositories/v1alpha1"
-	stash "stash.appscode.dev/stash/apis/stash/v1alpha1"
-	"stash.appscode.dev/stash/client/clientset/versioned"
-	"stash.appscode.dev/stash/pkg/util"
 )
 
 type REST struct {
@@ -88,8 +89,7 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 	}
 
 	// TODO: return &snapshots[0], nil
-	snapshot := &repositories.Snapshot{}
-	snapshot = &snapshots[0]
+	snapshot := &snapshots[0]
 	return snapshot, nil
 }
 

@@ -6,10 +6,11 @@ import (
 	"strings"
 	"time"
 
+	api "stash.appscode.dev/stash/apis/stash/v1alpha1"
+
 	"github.com/appscode/go/log"
 	shell "github.com/codeskyblue/go-sh"
 	"github.com/pkg/errors"
-	api "stash.appscode.dev/stash/apis/stash/v1alpha1"
 )
 
 const (
@@ -206,6 +207,7 @@ func (w *ResticWrapper) appendCaCertFlag(args []interface{}) []interface{} {
 	return args
 }
 
+//nolint:unparam
 func (w *ResticWrapper) run(cmd string, args []interface{}) error {
 	out, err := w.sh.Command(cmd, args...).CombinedOutput()
 	if err != nil {

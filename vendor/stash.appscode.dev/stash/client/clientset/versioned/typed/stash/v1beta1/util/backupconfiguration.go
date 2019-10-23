@@ -3,6 +3,9 @@ package util
 import (
 	"fmt"
 
+	api "stash.appscode.dev/stash/apis/stash/v1beta1"
+	cs "stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1beta1"
+
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/golang/glog"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
@@ -10,8 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	kutil "kmodules.xyz/client-go"
-	api "stash.appscode.dev/stash/apis/stash/v1beta1"
-	cs "stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1beta1"
 )
 
 func CreateOrPatchBackupConfiguration(c cs.StashV1beta1Interface, meta metav1.ObjectMeta, transform func(in *api.BackupConfiguration) *api.BackupConfiguration) (*api.BackupConfiguration, kutil.VerbType, error) {
@@ -76,6 +77,50 @@ func TryUpdateBackupConfiguration(c cs.StashV1beta1Interface, meta metav1.Object
 
 	if err != nil {
 		err = fmt.Errorf("failed to update BackupConfiguration %s/%s after %d attempts due to %v", meta.Namespace, meta.Name, attempt, err)
+	}
+	return
+}
+
+func UpdateBackupConfigurationStatus(
+	c cs.StashV1beta1Interface,
+	in *api.BackupConfiguration,
+	transform func(*api.BackupConfigurationStatus) *api.BackupConfigurationStatus,
+) (result *api.BackupConfiguration, err error) {
+	apply := func(x *api.BackupConfiguration) *api.BackupConfiguration {
+		out := &api.BackupConfiguration{
+			TypeMeta:   x.TypeMeta,
+			ObjectMeta: x.ObjectMeta,
+			Spec:       x.Spec,
+			Status:     *transform(in.Status.DeepCopy()),
+		}
+		return out
+	}
+
+	attempt := 0
+	cur := in.DeepCopy()
+	err = wait.PollImmediate(kutil.RetryInterval, kutil.RetryTimeout, func() (bool, error) {
+		attempt++
+		var e2 error
+		result, e2 = c.BackupConfigurations(in.Namespace).UpdateStatus(apply(cur))
+		if kerr.IsConflict(e2) {
+			latest, e3 := c.BackupConfigurations(in.Namespace).Get(in.Name, metav1.GetOptions{})
+			switch {
+			case e3 == nil:
+				cur = latest
+				return false, nil
+			case kutil.IsRequestRetryable(e3):
+				return false, nil
+			default:
+				return false, e3
+			}
+		} else if err != nil && !kutil.IsRequestRetryable(e2) {
+			return false, e2
+		}
+		return e2 == nil, nil
+	})
+
+	if err != nil {
+		err = fmt.Errorf("failed to update status of BackupConfiguration %s/%s after %d attempts due to %v", in.Namespace, in.Name, attempt, err)
 	}
 	return
 }

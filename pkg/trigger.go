@@ -3,18 +3,18 @@ package pkg
 import (
 	"fmt"
 
-	"github.com/appscode/go/log"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/client-go/tools/reference"
-	core_util "kmodules.xyz/client-go/core/v1"
 	"stash.appscode.dev/stash/apis/stash/v1beta1"
 	cs "stash.appscode.dev/stash/client/clientset/versioned"
 	stash_scheme "stash.appscode.dev/stash/client/clientset/versioned/scheme"
 	"stash.appscode.dev/stash/pkg/util"
+
+	"github.com/appscode/go/log"
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/client-go/tools/reference"
+	core_util "kmodules.xyz/client-go/core/v1"
 )
 
 func NewCmdTriggerBackup(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
@@ -70,8 +70,10 @@ func triggerBackup(backupConfig *v1beta1.BackupConfiguration, client cs.Interfac
 			},
 		},
 		Spec: v1beta1.BackupSessionSpec{
-			BackupConfiguration: v1.LocalObjectReference{
-				Name: backupConfig.Name,
+			Invoker: v1beta1.BackupInvokerRef{
+				APIGroup: v1beta1.SchemeGroupVersion.Group,
+				Kind:     v1beta1.ResourceKindBackupConfiguration,
+				Name:     backupConfig.Name,
 			},
 		},
 	}

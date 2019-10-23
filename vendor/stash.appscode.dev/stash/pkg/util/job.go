@@ -3,6 +3,12 @@ package util
 import (
 	"fmt"
 
+	"stash.appscode.dev/stash/apis"
+	api_v1alpha1 "stash.appscode.dev/stash/apis/stash/v1alpha1"
+	api_v1beta1 "stash.appscode.dev/stash/apis/stash/v1beta1"
+	cs "stash.appscode.dev/stash/client/clientset/versioned"
+	"stash.appscode.dev/stash/pkg/docker"
+
 	"github.com/appscode/go/types"
 	batch "k8s.io/api/batch/v1"
 	core "k8s.io/api/core/v1"
@@ -11,11 +17,6 @@ import (
 	"kmodules.xyz/client-go/tools/cli"
 	"kmodules.xyz/client-go/tools/clientcmd"
 	ofst_util "kmodules.xyz/offshoot-api/util"
-	"stash.appscode.dev/stash/apis"
-	api_v1alpha1 "stash.appscode.dev/stash/apis/stash/v1alpha1"
-	api_v1beta1 "stash.appscode.dev/stash/apis/stash/v1beta1"
-	cs "stash.appscode.dev/stash/client/clientset/versioned"
-	"stash.appscode.dev/stash/pkg/docker"
 )
 
 func NewCheckJob(restic *api_v1alpha1.Restic, hostName, smartPrefix string, image docker.Docker) *batch.Job {
@@ -36,7 +37,7 @@ func NewCheckJob(restic *api_v1alpha1.Restic, hostName, smartPrefix string, imag
 				AnnotationRestic:    restic.Name,
 				AnnotationOperation: OperationCheck,
 				// ensure that job gets deleted on completion
-				apis.KeyDeleteJobOnCompletion: "true",
+				apis.KeyDeleteJobOnCompletion: apis.AllowDeletingJobOnCompletion,
 			},
 		},
 		Spec: batch.JobSpec{
@@ -51,7 +52,6 @@ func NewCheckJob(restic *api_v1alpha1.Restic, hostName, smartPrefix string, imag
 								"--restic-name=" + restic.Name,
 								"--host-name=" + hostName,
 								"--smart-prefix=" + smartPrefix,
-								fmt.Sprintf("--enable-status-subresource=%v", apis.EnableStatusSubresource),
 								fmt.Sprintf("--use-kubeapiserver-fqdn-for-aks=%v", clientcmd.UseKubeAPIServerFQDNForAKS()),
 								fmt.Sprintf("--enable-analytics=%v", cli.EnableAnalytics),
 							}, cli.LoggerOptions.ToFlags()...),
@@ -130,7 +130,7 @@ func NewRecoveryJob(stashClient cs.Interface, recovery *api_v1alpha1.Recovery, i
 				AnnotationRecovery:  recovery.Name,
 				AnnotationOperation: OperationRecovery,
 				// ensure that the job gets deleted on completion
-				apis.KeyDeleteJobOnCompletion: "true",
+				apis.KeyDeleteJobOnCompletion: apis.AllowDeletingJobOnCompletion,
 			},
 		},
 		Spec: batch.JobSpec{
@@ -143,7 +143,6 @@ func NewRecoveryJob(stashClient cs.Interface, recovery *api_v1alpha1.Recovery, i
 							Args: append([]string{
 								"recover",
 								"--recovery-name=" + recovery.Name,
-								fmt.Sprintf("--enable-status-subresource=%v", apis.EnableStatusSubresource),
 								fmt.Sprintf("--use-kubeapiserver-fqdn-for-aks=%v", clientcmd.UseKubeAPIServerFQDNForAKS()),
 								fmt.Sprintf("--enable-analytics=%v", cli.EnableAnalytics),
 							}, cli.LoggerOptions.ToFlags()...),
@@ -212,7 +211,6 @@ func NewPVCRestorerJob(rs *api_v1beta1.RestoreSession, repository *api_v1alpha1.
 			fmt.Sprintf("--max-connections=%v", repository.Spec.Backend.MaxConnections()),
 			"--metrics-enabled=true",
 			"--pushgateway-url=" + PushgatewayURL(),
-			fmt.Sprintf("--enable-status-subresource=%v", apis.EnableStatusSubresource),
 			fmt.Sprintf("--use-kubeapiserver-fqdn-for-aks=%v", clientcmd.UseKubeAPIServerFQDNForAKS()),
 			fmt.Sprintf("--enable-analytics=%v", cli.EnableAnalytics),
 		}, cli.LoggerOptions.ToFlags()...),
@@ -305,7 +303,6 @@ func NewVolumeSnapshotterJob(bs *api_v1beta1.BackupSession, bc *api_v1beta1.Back
 			fmt.Sprintf("--backupsession=%s", bs.Name),
 			"--metrics-enabled=true",
 			"--pushgateway-url=" + PushgatewayURL(),
-			fmt.Sprintf("--enable-status-subresource=%v", apis.EnableStatusSubresource),
 			fmt.Sprintf("--use-kubeapiserver-fqdn-for-aks=%v", clientcmd.UseKubeAPIServerFQDNForAKS()),
 			fmt.Sprintf("--enable-analytics=%v", cli.EnableAnalytics),
 		}, cli.LoggerOptions.ToFlags()...),
@@ -343,7 +340,6 @@ func NewVolumeRestorerJob(rs *api_v1beta1.RestoreSession, image docker.Docker) (
 			fmt.Sprintf("--restoresession=%s", rs.Name),
 			"--metrics-enabled=true",
 			"--pushgateway-url=" + PushgatewayURL(),
-			fmt.Sprintf("--enable-status-subresource=%v", apis.EnableStatusSubresource),
 			fmt.Sprintf("--use-kubeapiserver-fqdn-for-aks=%v", clientcmd.UseKubeAPIServerFQDNForAKS()),
 			fmt.Sprintf("--enable-analytics=%v", cli.EnableAnalytics),
 		}, cli.LoggerOptions.ToFlags()...),

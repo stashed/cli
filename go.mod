@@ -5,7 +5,7 @@ go 1.12
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/MakeNowJust/heredoc v0.0.0-20171113091838-e9091a26100e // indirect
-	github.com/appscode/go v0.0.0-20191006073906-e3d193d493fc
+	github.com/appscode/go v0.0.0-20191016085057-e186b6c94a3b
 	github.com/evanphx/json-patch v4.5.0+incompatible
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
@@ -22,10 +22,10 @@ require (
 	k8s.io/kube-openapi v0.0.0-20190510232812-a01b7d5d6c22 // indirect
 	k8s.io/kubernetes v1.14.2
 	k8s.io/utils v0.0.0-20190520173318-324c5df7d3f0 // indirect
-	kmodules.xyz/client-go v0.0.0-20191006173540-91f8ee6b6b4b
-	kmodules.xyz/objectstore-api v0.0.0-20191006080053-fc8b57fadcf0
+	kmodules.xyz/client-go v0.0.0-20191023042933-b12d1ccfaf57
+	kmodules.xyz/objectstore-api v0.0.0-20191014210450-ac380fa650a3
 	kmodules.xyz/openshift v0.0.0-20190808144841-c8f9a927f1d1
-	stash.appscode.dev/stash v0.9.0-rc.1.0.20191007102408-f5a271be821a
+	stash.appscode.dev/stash v0.9.0-rc.2
 )
 
 replace (
@@ -43,6 +43,6 @@ replace (
 	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.0.0-20190314000639-da8327669ac5
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20190228160746-b3a7cee44a30
 	k8s.io/metrics => k8s.io/metrics v0.0.0-20190314001731-1bd6a4002213
-	k8s.io/utils => k8s.io/utils v0.0.0-20190221042446-c2654d5206da
+	k8s.io/utils => k8s.io/utils v0.0.0-20190514214443-0a167cbac756
 	sigs.k8s.io/structured-merge-diff => sigs.k8s.io/structured-merge-diff v0.0.0-20190302045857-e85c7b244fd2
 )

@@ -3,13 +3,14 @@ package util
 import (
 	"fmt"
 
-	core "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"stash.appscode.dev/stash/apis"
 	api_v1beta1 "stash.appscode.dev/stash/apis/stash/v1beta1"
 	cs "stash.appscode.dev/stash/client/clientset/versioned"
 	util_v1beta1 "stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1beta1/util"
 	"stash.appscode.dev/stash/pkg/docker"
+
+	core "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EnsureDefaultFunctions creates "update-status", "pvc-backup" and "pvc-restore" Functions if they are not already present
@@ -75,7 +76,6 @@ func updateStatusFunction(image docker.Docker) *api_v1beta1.Function {
 				"--metrics-enabled=true",
 				fmt.Sprintf("--metrics-pushgateway-url=%s", PushgatewayURL()),
 				"--prom-job-name=${PROMETHEUS_JOB_NAME:=}",
-				"--enable-status-subresource=${ENABLE_STATUS_SUBRESOURCE:=false}",
 			},
 		},
 	}

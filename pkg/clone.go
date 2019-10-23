@@ -1,11 +1,12 @@
 package pkg
 
 import (
+	cs "stash.appscode.dev/stash/client/clientset/versioned"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
-	cs "stash.appscode.dev/stash/client/clientset/versioned"
 )
 
 func NewCmdClone(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {

@@ -10,9 +10,10 @@ import (
 	"strings"
 	"text/template"
 
+	"stash.appscode.dev/cli/pkg"
+
 	"github.com/appscode/go/runtime"
 	"github.com/spf13/cobra/doc"
-	"stash.appscode.dev/cli/pkg"
 )
 
 var (
