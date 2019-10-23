@@ -22,14 +22,13 @@ github.com/MakeNowJust/heredoc
 github.com/PuerkitoBio/purell
 # github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
 github.com/PuerkitoBio/urlesc
-# github.com/appscode/go v0.0.0-20191006073906-e3d193d493fc
+# github.com/appscode/go v0.0.0-20191016085057-e186b6c94a3b
 github.com/appscode/go/log
 github.com/appscode/go/version
 github.com/appscode/go/runtime
 github.com/appscode/go/types
 github.com/appscode/go/context
 github.com/appscode/go/log/golog
-github.com/appscode/go/os
 github.com/appscode/go/encoding/json/types
 github.com/appscode/go/strings
 github.com/appscode/go/analytics
@@ -570,14 +569,13 @@ k8s.io/kubernetes/pkg/kubectl/validation
 k8s.io/kubernetes/pkg/version
 k8s.io/kubernetes/pkg/kubectl/util/term
 k8s.io/kubernetes/pkg/util/hash
-k8s.io/kubernetes/pkg/apis/core
 k8s.io/kubernetes/pkg/util/interrupt
 # k8s.io/utils v0.0.0-20190520173318-324c5df7d3f0 => k8s.io/utils v0.0.0-20190221042446-c2654d5206da
 k8s.io/utils/exec
 k8s.io/utils/integer
 k8s.io/utils/buffer
 k8s.io/utils/trace
-# kmodules.xyz/client-go v0.0.0-20191006173540-91f8ee6b6b4b
+# kmodules.xyz/client-go v0.0.0-20191023042933-b12d1ccfaf57
 kmodules.xyz/client-go/logs
 kmodules.xyz/client-go
 kmodules.xyz/client-go/core/v1
@@ -592,7 +590,7 @@ kmodules.xyz/custom-resources/client/clientset/versioned
 kmodules.xyz/custom-resources/apis/appcatalog
 kmodules.xyz/custom-resources/client/clientset/versioned/typed/appcatalog/v1alpha1
 kmodules.xyz/custom-resources/client/clientset/versioned/scheme
-# kmodules.xyz/objectstore-api v0.0.0-20191006080053-fc8b57fadcf0
+# kmodules.xyz/objectstore-api v0.0.0-20191014210450-ac380fa650a3
 kmodules.xyz/objectstore-api/api/v1
 # kmodules.xyz/offshoot-api v0.0.0-20190901210649-de049192326c
 kmodules.xyz/offshoot-api/api/v1
@@ -631,7 +629,7 @@ sigs.k8s.io/kustomize/pkg/expansion
 sigs.k8s.io/kustomize/pkg/transformers/config/defaultconfig
 # sigs.k8s.io/yaml v1.1.0
 sigs.k8s.io/yaml
-# stash.appscode.dev/stash v0.9.0-rc.1.0.20191007102408-f5a271be821a
+# stash.appscode.dev/stash v0.9.0-rc.2
 stash.appscode.dev/stash/client/clientset/versioned/fake
 stash.appscode.dev/stash/apis
 stash.appscode.dev/stash/apis/stash/v1alpha1

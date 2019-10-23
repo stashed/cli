@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"reflect"
 
+	"stash.appscode.dev/stash/apis/stash/v1alpha1"
+	v1beta1_api "stash.appscode.dev/stash/apis/stash/v1beta1"
+	cs "stash.appscode.dev/stash/client/clientset/versioned"
+	v1beta1_listers "stash.appscode.dev/stash/client/listers/stash/v1beta1"
+
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"kmodules.xyz/client-go/meta"
 	wapi "kmodules.xyz/webhook-runtime/apis/workload/v1"
-	"stash.appscode.dev/stash/apis/stash/v1alpha1"
-	v1beta1_api "stash.appscode.dev/stash/apis/stash/v1beta1"
-	cs "stash.appscode.dev/stash/client/clientset/versioned"
-	v1beta1_listers "stash.appscode.dev/stash/client/listers/stash/v1beta1"
 )
 
 // GetAppliedBackupConfiguration check whether BackupConfiguration was applied as annotation and returns the object definition if exist.
@@ -70,14 +71,28 @@ func FindBackupConfiguration(lister v1beta1_listers.BackupConfigurationLister, w
 
 // BackupConfigurationEqual check whether two BackupConfigurations has same specification.
 func BackupConfigurationEqual(old, new *v1beta1_api.BackupConfiguration) bool {
-	var oldSpec, newSpec *v1beta1_api.BackupConfigurationSpec
-	if old != nil {
-		oldSpec = &old.Spec
+	if (old == nil && new != nil) || (old != nil && new == nil) {
+		return false
 	}
-	if new != nil {
-		newSpec = &new.Spec
+	if old == nil && new == nil {
+		return true
 	}
-	return reflect.DeepEqual(oldSpec, newSpec)
+
+	// If "spec.paused" field is changed, we don't need to restart the workload.
+	// Hence, we will compare the new and old BackupConfiguration spec after making
+	// `spec.paused` field equal. This will avoid the restart.
+	// We should not change the original value of "spec.paused" field of the old BackupConfiguration.
+	// Hence, we will keep the original value in a temporary variable and re-assign the original value
+	// after the comparison.
+
+	oldSpec := &old.Spec
+	newSpec := &new.Spec
+
+	oldVal := oldSpec.Paused
+	oldSpec.Paused = newSpec.Paused
+	result := reflect.DeepEqual(oldSpec, newSpec)
+	oldSpec.Paused = oldVal
+	return result
 }
 
 func BackupPending(phase v1beta1_api.BackupSessionPhase) bool {

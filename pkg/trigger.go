@@ -6,7 +6,6 @@ import (
 	"github.com/appscode/go/log"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/tools/reference"
@@ -70,8 +69,10 @@ func triggerBackup(backupConfig *v1beta1.BackupConfiguration, client cs.Interfac
 			},
 		},
 		Spec: v1beta1.BackupSessionSpec{
-			BackupConfiguration: v1.LocalObjectReference{
-				Name: backupConfig.Name,
+			Invoker: v1beta1.BackupInvokerRef{
+				APIGroup: v1beta1.SchemeGroupVersion.Group,
+				Kind:     v1beta1.ResourceKindBackupConfiguration,
+				Name:     backupConfig.Name,
 			},
 		},
 	}

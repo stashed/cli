@@ -19,13 +19,14 @@ limitations under the License.
 package fake
 
 import (
+	v1beta1 "stash.appscode.dev/stash/apis/stash/v1beta1"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
-	v1beta1 "stash.appscode.dev/stash/apis/stash/v1beta1"
 )
 
 // FakeBackupConfigurations implements BackupConfigurationInterface
@@ -93,6 +94,18 @@ func (c *FakeBackupConfigurations) Create(backupConfiguration *v1beta1.BackupCon
 func (c *FakeBackupConfigurations) Update(backupConfiguration *v1beta1.BackupConfiguration) (result *v1beta1.BackupConfiguration, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(backupconfigurationsResource, c.ns, backupConfiguration), &v1beta1.BackupConfiguration{})
+
+	if obj == nil {
+		return nil, err
+	}
+	return obj.(*v1beta1.BackupConfiguration), err
+}
+
+// UpdateStatus was generated because the type contains a Status member.
+// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+func (c *FakeBackupConfigurations) UpdateStatus(backupConfiguration *v1beta1.BackupConfiguration) (*v1beta1.BackupConfiguration, error) {
+	obj, err := c.Fake.
+		Invokes(testing.NewUpdateSubresourceAction(backupconfigurationsResource, "status", c.ns, backupConfiguration), &v1beta1.BackupConfiguration{})
 
 	if obj == nil {
 		return nil, err

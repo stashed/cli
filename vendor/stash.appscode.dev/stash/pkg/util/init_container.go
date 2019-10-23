@@ -3,15 +3,15 @@ package util
 import (
 	"fmt"
 
+	v1alpha1_api "stash.appscode.dev/stash/apis/stash/v1alpha1"
+	v1beta1_api "stash.appscode.dev/stash/apis/stash/v1beta1"
+	"stash.appscode.dev/stash/pkg/docker"
+
 	"github.com/appscode/go/types"
 	core "k8s.io/api/core/v1"
 	"kmodules.xyz/client-go/tools/cli"
 	"kmodules.xyz/client-go/tools/clientcmd"
 	ofst_util "kmodules.xyz/offshoot-api/util"
-	"stash.appscode.dev/stash/apis"
-	v1alpha1_api "stash.appscode.dev/stash/apis/stash/v1alpha1"
-	v1beta1_api "stash.appscode.dev/stash/apis/stash/v1beta1"
-	"stash.appscode.dev/stash/pkg/docker"
 )
 
 func NewInitContainer(r *v1alpha1_api.Restic, workload v1alpha1_api.LocalTypedReference, image docker.Docker) core.Container {
@@ -24,12 +24,10 @@ func NewInitContainer(r *v1alpha1_api.Restic, workload v1alpha1_api.LocalTypedRe
 		"--docker-registry=" + image.Registry,
 		"--image-tag=" + image.Tag,
 		"--pushgateway-url=" + PushgatewayURL(),
-		fmt.Sprintf("--enable-status-subresource=%v", apis.EnableStatusSubresource),
 		fmt.Sprintf("--use-kubeapiserver-fqdn-for-aks=%v", clientcmd.UseKubeAPIServerFQDNForAKS()),
 		fmt.Sprintf("--enable-analytics=%v", cli.EnableAnalytics),
 	}
 	container.Args = append(container.Args, cli.LoggerOptions.ToFlags()...)
-	container.Args = append(container.Args, "--enable-rbac=true")
 
 	return container
 }
@@ -46,7 +44,6 @@ func NewRestoreInitContainer(rs *v1beta1_api.RestoreSession, repository *v1alpha
 			fmt.Sprintf("--max-connections=%v", repository.Spec.Backend.MaxConnections()),
 			"--metrics-enabled=true",
 			"--pushgateway-url=" + PushgatewayURL(),
-			fmt.Sprintf("--enable-status-subresource=%v", apis.EnableStatusSubresource),
 			fmt.Sprintf("--use-kubeapiserver-fqdn-for-aks=%v", clientcmd.UseKubeAPIServerFQDNForAKS()),
 			fmt.Sprintf("--enable-analytics=%v", cli.EnableAnalytics),
 		}, cli.LoggerOptions.ToFlags()...),
