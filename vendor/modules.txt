@@ -570,7 +570,7 @@ k8s.io/kubernetes/pkg/version
 k8s.io/kubernetes/pkg/kubectl/util/term
 k8s.io/kubernetes/pkg/util/hash
 k8s.io/kubernetes/pkg/util/interrupt
-# k8s.io/utils v0.0.0-20190520173318-324c5df7d3f0 => k8s.io/utils v0.0.0-20190221042446-c2654d5206da
+# k8s.io/utils v0.0.0-20190520173318-324c5df7d3f0 => k8s.io/utils v0.0.0-20190514214443-0a167cbac756
 k8s.io/utils/exec
 k8s.io/utils/integer
 k8s.io/utils/buffer

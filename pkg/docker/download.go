@@ -3,9 +3,10 @@ package docker
 import (
 	"path/filepath"
 
+	"stash.appscode.dev/stash/pkg/restic"
+
 	"github.com/appscode/go/log"
 	"github.com/spf13/cobra"
-	"stash.appscode.dev/stash/pkg/restic"
 )
 
 // RemoveIt!

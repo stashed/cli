@@ -6,12 +6,13 @@ import (
 	"runtime"
 	"time"
 
+	"stash.appscode.dev/cli/pkg"
+	_ "stash.appscode.dev/stash/client/clientset/versioned/fake"
+
 	"github.com/appscode/go/log"
 	_ "k8s.io/client-go/kubernetes/fake"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"kmodules.xyz/client-go/logs"
-	"stash.appscode.dev/cli/pkg"
-	_ "stash.appscode.dev/stash/client/clientset/versioned/fake"
 )
 
 func main() {

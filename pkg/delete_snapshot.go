@@ -7,16 +7,17 @@ import (
 	"os/exec"
 	"os/user"
 
+	"stash.appscode.dev/cli/pkg/docker"
+	cs "stash.appscode.dev/stash/client/clientset/versioned"
+	"stash.appscode.dev/stash/pkg/registry/snapshot"
+	"stash.appscode.dev/stash/pkg/util"
+
 	"github.com/appscode/go/log"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
-	"stash.appscode.dev/cli/pkg/docker"
-	cs "stash.appscode.dev/stash/client/clientset/versioned"
-	"stash.appscode.dev/stash/pkg/registry/snapshot"
-	"stash.appscode.dev/stash/pkg/util"
 )
 
 func NewCmdDeleteSnapshot(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {

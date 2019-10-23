@@ -5,10 +5,11 @@ import (
 	"os"
 	"path/filepath"
 
-	core "k8s.io/api/core/v1"
 	"stash.appscode.dev/cli/pkg/docker"
 	docker_image "stash.appscode.dev/stash/pkg/docker"
 	"stash.appscode.dev/stash/pkg/restic"
+
+	core "k8s.io/api/core/v1"
 )
 
 const (
