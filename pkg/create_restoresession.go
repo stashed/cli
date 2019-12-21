@@ -25,12 +25,13 @@ import (
 
 	"github.com/appscode/go/log"
 	"github.com/appscode/go/types"
-	vs "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1alpha1"
+	vs "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1beta1"
 	"github.com/spf13/cobra"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/kubernetes/pkg/kubectl/util/templates"
+	"k8s.io/kubectl/pkg/util/templates"
+	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
 
 var (
@@ -185,10 +186,10 @@ func (opt restoreSessionOption) setRestoreTarget(restoreSession *v1beta1.Restore
 	return nil
 }
 
-func (opt restoreSessionOption) getRestoredPVCTemplates() []core.PersistentVolumeClaim {
-	pvcs := []core.PersistentVolumeClaim{
+func (opt restoreSessionOption) getRestoredPVCTemplates() []ofst.PersistentVolumeClaim {
+	pvcs := []ofst.PersistentVolumeClaim{
 		{
-			ObjectMeta: metav1.ObjectMeta{
+			PartialObjectMeta: ofst.PartialObjectMeta{
 				Name:      opt.volumeClaimTemplate.name,
 				Namespace: namespace,
 				CreationTimestamp: metav1.Time{
