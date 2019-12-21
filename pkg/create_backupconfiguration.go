@@ -27,7 +27,7 @@ import (
 	"github.com/spf13/cobra"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/kubernetes/pkg/kubectl/util/templates"
+	"k8s.io/kubectl/pkg/util/templates"
 )
 
 var (
@@ -93,12 +93,12 @@ func NewCmdCreateBackupConfiguration() *cobra.Command {
 	cmd.Flags().StringVar(&backupConfigOpt.volumesnpashotclass, "volumesnpashotclass", backupConfigOpt.volumesnpashotclass, "Name of the VolumeSnapshotClass")
 	cmd.Flags().Int32Var(&backupConfigOpt.replica, "replica", backupConfigOpt.replica, "Replica specifies the number of replicas whose data should be backed up")
 
-	cmd.Flags().IntVar(&backupConfigOpt.retentionPolicy.KeepLast, "keep-last", backupConfigOpt.retentionPolicy.KeepLast, "Specify value for retention strategy")
-	cmd.Flags().IntVar(&backupConfigOpt.retentionPolicy.KeepHourly, "keep-hourly", backupConfigOpt.retentionPolicy.KeepHourly, "Specify value for retention strategy")
-	cmd.Flags().IntVar(&backupConfigOpt.retentionPolicy.KeepDaily, "keep-daily", backupConfigOpt.retentionPolicy.KeepDaily, "Specify value for retention strategy")
-	cmd.Flags().IntVar(&backupConfigOpt.retentionPolicy.KeepWeekly, "keep-weekly", backupConfigOpt.retentionPolicy.KeepWeekly, "Specify value for retention strategy")
-	cmd.Flags().IntVar(&backupConfigOpt.retentionPolicy.KeepMonthly, "keep-monthly", backupConfigOpt.retentionPolicy.KeepMonthly, "Specify value for retention strategy")
-	cmd.Flags().IntVar(&backupConfigOpt.retentionPolicy.KeepYearly, "keep-yearly", backupConfigOpt.retentionPolicy.KeepYearly, "Specify value for retention strategy")
+	cmd.Flags().Int64Var(&backupConfigOpt.retentionPolicy.KeepLast, "keep-last", backupConfigOpt.retentionPolicy.KeepLast, "Specify value for retention strategy")
+	cmd.Flags().Int64Var(&backupConfigOpt.retentionPolicy.KeepHourly, "keep-hourly", backupConfigOpt.retentionPolicy.KeepHourly, "Specify value for retention strategy")
+	cmd.Flags().Int64Var(&backupConfigOpt.retentionPolicy.KeepDaily, "keep-daily", backupConfigOpt.retentionPolicy.KeepDaily, "Specify value for retention strategy")
+	cmd.Flags().Int64Var(&backupConfigOpt.retentionPolicy.KeepWeekly, "keep-weekly", backupConfigOpt.retentionPolicy.KeepWeekly, "Specify value for retention strategy")
+	cmd.Flags().Int64Var(&backupConfigOpt.retentionPolicy.KeepMonthly, "keep-monthly", backupConfigOpt.retentionPolicy.KeepMonthly, "Specify value for retention strategy")
+	cmd.Flags().Int64Var(&backupConfigOpt.retentionPolicy.KeepYearly, "keep-yearly", backupConfigOpt.retentionPolicy.KeepYearly, "Specify value for retention strategy")
 	cmd.Flags().BoolVar(&backupConfigOpt.retentionPolicy.Prune, "prune", backupConfigOpt.retentionPolicy.Prune, "Specify whether to prune old snapshot data")
 	cmd.Flags().BoolVar(&backupConfigOpt.retentionPolicy.DryRun, "dry-run", backupConfigOpt.retentionPolicy.DryRun, "Specify whether to test retention policy without deleting actual data")
 

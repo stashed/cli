@@ -20,7 +20,6 @@ import (
 
 	"stash.appscode.dev/stash/apis/stash/v1beta1"
 	cs "stash.appscode.dev/stash/client/clientset/versioned"
-	stash_scheme "stash.appscode.dev/stash/client/clientset/versioned/scheme"
 	"stash.appscode.dev/stash/pkg/util"
 
 	"github.com/appscode/go/log"
@@ -28,7 +27,6 @@ import (
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/client-go/tools/reference"
 	core_util "kmodules.xyz/client-go/core/v1"
 )
 
@@ -94,14 +92,11 @@ func triggerBackup(backupConfig *v1beta1.BackupConfiguration, client cs.Interfac
 	}
 
 	// set backupConfig as backupSession's owner
-	ref, err := reference.GetReference(stash_scheme.Scheme, backupConfig)
-	if err != nil {
-		return backupSession, err
-	}
-	core_util.EnsureOwnerReference(&backupSession.ObjectMeta, ref)
+	owner := metav1.NewControllerRef(backupConfig, v1beta1.SchemeGroupVersion.WithKind(v1beta1.ResourceKindBackupConfiguration))
+	core_util.EnsureOwnerReference(&backupSession.ObjectMeta, owner)
 
 	// don't use createOrPatch here
-	backupSession, err = client.StashV1beta1().BackupSessions(backupSession.Namespace).Create(backupSession)
+	backupSession, err := client.StashV1beta1().BackupSessions(backupSession.Namespace).Create(backupSession)
 	if err != nil {
 		return backupSession, err
 	}

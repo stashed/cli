@@ -1,3 +1,19 @@
+/*
+Copyright The Stash Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package cli
 
 import (
@@ -114,27 +130,27 @@ func (w *ResticWrapper) Forget(resource *api.Restic, fg api.FileGroup) error {
 	args := []interface{}{"forget"}
 	if retentionPolicy.KeepLast > 0 {
 		args = append(args, string(api.KeepLast))
-		args = append(args, strconv.Itoa(retentionPolicy.KeepLast))
+		args = append(args, strconv.FormatInt(retentionPolicy.KeepLast, 10))
 	}
 	if retentionPolicy.KeepHourly > 0 {
 		args = append(args, string(api.KeepHourly))
-		args = append(args, strconv.Itoa(retentionPolicy.KeepHourly))
+		args = append(args, strconv.FormatInt(retentionPolicy.KeepHourly, 10))
 	}
 	if retentionPolicy.KeepDaily > 0 {
 		args = append(args, string(api.KeepDaily))
-		args = append(args, strconv.Itoa(retentionPolicy.KeepDaily))
+		args = append(args, strconv.FormatInt(retentionPolicy.KeepDaily, 10))
 	}
 	if retentionPolicy.KeepWeekly > 0 {
 		args = append(args, string(api.KeepWeekly))
-		args = append(args, strconv.Itoa(retentionPolicy.KeepWeekly))
+		args = append(args, strconv.FormatInt(retentionPolicy.KeepWeekly, 10))
 	}
 	if retentionPolicy.KeepMonthly > 0 {
 		args = append(args, string(api.KeepMonthly))
-		args = append(args, strconv.Itoa(retentionPolicy.KeepMonthly))
+		args = append(args, strconv.FormatInt(retentionPolicy.KeepMonthly, 10))
 	}
 	if retentionPolicy.KeepYearly > 0 {
 		args = append(args, string(api.KeepYearly))
-		args = append(args, strconv.Itoa(retentionPolicy.KeepYearly))
+		args = append(args, strconv.FormatInt(retentionPolicy.KeepYearly, 10))
 	}
 	for _, tag := range retentionPolicy.KeepTags {
 		args = append(args, string(api.KeepTag))
