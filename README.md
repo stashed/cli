@@ -3,7 +3,7 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/appscode/stash.svg)](https://hub.docker.com/r/appscode/stash/)
 [![Github All Releases](https://img.shields.io/github/downloads/stashed/cli/total.svg)](https://github.com/stashed/cli/releases)
 [![Slack](https://slack.appscode.com/badge.svg)](https://slack.appscode.com)
-[![Twitter](https://img.shields.io/twitter/follow/appscodehq.svg?style=social&logo=twitter&label=Follow)](https://twitter.com/intent/follow?screen_name=AppsCodeHQ)
+[![Twitter](https://img.shields.io/twitter/follow/kubestash.svg?style=social&logo=twitter&label=Follow)](https://twitter.com/intent/follow?screen_name=KubeStash)
 
 # CLI
 `kubectl` plugin for [Stash by AppsCode](https://appscode.com/products/stash).
