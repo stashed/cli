@@ -17,8 +17,8 @@ package pkg
 
 import (
 	"fmt"
-	"time"
 
+	"stash.appscode.dev/stash/apis"
 	"stash.appscode.dev/stash/apis/stash/v1beta1"
 	v1beta1_util "stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1beta1/util"
 	"stash.appscode.dev/stash/pkg/util"
@@ -162,7 +162,7 @@ func (opt restoreSessionOption) setRestoreTarget(restoreSession *v1beta1.Restore
 			APIGroup: types.StringP(vs.GroupName),
 		}
 	} else {
-		if opt.targetRef.Kind != "" && util.BackupModel(opt.targetRef.Kind) == util.ModelSidecar {
+		if opt.targetRef.Kind != "" && util.BackupModel(opt.targetRef.Kind) == apis.ModelSidecar {
 			restoreSession.Spec.Target = &v1beta1.RestoreTarget{
 				Ref: opt.targetRef,
 			}
@@ -192,9 +192,6 @@ func (opt restoreSessionOption) getRestoredPVCTemplates() []ofst.PersistentVolum
 			PartialObjectMeta: ofst.PartialObjectMeta{
 				Name:      opt.volumeClaimTemplate.name,
 				Namespace: namespace,
-				CreationTimestamp: metav1.Time{
-					Time: time.Now(),
-				},
 			},
 			Spec: core.PersistentVolumeClaimSpec{
 				AccessModes:      getPVAccessModes(opt.volumeClaimTemplate.accessModes),

@@ -172,9 +172,6 @@ func restorePVC(pvc *core.PersistentVolumeClaim, repoName string) error {
 			PartialObjectMeta: ofst.PartialObjectMeta{
 				Name:      pvc.Name,
 				Namespace: dstNamespace,
-				CreationTimestamp: metav1.Time{
-					Time: time.Now(),
-				},
 			},
 			Spec: core.PersistentVolumeClaimSpec{
 				StorageClassName: pvc.Spec.StorageClassName,

@@ -18,9 +18,9 @@ package pkg
 import (
 	"fmt"
 
+	"stash.appscode.dev/stash/apis"
 	"stash.appscode.dev/stash/apis/stash/v1beta1"
 	cs "stash.appscode.dev/stash/client/clientset/versioned"
-	"stash.appscode.dev/stash/pkg/util"
 
 	"github.com/appscode/go/log"
 	"github.com/pkg/errors"
@@ -71,15 +71,15 @@ func NewCmdTriggerBackup(clientGetter genericclioptions.RESTClientGetter) *cobra
 }
 
 func triggerBackup(backupConfig *v1beta1.BackupConfiguration, client cs.Interface) (*v1beta1.BackupSession, error) {
-
 	// create backupSession for backupConfig
 	backupSession := &v1beta1.BackupSession{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: backupConfig.Name + "-",
 			Namespace:    backupConfig.Namespace,
 			Labels: map[string]string{
-				util.LabelApp:                 util.AppLabelStash,
-				util.LabelBackupConfiguration: backupConfig.Name,
+				apis.LabelApp:         apis.AppLabelStash,
+				apis.LabelInvokerType: "BackupConfiguration",
+				apis.LabelInvokerName: backupConfig.Name,
 			},
 		},
 		Spec: v1beta1.BackupSessionSpec{
