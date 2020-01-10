@@ -16,11 +16,11 @@ require (
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/component-base v0.0.0-20191114102325-35a9586014f7
 	k8s.io/kubectl v0.0.0-20191114113550-6123e1c827f7
-	kmodules.xyz/client-go v0.0.0-20191219184245-880ab4b0e5db
+	kmodules.xyz/client-go v0.0.0-20200108114229-70ba8841e60f
 	kmodules.xyz/objectstore-api v0.0.0-20191127144749-5881939b57f0
-	kmodules.xyz/offshoot-api v0.0.0-20191204032627-ee9a85c51ab3
+	kmodules.xyz/offshoot-api v0.0.0-20200103145223-2c4f520520d2
 	kmodules.xyz/openshift v0.0.0-20191127145035-f6c48a90dbb7
-	stash.appscode.dev/stash v0.9.0-rc.2.0.20191220142029-ca6885400de1
+	stash.appscode.dev/stash v0.9.0-rc.3
 )
 
 replace (
