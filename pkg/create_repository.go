@@ -18,8 +18,8 @@ package pkg
 import (
 	"fmt"
 
-	"stash.appscode.dev/stash/apis/stash/v1alpha1"
-	"stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1alpha1/util"
+	"stash.appscode.dev/apimachinery/apis/stash/v1alpha1"
+	"stash.appscode.dev/apimachinery/client/clientset/versioned/typed/stash/v1alpha1/util"
 
 	"github.com/appscode/go/log"
 	"github.com/spf13/cobra"

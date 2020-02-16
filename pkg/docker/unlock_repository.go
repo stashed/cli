@@ -18,7 +18,7 @@ package docker
 import (
 	"path/filepath"
 
-	"stash.appscode.dev/stash/pkg/restic"
+	"stash.appscode.dev/apimachinery/pkg/restic"
 
 	"github.com/appscode/go/log"
 	"github.com/spf13/cobra"

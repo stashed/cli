@@ -20,9 +20,9 @@ import (
 	"os"
 	"path/filepath"
 
+	docker_image "stash.appscode.dev/apimachinery/pkg/docker"
+	"stash.appscode.dev/apimachinery/pkg/restic"
 	"stash.appscode.dev/cli/pkg/docker"
-	docker_image "stash.appscode.dev/stash/pkg/docker"
-	"stash.appscode.dev/stash/pkg/restic"
 
 	core "k8s.io/api/core/v1"
 )

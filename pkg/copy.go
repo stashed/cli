@@ -16,7 +16,7 @@ limitations under the License.
 package pkg
 
 import (
-	cs "stash.appscode.dev/stash/client/clientset/versioned"
+	cs "stash.appscode.dev/apimachinery/client/clientset/versioned"
 
 	vs_cs "github.com/kubernetes-csi/external-snapshotter/pkg/client/clientset/versioned"
 	"github.com/pkg/errors"

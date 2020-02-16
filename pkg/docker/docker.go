@@ -21,7 +21,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"stash.appscode.dev/stash/pkg/restic"
+	"stash.appscode.dev/apimachinery/pkg/restic"
 )
 
 const (

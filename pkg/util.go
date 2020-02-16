@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	"stash.appscode.dev/stash/apis/stash/v1beta1"
+	"stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 
 	"github.com/evanphx/json-patch"
 	"github.com/golang/glog"
