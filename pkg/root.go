@@ -18,7 +18,7 @@ package pkg
 import (
 	"flag"
 
-	"stash.appscode.dev/stash/client/clientset/versioned/scheme"
+	"stash.appscode.dev/apimachinery/client/clientset/versioned/scheme"
 
 	v "github.com/appscode/go/version"
 	"github.com/spf13/cobra"

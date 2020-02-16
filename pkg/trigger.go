@@ -18,9 +18,9 @@ package pkg
 import (
 	"fmt"
 
-	"stash.appscode.dev/stash/apis"
-	"stash.appscode.dev/stash/apis/stash/v1beta1"
-	cs "stash.appscode.dev/stash/client/clientset/versioned"
+	"stash.appscode.dev/apimachinery/apis"
+	"stash.appscode.dev/apimachinery/apis/stash/v1beta1"
+	cs "stash.appscode.dev/apimachinery/client/clientset/versioned"
 
 	"github.com/appscode/go/log"
 	"github.com/pkg/errors"

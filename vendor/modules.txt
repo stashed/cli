@@ -530,7 +530,7 @@ k8s.io/utils/integer
 k8s.io/utils/io
 k8s.io/utils/pointer
 k8s.io/utils/trace
-# kmodules.xyz/client-go v0.0.0-20200116162153-e083ae16abca
+# kmodules.xyz/client-go v0.0.0-20200216080917-08714f78f885
 kmodules.xyz/client-go
 kmodules.xyz/client-go/core/v1
 kmodules.xyz/client-go/logs
@@ -539,6 +539,7 @@ kmodules.xyz/client-go/tools/analytics
 kmodules.xyz/client-go/tools/cli
 kmodules.xyz/client-go/tools/clientcmd
 kmodules.xyz/client-go/tools/exec
+kmodules.xyz/client-go/tools/pushgateway
 # kmodules.xyz/custom-resources v0.0.0-20191130062942-f41b54f62419
 kmodules.xyz/custom-resources/api/crds
 kmodules.xyz/custom-resources/apis/appcatalog
@@ -546,9 +547,9 @@ kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1
 kmodules.xyz/custom-resources/client/clientset/versioned
 kmodules.xyz/custom-resources/client/clientset/versioned/scheme
 kmodules.xyz/custom-resources/client/clientset/versioned/typed/appcatalog/v1alpha1
-# kmodules.xyz/objectstore-api v0.0.0-20191127144749-5881939b57f0
+# kmodules.xyz/objectstore-api v0.0.0-20200214040336-fe8f39a4210d
 kmodules.xyz/objectstore-api/api/v1
-# kmodules.xyz/offshoot-api v0.0.0-20200103145223-2c4f520520d2
+# kmodules.xyz/offshoot-api v0.0.0-20200216080509-45ee6418d1c1
 kmodules.xyz/offshoot-api/api/v1
 kmodules.xyz/offshoot-api/util
 # kmodules.xyz/openshift v0.0.0-20191127145035-f6c48a90dbb7
@@ -592,29 +593,30 @@ sigs.k8s.io/kustomize/pkg/transformers/config/defaultconfig
 sigs.k8s.io/kustomize/pkg/types
 # sigs.k8s.io/yaml v1.1.0 => sigs.k8s.io/yaml v1.1.0
 sigs.k8s.io/yaml
-# stash.appscode.dev/stash v0.9.0-rc.4
-stash.appscode.dev/stash/api/crds
-stash.appscode.dev/stash/apis
-stash.appscode.dev/stash/apis/repositories
-stash.appscode.dev/stash/apis/repositories/v1alpha1
-stash.appscode.dev/stash/apis/stash
-stash.appscode.dev/stash/apis/stash/v1alpha1
-stash.appscode.dev/stash/apis/stash/v1beta1
-stash.appscode.dev/stash/client/clientset/versioned
-stash.appscode.dev/stash/client/clientset/versioned/fake
-stash.appscode.dev/stash/client/clientset/versioned/scheme
-stash.appscode.dev/stash/client/clientset/versioned/typed/repositories/v1alpha1
-stash.appscode.dev/stash/client/clientset/versioned/typed/repositories/v1alpha1/fake
-stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1alpha1
-stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1alpha1/fake
-stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1alpha1/util
-stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1beta1
-stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1beta1/fake
-stash.appscode.dev/stash/client/clientset/versioned/typed/stash/v1beta1/util
-stash.appscode.dev/stash/client/listers/stash/v1alpha1
-stash.appscode.dev/stash/client/listers/stash/v1beta1
+# stash.appscode.dev/apimachinery v0.9.0-rc.6
+stash.appscode.dev/apimachinery/api/crds
+stash.appscode.dev/apimachinery/apis
+stash.appscode.dev/apimachinery/apis/repositories
+stash.appscode.dev/apimachinery/apis/repositories/v1alpha1
+stash.appscode.dev/apimachinery/apis/stash
+stash.appscode.dev/apimachinery/apis/stash/v1alpha1
+stash.appscode.dev/apimachinery/apis/stash/v1beta1
+stash.appscode.dev/apimachinery/client/clientset/versioned
+stash.appscode.dev/apimachinery/client/clientset/versioned/fake
+stash.appscode.dev/apimachinery/client/clientset/versioned/scheme
+stash.appscode.dev/apimachinery/client/clientset/versioned/typed/repositories/v1alpha1
+stash.appscode.dev/apimachinery/client/clientset/versioned/typed/repositories/v1alpha1/fake
+stash.appscode.dev/apimachinery/client/clientset/versioned/typed/stash/v1alpha1
+stash.appscode.dev/apimachinery/client/clientset/versioned/typed/stash/v1alpha1/fake
+stash.appscode.dev/apimachinery/client/clientset/versioned/typed/stash/v1alpha1/util
+stash.appscode.dev/apimachinery/client/clientset/versioned/typed/stash/v1beta1
+stash.appscode.dev/apimachinery/client/clientset/versioned/typed/stash/v1beta1/fake
+stash.appscode.dev/apimachinery/client/clientset/versioned/typed/stash/v1beta1/util
+stash.appscode.dev/apimachinery/client/listers/stash/v1alpha1
+stash.appscode.dev/apimachinery/client/listers/stash/v1beta1
+stash.appscode.dev/apimachinery/pkg/docker
+stash.appscode.dev/apimachinery/pkg/restic
+# stash.appscode.dev/stash v0.9.0-rc.6
 stash.appscode.dev/stash/pkg/cli
-stash.appscode.dev/stash/pkg/docker
 stash.appscode.dev/stash/pkg/registry/snapshot
-stash.appscode.dev/stash/pkg/restic
 stash.appscode.dev/stash/pkg/util

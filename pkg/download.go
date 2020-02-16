@@ -22,9 +22,9 @@ import (
 	"os/exec"
 	"os/user"
 
+	cs "stash.appscode.dev/apimachinery/client/clientset/versioned"
+	"stash.appscode.dev/apimachinery/pkg/restic"
 	"stash.appscode.dev/cli/pkg/docker"
-	cs "stash.appscode.dev/stash/client/clientset/versioned"
-	"stash.appscode.dev/stash/pkg/restic"
 	"stash.appscode.dev/stash/pkg/util"
 
 	"github.com/appscode/go/log"

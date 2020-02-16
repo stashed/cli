@@ -19,11 +19,11 @@ package util
 import (
 	"fmt"
 
-	"stash.appscode.dev/stash/apis"
-	api_v1alpha1 "stash.appscode.dev/stash/apis/stash/v1alpha1"
-	api_v1beta1 "stash.appscode.dev/stash/apis/stash/v1beta1"
-	cs "stash.appscode.dev/stash/client/clientset/versioned"
-	"stash.appscode.dev/stash/pkg/docker"
+	"stash.appscode.dev/apimachinery/apis"
+	api_v1alpha1 "stash.appscode.dev/apimachinery/apis/stash/v1alpha1"
+	api_v1beta1 "stash.appscode.dev/apimachinery/apis/stash/v1beta1"
+	cs "stash.appscode.dev/apimachinery/client/clientset/versioned"
+	"stash.appscode.dev/apimachinery/pkg/docker"
 
 	"github.com/appscode/go/types"
 	batch "k8s.io/api/batch/v1"
@@ -32,6 +32,7 @@ import (
 	"kmodules.xyz/client-go/tools/analytics"
 	"kmodules.xyz/client-go/tools/cli"
 	"kmodules.xyz/client-go/tools/clientcmd"
+	"kmodules.xyz/client-go/tools/pushgateway"
 	v1 "kmodules.xyz/offshoot-api/api/v1"
 	ofst_util "kmodules.xyz/offshoot-api/util"
 )
@@ -227,7 +228,7 @@ func NewPVCRestorerJob(rs *api_v1beta1.RestoreSession, repository *api_v1alpha1.
 			fmt.Sprintf("--enable-cache=%v", !rs.Spec.TempDir.DisableCaching),
 			fmt.Sprintf("--max-connections=%v", repository.Spec.Backend.MaxConnections()),
 			"--metrics-enabled=true",
-			"--pushgateway-url=" + PushgatewayURL(),
+			"--pushgateway-url=" + pushgateway.URL(),
 			fmt.Sprintf("--use-kubeapiserver-fqdn-for-aks=%v", clientcmd.UseKubeAPIServerFQDNForAKS()),
 			fmt.Sprintf("--enable-analytics=%v", cli.EnableAnalytics),
 		}, cli.LoggerOptions.ToFlags()...),
@@ -301,9 +302,6 @@ func NewPVCRestorerJob(rs *api_v1beta1.RestoreSession, repository *api_v1alpha1.
 		},
 	}
 
-	// Upsert default pod level security context
-	jobTemplate.Spec.SecurityContext = UpsertDefaultPodSecurityContext(jobTemplate.Spec.SecurityContext)
-
 	// Pass pod RuntimeSettings from RestoreSession
 	if rs.Spec.RuntimeSettings.Pod != nil {
 		jobTemplate.Spec = ofst_util.ApplyPodRuntimeSettings(jobTemplate.Spec, *rs.Spec.RuntimeSettings.Pod)
@@ -329,7 +327,7 @@ func NewVolumeSnapshotterJob(bs *api_v1beta1.BackupSession, backupTarget *api_v1
 			"--target-name=" + backupTarget.Ref.Name,
 			"--target-kind=" + backupTarget.Ref.Kind,
 			"--metrics-enabled=true",
-			"--pushgateway-url=" + PushgatewayURL(),
+			"--pushgateway-url=" + pushgateway.URL(),
 			fmt.Sprintf("--use-kubeapiserver-fqdn-for-aks=%v", clientcmd.UseKubeAPIServerFQDNForAKS()),
 			fmt.Sprintf("--enable-analytics=%v", cli.EnableAnalytics),
 		}, cli.LoggerOptions.ToFlags()...),
@@ -357,10 +355,6 @@ func NewVolumeSnapshotterJob(bs *api_v1beta1.BackupSession, backupTarget *api_v1
 		},
 	}
 
-	// apply default pod level security context
-	// don't overwrite user provided sc
-	jobTemplate.Spec.SecurityContext = UpsertDefaultPodSecurityContext(jobTemplate.Spec.SecurityContext)
-
 	// Pass pod RuntimeSettings from RestoreSession
 	if runtimeSettings.Pod != nil {
 		jobTemplate.Spec = ofst_util.ApplyPodRuntimeSettings(jobTemplate.Spec, *runtimeSettings.Pod)
@@ -376,7 +370,7 @@ func NewVolumeRestorerJob(rs *api_v1beta1.RestoreSession, image docker.Docker) (
 			"restore-vs",
 			fmt.Sprintf("--restoresession=%s", rs.Name),
 			"--metrics-enabled=true",
-			"--pushgateway-url=" + PushgatewayURL(),
+			"--pushgateway-url=" + pushgateway.URL(),
 			fmt.Sprintf("--use-kubeapiserver-fqdn-for-aks=%v", clientcmd.UseKubeAPIServerFQDNForAKS()),
 			fmt.Sprintf("--enable-analytics=%v", cli.EnableAnalytics),
 		}, cli.LoggerOptions.ToFlags()...),
@@ -403,10 +397,6 @@ func NewVolumeRestorerJob(rs *api_v1beta1.RestoreSession, image docker.Docker) (
 			RestartPolicy: core.RestartPolicyNever,
 		},
 	}
-
-	// apply default pod level security context
-	// don't overwrite user provided sc
-	jobTemplate.Spec.SecurityContext = UpsertDefaultPodSecurityContext(jobTemplate.Spec.SecurityContext)
 
 	// Pass pod RuntimeSettings from RestoreSession
 	if rs.Spec.RuntimeSettings.Pod != nil {
