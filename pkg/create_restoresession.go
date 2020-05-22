@@ -16,6 +16,7 @@ limitations under the License.
 package pkg
 
 import (
+	"context"
 	"fmt"
 
 	"stash.appscode.dev/apimachinery/apis"
@@ -25,7 +26,7 @@ import (
 
 	"github.com/appscode/go/log"
 	"github.com/appscode/go/types"
-	vs "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1beta1"
+	vs "github.com/kubernetes-csi/external-snapshotter/v2/pkg/apis/volumesnapshot/v1beta1"
 	"github.com/spf13/cobra"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -142,10 +143,16 @@ func (opt restoreSessionOption) newRestoreSession(name string, namespace string)
 }
 
 func createRestoreSession(restoreSession *v1beta1.RestoreSession) (*v1beta1.RestoreSession, error) {
-	restoreSession, _, err := v1beta1_util.CreateOrPatchRestoreSession(stashClient.StashV1beta1(), restoreSession.ObjectMeta, func(in *v1beta1.RestoreSession) *v1beta1.RestoreSession {
-		in.Spec = restoreSession.Spec
-		return in
-	})
+	restoreSession, _, err := v1beta1_util.CreateOrPatchRestoreSession(
+		context.TODO(),
+		stashClient.StashV1beta1(),
+		restoreSession.ObjectMeta,
+		func(in *v1beta1.RestoreSession) *v1beta1.RestoreSession {
+			in.Spec = restoreSession.Spec
+			return in
+		},
+		metav1.PatchOptions{},
+	)
 	return restoreSession, err
 }
 

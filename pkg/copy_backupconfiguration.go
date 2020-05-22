@@ -16,6 +16,7 @@ limitations under the License.
 package pkg
 
 import (
+	"context"
 	"fmt"
 
 	"stash.appscode.dev/apimachinery/apis/stash/v1beta1"
@@ -49,7 +50,7 @@ func NewCmdCopyBackupConfiguration() *cobra.Command {
 
 func ensureBackupConfiguration(name string) error {
 	// get resource BackupConfiguration
-	backupConfig, err := stashClient.StashV1beta1().BackupConfigurations(srcNamespace).Get(name, metav1.GetOptions{})
+	backupConfig, err := stashClient.StashV1beta1().BackupConfigurations(srcNamespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}

@@ -16,6 +16,7 @@ limitations under the License.
 package pkg
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -70,13 +71,13 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 			}
 
 			// get source repository
-			repository, err := client.StashV1alpha1().Repositories(namespace).Get(repositoryName, metav1.GetOptions{})
+			repository, err := client.StashV1alpha1().Repositories(namespace).Get(context.TODO(), repositoryName, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
 
 			// get source repository secret
-			secret, err := kc.CoreV1().Secrets(namespace).Get(repository.Spec.Backend.StorageSecretName, metav1.GetOptions{})
+			secret, err := kc.CoreV1().Secrets(namespace).Get(context.TODO(), repository.Spec.Backend.StorageSecretName, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}

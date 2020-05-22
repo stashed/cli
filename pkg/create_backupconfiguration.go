@@ -16,6 +16,7 @@ limitations under the License.
 package pkg
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -136,10 +137,16 @@ func (opt backupConfigOption) newBackupConfiguration(name string, namespace stri
 }
 
 func createBackupConfiguration(backupConfig *v1beta1.BackupConfiguration, meta metav1.ObjectMeta) (*v1beta1.BackupConfiguration, error) {
-	backupConfig, _, err := v1beta1_util.CreateOrPatchBackupConfiguration(stashClient.StashV1beta1(), meta, func(in *v1beta1.BackupConfiguration) *v1beta1.BackupConfiguration {
-		in.Spec = backupConfig.Spec
-		return in
-	})
+	backupConfig, _, err := v1beta1_util.CreateOrPatchBackupConfiguration(
+		context.TODO(),
+		stashClient.StashV1beta1(),
+		meta,
+		func(in *v1beta1.BackupConfiguration) *v1beta1.BackupConfiguration {
+			in.Spec = backupConfig.Spec
+			return in
+		},
+		metav1.PatchOptions{},
+	)
 	return backupConfig, err
 }
 

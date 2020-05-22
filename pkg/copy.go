@@ -18,7 +18,7 @@ package pkg
 import (
 	cs "stash.appscode.dev/apimachinery/client/clientset/versioned"
 
-	vs_cs "github.com/kubernetes-csi/external-snapshotter/pkg/client/clientset/versioned"
+	vs_cs "github.com/kubernetes-csi/external-snapshotter/v2/pkg/client/clientset/versioned"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"

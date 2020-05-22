@@ -16,6 +16,7 @@ limitations under the License.
 package pkg
 
 import (
+	"context"
 	"fmt"
 
 	"stash.appscode.dev/apimachinery/apis/stash/v1alpha1"
@@ -95,10 +96,14 @@ func newRepository(opt repositoryOption, name string, namespace string) *v1alpha
 
 // CreateOrPatch New Secret
 func createRepository(repository *v1alpha1.Repository, meta metav1.ObjectMeta) (*v1alpha1.Repository, error) {
-	repository, _, err := util.CreateOrPatchRepository(stashClient.StashV1alpha1(), meta, func(in *v1alpha1.Repository) *v1alpha1.Repository {
-		in.Spec = repository.Spec
-		return in
-	},
+	repository, _, err := util.CreateOrPatchRepository(
+		context.TODO(),
+		stashClient.StashV1alpha1(),
+		meta, func(in *v1alpha1.Repository) *v1alpha1.Repository {
+			in.Spec = repository.Spec
+			return in
+		},
+		metav1.PatchOptions{},
 	)
 	return repository, err
 }

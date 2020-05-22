@@ -16,6 +16,7 @@ limitations under the License.
 package pkg
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/appscode/go/log"
@@ -50,7 +51,7 @@ func NewCmdCopySecret() *cobra.Command {
 
 func ensureSecret(name string) error {
 	// get source Secret
-	secret, err := kubeClient.CoreV1().Secrets(srcNamespace).Get(name, metav1.GetOptions{})
+	secret, err := kubeClient.CoreV1().Secrets(srcNamespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -73,9 +74,9 @@ func ensureSecret(name string) error {
 }
 
 func createSecret(secret *core.Secret, meta metav1.ObjectMeta) (*core.Secret, error) {
-	secret, _, err := core_util.CreateOrPatchSecret(kubeClient, meta, func(in *core.Secret) *core.Secret {
+	secret, _, err := core_util.CreateOrPatchSecret(context.TODO(), kubeClient, meta, func(in *core.Secret) *core.Secret {
 		in.Data = secret.Data
 		return in
-	})
+	}, metav1.PatchOptions{})
 	return secret, err
 }

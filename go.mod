@@ -3,31 +3,31 @@ module stash.appscode.dev/cli
 go 1.12
 
 require (
-	github.com/appscode/go v0.0.0-20191119085241-0887d8ec2ecc
+	github.com/appscode/go v0.0.0-20200323182826-54e98e09185a
 	github.com/evanphx/json-patch v4.5.0+incompatible
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/json-iterator/go v1.1.8
-	github.com/kubernetes-csi/external-snapshotter v1.2.1-0.20191220180133-bba358438aee
+	github.com/kubernetes-csi/external-snapshotter/v2 v2.1.1-0.20200521091436-82ef6e66e992
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/cobra v0.0.5
-	k8s.io/api v0.0.0-20191122220107-b5267f2975e0
-	k8s.io/apimachinery v0.16.5-beta.1
-	k8s.io/cli-runtime v0.0.0-20191114110141-0a35778df828
+	k8s.io/api v0.18.3
+	k8s.io/apimachinery v0.18.3
+	k8s.io/cli-runtime v0.18.3
 	k8s.io/client-go v12.0.0+incompatible
-	k8s.io/component-base v0.0.0-20191114102325-35a9586014f7
-	k8s.io/kubectl v0.0.0-20191114113550-6123e1c827f7
-	kmodules.xyz/client-go v0.0.0-20200216080917-08714f78f885
-	kmodules.xyz/objectstore-api v0.0.0-20200214040336-fe8f39a4210d
-	kmodules.xyz/offshoot-api v0.0.0-20200216080509-45ee6418d1c1
-	kmodules.xyz/openshift v0.0.0-20191127145035-f6c48a90dbb7
-	stash.appscode.dev/apimachinery v0.9.0-rc.6
-	stash.appscode.dev/stash v0.9.0-rc.6
+	k8s.io/component-base v0.18.3
+	k8s.io/kubectl v0.18.3
+	kmodules.xyz/client-go v0.0.0-20200522120609-c6430d66212f
+	kmodules.xyz/objectstore-api v0.0.0-20200521103120-92080446e04d
+	kmodules.xyz/offshoot-api v0.0.0-20200521035628-e135bf07b226
+	kmodules.xyz/openshift v0.0.0-20200522123204-ce4abf5433c8
+	stash.appscode.dev/apimachinery v0.9.0-rc.6.0.20200522135619-e81205a3590e
+	stash.appscode.dev/stash v0.9.0-rc.6.0.20200522144808-7d851e537e77
 )
 
 replace (
-	cloud.google.com/go => cloud.google.com/go v0.38.0
+	bitbucket.org/ww/goautoneg => gomodules.xyz/goautoneg v0.0.0-20120707110453-a547fc61f48d
 	git.apache.org/thrift.git => github.com/apache/thrift v0.12.0
-	github.com/Azure/azure-sdk-for-go => github.com/Azure/azure-sdk-for-go v32.5.0+incompatible
+	github.com/Azure/azure-sdk-for-go => github.com/Azure/azure-sdk-for-go v35.0.0+incompatible
 	github.com/Azure/go-ansiterm => github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.0.0+incompatible
 	github.com/Azure/go-autorest/autorest => github.com/Azure/go-autorest/autorest v0.9.0
@@ -39,25 +39,11 @@ replace (
 	github.com/Azure/go-autorest/autorest/validation => github.com/Azure/go-autorest/autorest/validation v0.1.0
 	github.com/Azure/go-autorest/logger => github.com/Azure/go-autorest/logger v0.1.0
 	github.com/Azure/go-autorest/tracing => github.com/Azure/go-autorest/tracing v0.5.0
-	github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.2
-	google.golang.org/api => google.golang.org/api v0.6.1-0.20190607001116-5213b8090861
-	k8s.io/api => k8s.io/api v0.0.0-20191114100352-16d7abae0d2a
-	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.0.0-20191114105449-027877536833
-	k8s.io/apimachinery => github.com/kmodules/apimachinery v0.0.0-20191119091232-0553326db082
-	k8s.io/apiserver => github.com/kmodules/apiserver v0.0.0-20191119111000-36ac3646ae82
-	k8s.io/cli-runtime => k8s.io/cli-runtime v0.0.0-20191114110141-0a35778df828
-	k8s.io/client-go => k8s.io/client-go v0.0.0-20191114101535-6c5935290e33
-	k8s.io/cloud-provider => k8s.io/cloud-provider v0.0.0-20191114112024-4bbba8331835
-	k8s.io/component-base => k8s.io/component-base v0.0.0-20191114102325-35a9586014f7
-	k8s.io/klog => k8s.io/klog v0.4.0
-	k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.0.0-20191114103820-f023614fb9ea
-	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20190816220812-743ec37842bf
-	k8s.io/kubectl => k8s.io/kubectl v0.0.0-20191114113550-6123e1c827f7
-	k8s.io/kubernetes => github.com/kmodules/kubernetes v1.17.0-alpha.0.0.20191127022853-9d027e3886fd
-	k8s.io/metrics => k8s.io/metrics v0.0.0-20191114105837-a4a2842dc51b
-	k8s.io/repo-infra => k8s.io/repo-infra v0.0.0-20181204233714-00fe14e3d1a3
-	k8s.io/utils => k8s.io/utils v0.0.0-20190801114015-581e00157fb1
-	sigs.k8s.io/kustomize => sigs.k8s.io/kustomize v2.0.3+incompatible
-	sigs.k8s.io/structured-merge-diff => sigs.k8s.io/structured-merge-diff v0.0.0-20190817042607-6149e4549fca
-	sigs.k8s.io/yaml => sigs.k8s.io/yaml v1.1.0
+	github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.0.0
+	go.etcd.io/etcd => go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738
+	google.golang.org/grpc => google.golang.org/grpc v1.26.0
+	k8s.io/apimachinery => github.com/kmodules/apimachinery v0.19.0-alpha.0.0.20200520235721-10b58e57a423
+	k8s.io/apiserver => github.com/kmodules/apiserver v0.18.4-0.20200521000930-14c5f6df9625
+	k8s.io/client-go => k8s.io/client-go v0.18.3
+	k8s.io/kubernetes => github.com/kmodules/kubernetes v1.19.0-alpha.0.0.20200521033432-49d3646051ad
 )
