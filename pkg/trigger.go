@@ -16,6 +16,7 @@ limitations under the License.
 package pkg
 
 import (
+	"context"
 	"fmt"
 
 	"stash.appscode.dev/apimachinery/apis"
@@ -57,7 +58,7 @@ func NewCmdTriggerBackup(clientGetter genericclioptions.RESTClientGetter) *cobra
 			}
 
 			// get backupConfiguration
-			backupConfig, err := client.StashV1beta1().BackupConfigurations(namespace).Get(backupConfigName, metav1.GetOptions{})
+			backupConfig, err := client.StashV1beta1().BackupConfigurations(namespace).Get(context.TODO(), backupConfigName, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
@@ -96,7 +97,7 @@ func triggerBackup(backupConfig *v1beta1.BackupConfiguration, client cs.Interfac
 	core_util.EnsureOwnerReference(&backupSession.ObjectMeta, owner)
 
 	// don't use createOrPatch here
-	backupSession, err := client.StashV1beta1().BackupSessions(backupSession.Namespace).Create(backupSession)
+	backupSession, err := client.StashV1beta1().BackupSessions(backupSession.Namespace).Create(context.TODO(), backupSession, metav1.CreateOptions{})
 	if err != nil {
 		return backupSession, err
 	}

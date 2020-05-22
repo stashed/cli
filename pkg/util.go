@@ -16,6 +16,7 @@ limitations under the License.
 package pkg
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -23,8 +24,8 @@ import (
 
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/golang/glog"
-	vs_api "github.com/kubernetes-csi/external-snapshotter/pkg/apis/volumesnapshot/v1beta1"
-	vs "github.com/kubernetes-csi/external-snapshotter/pkg/client/clientset/versioned/typed/volumesnapshot/v1beta1"
+	vs_api "github.com/kubernetes-csi/external-snapshotter/v2/pkg/apis/volumesnapshot/v1beta1"
+	vs "github.com/kubernetes-csi/external-snapshotter/v2/pkg/client/clientset/versioned/typed/volumesnapshot/v1beta1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -38,29 +39,32 @@ const (
 	WaitTimeOut  = time.Minute * 10
 )
 
-func CreateOrPatchVolumeSnapshot(c vs.SnapshotV1beta1Interface, meta metav1.ObjectMeta, transform func(alert *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot) (*vs_api.VolumeSnapshot, kutil.VerbType, error) {
-	cur, err := c.VolumeSnapshots(meta.Namespace).Get(meta.Name, metav1.GetOptions{})
+func CreateOrPatchVolumeSnapshot(ctx context.Context, c vs.SnapshotV1beta1Interface, meta metav1.ObjectMeta, transform func(alert *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot, opts metav1.PatchOptions) (*vs_api.VolumeSnapshot, kutil.VerbType, error) {
+	cur, err := c.VolumeSnapshots(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 	if kerr.IsNotFound(err) {
 		glog.V(3).Infof("Creating VolumeSnapshot %s/%s.", meta.Namespace, meta.Name)
-		out, err := c.VolumeSnapshots(meta.Namespace).Create(transform(&vs_api.VolumeSnapshot{
+		out, err := c.VolumeSnapshots(meta.Namespace).Create(ctx, transform(&vs_api.VolumeSnapshot{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "VolumeSnapshot",
 				APIVersion: api.SchemeGroupVersion.String(),
 			},
 			ObjectMeta: meta,
-		}))
+		}), metav1.CreateOptions{
+			DryRun:       opts.DryRun,
+			FieldManager: opts.FieldManager,
+		})
 		return out, kutil.VerbCreated, err
 	} else if err != nil {
 		return nil, kutil.VerbUnchanged, err
 	}
-	return PatchVolumeSnapshot(c, cur, transform)
+	return PatchVolumeSnapshot(ctx, c, cur, transform, opts)
 }
 
-func PatchVolumeSnapshot(c vs.SnapshotV1beta1Interface, cur *vs_api.VolumeSnapshot, transform func(alert *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot) (*vs_api.VolumeSnapshot, kutil.VerbType, error) {
-	return PatchVolumesnapshotObject(c, cur, transform(cur.DeepCopy()))
+func PatchVolumeSnapshot(ctx context.Context, c vs.SnapshotV1beta1Interface, cur *vs_api.VolumeSnapshot, transform func(alert *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot, opts metav1.PatchOptions) (*vs_api.VolumeSnapshot, kutil.VerbType, error) {
+	return PatchVolumesnapshotObject(ctx, c, cur, transform(cur.DeepCopy()), opts)
 }
 
-func PatchVolumesnapshotObject(c vs.SnapshotV1beta1Interface, cur, mod *vs_api.VolumeSnapshot) (*vs_api.VolumeSnapshot, kutil.VerbType, error) {
+func PatchVolumesnapshotObject(ctx context.Context, c vs.SnapshotV1beta1Interface, cur, mod *vs_api.VolumeSnapshot, opts metav1.PatchOptions) (*vs_api.VolumeSnapshot, kutil.VerbType, error) {
 	curJson, err := json.Marshal(cur)
 	if err != nil {
 		return nil, kutil.VerbUnchanged, err
@@ -79,13 +83,13 @@ func PatchVolumesnapshotObject(c vs.SnapshotV1beta1Interface, cur, mod *vs_api.V
 		return cur, kutil.VerbUnchanged, nil
 	}
 	glog.V(3).Infof("Patching VolumeSnapshot %s/%s with %s.", cur.Namespace, cur.Name, string(patch))
-	out, err := c.VolumeSnapshots(cur.Namespace).Patch(cur.Name, types.MergePatchType, patch)
+	out, err := c.VolumeSnapshots(cur.Namespace).Patch(ctx, cur.Name, types.MergePatchType, patch, opts)
 	return out, kutil.VerbPatched, err
 }
 
 func WaitUntilBackupSessionCompleted(name string, namespace string) error {
 	return wait.PollImmediate(PullInterval, WaitTimeOut, func() (done bool, err error) {
-		backupSession, err := stashClient.StashV1beta1().BackupSessions(namespace).Get(name, metav1.GetOptions{})
+		backupSession, err := stashClient.StashV1beta1().BackupSessions(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 		if err == nil {
 			if backupSession.Status.Phase == v1beta1.BackupSessionSucceeded {
 				return true, nil
@@ -100,7 +104,7 @@ func WaitUntilBackupSessionCompleted(name string, namespace string) error {
 
 func WaitUntilRestoreSessionCompleted(name string, namespace string) error {
 	return wait.PollImmediate(PullInterval, WaitTimeOut, func() (done bool, err error) {
-		restoreSession, err := stashClient.StashV1beta1().RestoreSessions(namespace).Get(name, metav1.GetOptions{})
+		restoreSession, err := stashClient.StashV1beta1().RestoreSessions(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 		if err == nil {
 			if restoreSession.Status.Phase == v1beta1.RestoreSessionSucceeded {
 				return true, nil

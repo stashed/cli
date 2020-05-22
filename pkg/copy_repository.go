@@ -16,6 +16,7 @@ limitations under the License.
 package pkg
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/appscode/go/log"
@@ -48,7 +49,7 @@ func NewCmdCopyRepository() *cobra.Command {
 
 func ensureRepository(name string) error {
 	// get source Repository
-	repository, err := stashClient.StashV1alpha1().Repositories(srcNamespace).Get(name, metav1.GetOptions{})
+	repository, err := stashClient.StashV1alpha1().Repositories(srcNamespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}

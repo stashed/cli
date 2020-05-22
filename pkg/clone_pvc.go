@@ -16,6 +16,7 @@ limitations under the License.
 package pkg
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -52,7 +53,7 @@ func NewCmdClonePVC() *cobra.Command {
 
 			pvcName := args[0]
 
-			pvc, err := kubeClient.CoreV1().PersistentVolumeClaims(srcNamespace).Get(pvcName, metav1.GetOptions{})
+			pvc, err := kubeClient.CoreV1().PersistentVolumeClaims(srcNamespace).Get(context.TODO(), pvcName, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
@@ -148,7 +149,7 @@ func backupPVC(pvcName string, repoName string) error {
 	}
 	log.Infof("BackupSession has been succeeded.")
 	// delete the BackupConfiguration to stop taking backup
-	return stashClient.StashV1beta1().BackupConfigurations(srcNamespace).Delete(backupConfig.Name, &metav1.DeleteOptions{})
+	return stashClient.StashV1beta1().BackupConfigurations(srcNamespace).Delete(context.TODO(), backupConfig.Name, metav1.DeleteOptions{})
 }
 
 // create RestoreSession to create a new PVC in the destination namespace
@@ -193,13 +194,13 @@ func restorePVC(pvc *core.PersistentVolumeClaim, repoName string) error {
 	}
 	log.Infof("RestoreSession has been succeeded.")
 	// delete RestoreSession
-	return stashClient.StashV1beta1().RestoreSessions(dstNamespace).Delete(restoreSession.Name, &metav1.DeleteOptions{})
+	return stashClient.StashV1beta1().RestoreSessions(dstNamespace).Delete(context.TODO(), restoreSession.Name, metav1.DeleteOptions{})
 }
 
 func cleanupRepository(repoName string) error {
-	err := stashClient.StashV1alpha1().Repositories(srcNamespace).Delete(repoName, &metav1.DeleteOptions{})
+	err := stashClient.StashV1alpha1().Repositories(srcNamespace).Delete(context.TODO(), repoName, metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
-	return stashClient.StashV1alpha1().Repositories(dstNamespace).Delete(repoName, &metav1.DeleteOptions{})
+	return stashClient.StashV1alpha1().Repositories(dstNamespace).Delete(context.TODO(), repoName, metav1.DeleteOptions{})
 }

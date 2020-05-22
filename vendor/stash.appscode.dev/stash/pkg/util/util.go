@@ -17,6 +17,7 @@ limitations under the License.
 package util
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -30,12 +31,14 @@ import (
 	"github.com/pkg/errors"
 	core "k8s.io/api/core/v1"
 	crd_cs "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/reference"
 	core_util "kmodules.xyz/client-go/core/v1"
+	meta_util "kmodules.xyz/client-go/meta"
 	"kmodules.xyz/client-go/tools/pushgateway"
 	appcatalog_cs "kmodules.xyz/custom-resources/client/clientset/versioned"
 	store "kmodules.xyz/objectstore-api/api/v1"
@@ -110,7 +113,7 @@ func GetHostName(target interface{}) (string, error) {
 }
 
 func GetRestoreHostName(stashClient cs.Interface, restoreSessionName, namespace string) (string, error) {
-	restoreSession, err := stashClient.StashV1beta1().RestoreSessions(namespace).Get(restoreSessionName, metav1.GetOptions{})
+	restoreSession, err := stashClient.StashV1beta1().RestoreSessions(namespace).Get(context.TODO(), restoreSessionName, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -127,6 +130,10 @@ func BackupModel(kind string) string {
 	default:
 		return apis.ModelCronJob
 	}
+}
+
+func RestoreModel(kind string) string {
+	return BackupModel(kind)
 }
 
 func GetRepoNameAndSnapshotID(snapshotName string) (repoName, snapshotId string, err error) {
@@ -249,50 +256,54 @@ type WorkloadClients struct {
 	AppCatalogClient appcatalog_cs.Interface
 }
 
-func (wc *WorkloadClients) IsTargetExist(target api_v1beta1.TargetRef, namespace string) bool {
+func (wc *WorkloadClients) IsTargetExist(target api_v1beta1.TargetRef, namespace string) (bool, error) {
+	var err error
 	switch target.Kind {
 	case apis.KindDeployment:
-		if _, err := wc.KubeClient.AppsV1().Deployments(namespace).Get(target.Name, metav1.GetOptions{}); err == nil {
-			return true
+		if _, err = wc.KubeClient.AppsV1().Deployments(namespace).Get(context.TODO(), target.Name, metav1.GetOptions{}); err == nil {
+			return true, nil
 		}
 	case apis.KindDaemonSet:
-		if _, err := wc.KubeClient.AppsV1().DaemonSets(namespace).Get(target.Name, metav1.GetOptions{}); err == nil {
-			return true
+		if _, err = wc.KubeClient.AppsV1().DaemonSets(namespace).Get(context.TODO(), target.Name, metav1.GetOptions{}); err == nil {
+			return true, nil
 		}
 	case apis.KindStatefulSet:
-		if _, err := wc.KubeClient.AppsV1().StatefulSets(namespace).Get(target.Name, metav1.GetOptions{}); err == nil {
-			return true
+		if _, err = wc.KubeClient.AppsV1().StatefulSets(namespace).Get(context.TODO(), target.Name, metav1.GetOptions{}); err == nil {
+			return true, nil
 		}
 	case apis.KindReplicationController:
-		if _, err := wc.KubeClient.CoreV1().ReplicationControllers(namespace).Get(target.Name, metav1.GetOptions{}); err == nil {
-			return true
+		if _, err = wc.KubeClient.CoreV1().ReplicationControllers(namespace).Get(context.TODO(), target.Name, metav1.GetOptions{}); err == nil {
+			return true, nil
 		}
 	case apis.KindReplicaSet:
-		if _, err := wc.KubeClient.AppsV1().ReplicaSets(namespace).Get(target.Name, metav1.GetOptions{}); err == nil {
-			return true
+		if _, err = wc.KubeClient.AppsV1().ReplicaSets(namespace).Get(context.TODO(), target.Name, metav1.GetOptions{}); err == nil {
+			return true, nil
 		}
 	case apis.KindDeploymentConfig:
 		if wc.OcClient != nil {
-			if _, err := wc.OcClient.AppsV1().DeploymentConfigs(namespace).Get(target.Name, metav1.GetOptions{}); err == nil {
-				return true
+			if _, err = wc.OcClient.AppsV1().DeploymentConfigs(namespace).Get(context.TODO(), target.Name, metav1.GetOptions{}); err == nil {
+				return true, nil
 			}
 		}
 	case apis.KindPersistentVolumeClaim:
-		if _, err := wc.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(target.Name, metav1.GetOptions{}); err == nil {
-			return true
+		if _, err = wc.KubeClient.CoreV1().PersistentVolumeClaims(namespace).Get(context.TODO(), target.Name, metav1.GetOptions{}); err == nil {
+			return true, nil
 		}
 	case apis.KindAppBinding:
-		if _, err := wc.AppCatalogClient.AppcatalogV1alpha1().AppBindings(namespace).Get(target.Name, metav1.GetOptions{}); err == nil {
-			return true
+		if _, err = wc.AppCatalogClient.AppcatalogV1alpha1().AppBindings(namespace).Get(context.TODO(), target.Name, metav1.GetOptions{}); err == nil {
+			return true, nil
 		}
 	}
-	return false
+	if err != nil && !kerr.IsNotFound(err) {
+		return false, err
+	}
+	return false, nil
 }
 
 // CreateBatchPVC creates a batch of PVCs whose definitions has been provided in pvcList argument
 func CreateBatchPVC(kubeClient kubernetes.Interface, namespace string, pvcList []core.PersistentVolumeClaim) error {
 	for _, pvc := range pvcList {
-		_, err := kubeClient.CoreV1().PersistentVolumeClaims(namespace).Create(&pvc)
+		_, err := kubeClient.CoreV1().PersistentVolumeClaims(namespace).Create(context.TODO(), &pvc, metav1.CreateOptions{})
 		if err != nil {
 			return err
 		}
@@ -356,26 +367,25 @@ func GetWorkloadReference(w *wapi.Workload) (*core.ObjectReference, error) {
 }
 
 // UpsertInterimVolume create a PVC according to InterimVolumeTemplate and attach it to the respective pod
-func UpsertInterimVolume(kubeClient kubernetes.Interface, podSpec core.PodSpec, interimVolumeTemplate *core.PersistentVolumeClaim, namespace string, owner *metav1.OwnerReference) (core.PodSpec, error) {
+func UpsertInterimVolume(kc kubernetes.Interface, podSpec core.PodSpec, interimVolumeTemplate *core.PersistentVolumeClaim, namespace string, owner *metav1.OwnerReference) (core.PodSpec, error) {
 	// if no InterimVolumeTemplate is provided then nothing to do
 	if interimVolumeTemplate == nil {
 		return podSpec, nil
 	}
 
-	// Use BackupConfiguration/RestoreSession name as prefix of the interim volume
+	// Use owner name as prefix of the interim volume
 	pvcMeta := metav1.ObjectMeta{
-		Name:      fmt.Sprintf("%s-%s", interimVolumeTemplate.Name, owner.Name),
+		Name:      meta_util.ValidNameWithPrefix(owner.Name, interimVolumeTemplate.Name),
 		Namespace: namespace,
 	}
 
 	// create the interim pvc
-	createdPVC, _, err := core_util.CreateOrPatchPVC(kubeClient, pvcMeta, func(in *core.PersistentVolumeClaim) *core.PersistentVolumeClaim {
-		// Set BackupConfiguration/RestoreSession as owner of the PVC so that it get deleted when the respective
-		// BackupConfiguration/RestoreSession is deleted.
+	createdPVC, _, err := core_util.CreateOrPatchPVC(context.TODO(), kc, pvcMeta, func(in *core.PersistentVolumeClaim) *core.PersistentVolumeClaim {
+		// Set BackupSession/RestoreSession as owner of the PVC so that it get deleted when the respective owner is deleted.
 		core_util.EnsureOwnerReference(&in.ObjectMeta, owner)
 		in.Spec = interimVolumeTemplate.Spec
 		return in
-	})
+	}, metav1.PatchOptions{})
 	if err != nil {
 		return podSpec, err
 	}
