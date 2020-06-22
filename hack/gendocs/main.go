@@ -89,15 +89,20 @@ func main() {
 	}
 
 	filePrepender := func(filename string) string {
-		name := filepath.Base(filename)
-		base := strings.TrimSuffix(name, path.Ext(name))
+		filename = filepath.Base(filename)
+		base := strings.TrimSuffix(filename, path.Ext(filename))
+		name := strings.Title(strings.Replace(base, "_", " ", -1))
+		parts := strings.Split(name, " ")
+		if len(parts) > 1 {
+			name = strings.Join(parts[1:], " ")
+		}
 		data := struct {
 			ID      string
 			Name    string
 			RootCmd bool
 		}{
 			strings.Replace(base, "_", "-", -1),
-			strings.Title(strings.Replace(base, "_", " ", -1)),
+			name,
 			!strings.ContainsRune(base, '_'),
 		}
 		var buf bytes.Buffer
