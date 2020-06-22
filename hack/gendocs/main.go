@@ -34,43 +34,50 @@ import (
 
 var (
 	tplFrontMatter = template.Must(template.New("index").Parse(`---
-title: Stash kubectl plugin
-description: Stash kubectl plugin Reference
+title: Reference | Stash CLI
+description: Stash CLI Reference
 menu:
-  product_stash_{{ "{{.version}}" }}:
-    identifier: stash-cli-references-{{ "{{ .subproject_version }}" }}
-    name: {{ "{{ .subproject_version }}" }}
-    parent: stash-cli-references
-    weight: 20
-menu_name: product_stash_{{ "{{.version}}" }}
+  docs_{{ "{{ .version }}" }}:
+    identifier: reference-cli
+    name: Stash CLI
+    weight: 30
+    parent: reference
+menu_name: docs_{{ "{{ .version }}" }}
 ---
 `))
 
 	_ = template.Must(tplFrontMatter.New("cmd").Parse(`---
 title: {{ .Name }}
 menu:
-  product_stash_{{ "{{.version}}" }}:
-    identifier: {{ .ID }}-{{ "{{ .subproject_version }}" }}
+  docs_{{ "{{ .version }}" }}:
+    identifier: {{ .ID }}
     name: {{ .Name }}
-    parent: stash-cli-references-{{ "{{ .subproject_version }}" }}
+    parent: reference-cli
 {{- if .RootCmd }}
     weight: 0
-{{- end }}
-product_name: stash
-section_menu_id: guides
-menu_name: product_stash_{{ "{{.version}}" }}
-{{- if .RootCmd }}
-aliases:
-  - /products/stash/{{ "{{.version}}" }}/guides/latest/cli/reference/{{ "{{ .subproject_version }}" }}
 {{ end }}
+menu_name: docs_{{ "{{ .version }}" }}
+section_menu_id: reference
+{{- if .RootCmd }}
+url: /docs/{{ "{{ .version }}" }}/reference/cli/
+aliases:
+- /docs/{{ "{{ .version }}" }}/reference/cli/{{ .ID }}/
+{{- end }}
 ---
 `))
 )
 
+func docsDir() string {
+	if dir, ok := os.LookupEnv("DOCS_ROOT"); ok {
+		return dir
+	}
+	return runtime.GOPath() + "/src/stash.appscode.dev/docs"
+}
+
 // ref: https://github.com/spf13/cobra/blob/master/doc/md_docs.md
 func main() {
 	rootCmd := pkg.NewRootCmd()
-	dir := runtime.GOPath() + "/src/stash.appscode.dev/cli/docs/"
+	dir := filepath.Join(docsDir(), "docs", "reference", "cli")
 	fmt.Printf("Generating cli markdown tree in: %v\n", dir)
 	err := os.RemoveAll(dir)
 	if err != nil {
@@ -82,20 +89,15 @@ func main() {
 	}
 
 	filePrepender := func(filename string) string {
-		filename = filepath.Base(filename)
-		base := strings.TrimSuffix(filename, path.Ext(filename))
-		name := strings.Title(strings.Replace(base, "_", " ", -1))
-		parts := strings.Split(name, " ")
-		if len(parts) > 1 {
-			name = strings.Join(parts[1:], " ")
-		}
+		name := filepath.Base(filename)
+		base := strings.TrimSuffix(name, path.Ext(name))
 		data := struct {
 			ID      string
 			Name    string
 			RootCmd bool
 		}{
 			strings.Replace(base, "_", "-", -1),
-			name,
+			strings.Title(strings.Replace(base, "_", " ", -1)),
 			!strings.ContainsRune(base, '_'),
 		}
 		var buf bytes.Buffer
@@ -106,7 +108,7 @@ func main() {
 	}
 
 	linkHandler := func(name string) string {
-		return `/docs/guides/latest/cli/reference/{{< param "info.subproject_version" >}}/` + name
+		return "/docs/reference/cli/" + name
 	}
 	err = doc.GenMarkdownTreeCustom(rootCmd, dir, filePrepender, linkHandler)
 	if err != nil {
@@ -118,7 +120,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	err = tplFrontMatter.ExecuteTemplate(f, "index", struct{ Version string }{""})
+	err = tplFrontMatter.ExecuteTemplate(f, "index", struct{}{})
 	if err != nil {
 		log.Fatalln(err)
 	}
