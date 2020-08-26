@@ -107,10 +107,10 @@ func WaitUntilRestoreSessionCompleted(name string, namespace string) error {
 	return wait.PollImmediate(PullInterval, WaitTimeOut, func() (done bool, err error) {
 		restoreSession, err := stashClient.StashV1beta1().RestoreSessions(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 		if err == nil {
-			if restoreSession.Status.Phase == v1beta1.RestoreSessionSucceeded {
+			if restoreSession.Status.Phase == v1beta1.RestoreSucceeded {
 				return true, nil
 			}
-			if restoreSession.Status.Phase == v1beta1.RestoreSessionFailed {
+			if restoreSession.Status.Phase == v1beta1.RestoreFailed {
 				return true, fmt.Errorf("RestoreSession has been failed")
 			}
 		}

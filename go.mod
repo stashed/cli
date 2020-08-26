@@ -8,10 +8,10 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/json-iterator/go v1.1.8
 	github.com/kubernetes-csi/external-snapshotter/v2 v2.1.1-0.20200521091436-82ef6e66e992
-	github.com/pkg/errors v0.8.1
+	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v0.0.5
 	k8s.io/api v0.18.3
-	k8s.io/apimachinery v0.18.3
+	k8s.io/apimachinery v0.18.8
 	k8s.io/cli-runtime v0.18.3
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/component-base v0.18.3
@@ -20,8 +20,8 @@ require (
 	kmodules.xyz/objectstore-api v0.0.0-20200521103120-92080446e04d
 	kmodules.xyz/offshoot-api v0.0.0-20200521035628-e135bf07b226
 	kmodules.xyz/openshift v0.0.0-20200522123204-ce4abf5433c8
-	stash.appscode.dev/apimachinery v0.10.0-beta.1
-	stash.appscode.dev/stash v0.10.0-beta.1
+	stash.appscode.dev/apimachinery v0.10.0-beta.1.0.20200824083420-254ee64edd3b
+	stash.appscode.dev/stash v0.10.0-beta.1.0.20200822080632-48e5c87e68ba
 )
 
 replace bitbucket.org/ww/goautoneg => gomodules.xyz/goautoneg v0.0.0-20120707110453-a547fc61f48d

@@ -53,6 +53,7 @@ type restoreSessionOption struct {
 	repository   string
 	driver       string
 	replica      int32
+	alias        string
 
 	rule                v1beta1.Rule
 	volumeClaimTemplate volumeclaimTemplate
@@ -104,6 +105,7 @@ func NewCmdCreateRestoreSession() *cobra.Command {
 	cmd.Flags().StringVar(&restoreSessionOpt.driver, "driver", restoreSessionOpt.driver, "Driver indicates the mechanism used to backup (i.e. VolumeSnapshotter, Restic)")
 	cmd.Flags().StringVar(&restoreSessionOpt.task, "task", restoreSessionOpt.task, "Name of the Task")
 	cmd.Flags().Int32Var(&restoreSessionOpt.replica, "replica", restoreSessionOpt.replica, "Replica specifies the number of replicas whose data should be backed up")
+	cmd.Flags().StringVar(&restoreSessionOpt.alias, "alias", restoreSessionOpt.alias, "Host identifier of the backed up data. It must be same as the alias used during backup")
 
 	cmd.Flags().StringSliceVar(&restoreSessionOpt.volumeMounts, "volume-mounts", restoreSessionOpt.volumeMounts, "List of volumes and their mountPaths")
 	cmd.Flags().StringSliceVar(&restoreSessionOpt.rule.Paths, "paths", restoreSessionOpt.rule.Paths, "List of paths to backup")
@@ -130,10 +132,9 @@ func (opt restoreSessionOption) newRestoreSession(name string, namespace string)
 		restoreSession.Spec.Driver = v1beta1.Snapshotter(opt.driver)
 	} else {
 		restoreSession.Spec = v1beta1.RestoreSessionSpec{
-			Task:       v1beta1.TaskRef{Name: opt.task},
-			Rules:      append(make([]v1beta1.Rule, 0), opt.rule),
 			Repository: core.LocalObjectReference{Name: opt.repository},
 		}
+		restoreSession.Spec.Task = v1beta1.TaskRef{Name: opt.task}
 	}
 
 	err := opt.setRestoreTarget(restoreSession)
@@ -187,6 +188,8 @@ func (opt restoreSessionOption) setRestoreTarget(restoreSession *v1beta1.Restore
 			}
 			restoreSession.Spec.Target.VolumeMounts = volumeMounts
 		}
+		restoreSession.Spec.Target.Alias = opt.alias
+		restoreSession.Spec.Target.Rules = []v1beta1.Rule{opt.rule}
 	}
 	if opt.replica > 0 {
 		restoreSession.Spec.Target.Replicas = &opt.replica
@@ -209,7 +212,7 @@ func (opt restoreSessionOption) getRestoredPVCTemplates() []ofst.PersistentVolum
 	}
 	if opt.volumeClaimTemplate.size != "" {
 		pvcs[0].Spec.Resources.Requests = core.ResourceList{
-			core.ResourceName(core.ResourceStorage): resource.MustParse(opt.volumeClaimTemplate.size),
+			core.ResourceStorage: resource.MustParse(opt.volumeClaimTemplate.size),
 		}
 	}
 	return pvcs
