@@ -19,6 +19,7 @@ package docker
 import (
 	"path/filepath"
 
+	"stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 	"stash.appscode.dev/apimachinery/pkg/restic"
 
 	"github.com/appscode/go/log"
@@ -47,7 +48,7 @@ func NewDownloadCmd() *cobra.Command {
 				return err
 			}
 			// run restore
-			if _, err = resticWrapper.RunRestore(*restoreOpt); err != nil {
+			if _, err = resticWrapper.RunRestore(*restoreOpt, v1beta1.TargetRef{}); err != nil {
 				return err
 			}
 			log.Infof("Restore completed")
