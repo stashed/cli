@@ -16,7 +16,7 @@ require (
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/component-base v0.18.3
 	k8s.io/kubectl v0.18.3
-	kmodules.xyz/client-go v0.0.0-20200901064306-0f1faee534af
+	kmodules.xyz/client-go v0.0.0-20200903033732-dab39b86c81b
 	kmodules.xyz/objectstore-api v0.0.0-20200521103120-92080446e04d
 	kmodules.xyz/offshoot-api v0.0.0-20200521035628-e135bf07b226
 	kmodules.xyz/openshift v0.0.0-20200522123204-ce4abf5433c8
