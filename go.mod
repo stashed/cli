@@ -11,7 +11,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v0.0.5
 	k8s.io/api v0.18.3
-	k8s.io/apimachinery v0.18.8
+	k8s.io/apimachinery v0.18.3
 	k8s.io/cli-runtime v0.18.3
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/component-base v0.18.3
