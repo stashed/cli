@@ -39,15 +39,12 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
+            bin/kubectl-stash-darwin-amd64
             bin/kubectl-stash-linux-amd64
             bin/kubectl-stash-linux-arm
             bin/kubectl-stash-linux-arm64
             bin/kubectl-stash-windows-amd64.exe
-            bin/kubectl-stash-darwin-amd64
+            bin/kubectl-stash.zip
+            bin/kubectl-stash-sha256sum.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/upload-artifact@v2
-        with:
-          name: stash-cli-binaries
-          path: bin

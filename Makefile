@@ -88,6 +88,9 @@ build-%:
 	    GOARCH=$(lastword $(subst _, ,$*))
 
 all-build: $(addprefix build-, $(subst /,_, $(BIN_PLATFORMS)))
+	@cd bin; \
+	zip $(BIN).zip $(addprefix $(BIN)-, $(subst /,-, $(patsubst windows/%,windows/%.exe,$(BIN_PLATFORMS)))); \
+	sha256sum $(BIN).zip | cut -d' ' -f1 > $(BIN)-sha256sum.txt
 
 version:
 	@echo ::set-output name=version::$(VERSION)
