@@ -32,19 +32,18 @@ jobs:
         env:
           APPSCODE_ENV: prod
         run: |
-          make release
+          make release COMPRESS=yes
 
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            bin/kubectl-stash-darwin-amd64
-            bin/kubectl-stash-linux-amd64
-            bin/kubectl-stash-linux-arm
-            bin/kubectl-stash-linux-arm64
-            bin/kubectl-stash-windows-amd64.exe
-            bin/kubectl-stash.zip
-            bin/kubectl-stash-sha256sum.txt
+            bin/kubectl-stash-darwin-amd64.tar.gz
+            bin/kubectl-stash-linux-amd64.tar.gz
+            bin/kubectl-stash-linux-arm.tar.gz
+            bin/kubectl-stash-linux-arm64.tar.gz
+            bin/kubectl-stash-windows-amd64.zip
+            bin/kubectl-stash-checksums.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
