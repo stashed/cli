@@ -47,3 +47,30 @@ jobs:
             bin/kubectl-stash-checksums.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install GitHub CLI
+        run: |
+          curl -fsSL https://github.com/github/hub/raw/master/script/get | bash -s 2.14.1
+          sudo mv bin/hub /usr/local/bin
+
+      - name: Clone krew-index repository
+        env:
+          GITHUB_USER: 1gtm
+          GITHUB_TOKEN: ${{ secrets.LGTM_GITHUB_TOKEN }}
+        run: |
+          KREW_INDEX_REPOSITORY=github.com/appscode/krew-index
+          url="https://${GITHUB_USER}:${GITHUB_TOKEN}@${KREW_INDEX_REPOSITORY}.git"
+          cd $RUNNER_WORKSPACE
+          git clone $url
+          cd $(basename $KREW_INDEX_REPOSITORY)
+          git config user.name "${GITHUB_USER}"
+          git config user.email "${GITHUB_USER}@appscode.com"
+
+      - name: Publish krew manifest
+        env:
+          GITHUB_USER: 1gtm
+          GITHUB_TOKEN: ${{ secrets.LGTM_GITHUB_TOKEN }}
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          cd $RUNNER_WORKSPACE/krew-index
+          ./hack/scripts/open-pr.sh $GITHUB_WORKSPACE kubectl-stash
