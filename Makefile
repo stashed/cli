@@ -298,3 +298,18 @@ release:
 .PHONY: clean
 clean:
 	rm -rf .go bin
+
+.PHONY: gen-krew-manifest
+gen-krew-manifest:
+	@if [ "$(version_strategy)" != "tag" ]; then       \
+		echo "apply tag to generate krew manifest.";   \
+		exit 1;                                        \
+	fi
+	@sed                                               \
+      -e 's|{VERSION}|$(VERSION)|g'                                                                       \
+      -e 's|{SHA256SUM_DARWIN_AMD64}|$(shell sha256sum bin/$(BIN)-darwin-amd64.tar.gz | cut -d' ' -f1)|g' \
+      -e 's|{SHA256SUM_LINUX_AMD64}|$(shell sha256sum bin/$(BIN)-linux-amd64.tar.gz | cut -d' ' -f1)|g'   \
+      -e 's|{SHA256SUM_LINUX_ARM}|$(shell sha256sum bin/$(BIN)-linux-arm.tar.gz | cut -d' ' -f1)|g'       \
+      -e 's|{SHA256SUM_LINUX_ARM64}|$(shell sha256sum bin/$(BIN)-linux-arm64.tar.gz | cut -d' ' -f1)|g'   \
+      -e 's|{SHA256SUM_WINDOWS_AMD64}|$(shell sha256sum bin/$(BIN)-windows-amd64.zip | cut -d' ' -f1)|g'  \
+      hack/krew/plugin.yaml
