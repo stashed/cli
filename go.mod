@@ -16,7 +16,7 @@ require (
 	k8s.io/client-go v0.18.9
 	k8s.io/component-base v0.18.9
 	k8s.io/kubectl v0.18.9
-	kmodules.xyz/client-go v0.0.0-20201011221802-3180ab67d845
+	kmodules.xyz/client-go v0.0.0-20201013083546-b17c1e15f1a3
 	kmodules.xyz/custom-resources v0.0.0-20201008012351-6d8090f759d4 // indirect
 	kmodules.xyz/objectstore-api v0.0.0-20200922210707-59bab27e5d41
 	kmodules.xyz/offshoot-api v0.0.0-20200922211229-36acc531abab
