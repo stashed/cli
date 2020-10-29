@@ -3,44 +3,25 @@ module stash.appscode.dev/cli
 go 1.12
 
 require (
-	cloud.google.com/go v0.56.0 // indirect
-	github.com/Azure/go-autorest/autorest v0.10.2 // indirect
-	github.com/Azure/go-autorest/autorest/adal v0.8.3 // indirect
 	github.com/appscode/go v0.0.0-20200928211031-cc0c23082d91
-	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/evanphx/json-patch v4.9.0+incompatible
-	github.com/go-openapi/swag v0.19.9 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	github.com/golang/groupcache v0.0.0-20191227052852-215e87163ea7 // indirect
-	github.com/googleapis/gnostic v0.4.0 // indirect
-	github.com/gophercloud/gophercloud v0.11.0 // indirect
-	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/json-iterator/go v1.1.10
-	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/kr/pretty v0.2.0 // indirect
 	github.com/kubernetes-csi/external-snapshotter/v2 v2.1.1-0.20200521091436-82ef6e66e992
-	github.com/mailru/easyjson v0.7.1 // indirect
-	github.com/mattn/go-colorable v0.1.6 // indirect
-	github.com/mitchellh/mapstructure v1.2.2 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.0.0
-	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
-	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1 // indirect
-	google.golang.org/appengine v1.6.6 // indirect
-	gopkg.in/yaml.v2 v2.3.0 // indirect
 	k8s.io/api v0.18.9
 	k8s.io/apimachinery v0.18.9
 	k8s.io/cli-runtime v0.18.9
 	k8s.io/client-go v0.18.9
 	k8s.io/component-base v0.18.9
 	k8s.io/kubectl v0.18.9
-	k8s.io/utils v0.0.0-20200414100711-2df71ebbae66 // indirect
 	kmodules.xyz/client-go v0.0.0-20201027113349-01a6d453d836
 	kmodules.xyz/objectstore-api v0.0.0-20200922210707-59bab27e5d41
 	kmodules.xyz/offshoot-api v0.0.0-20201027212804-f5e6dc573558
 	kmodules.xyz/openshift v0.0.0-20200922211657-1ece16d36c18
-	stash.appscode.dev/apimachinery v0.11.3
-	stash.appscode.dev/stash v0.11.3
+	stash.appscode.dev/apimachinery v0.11.4
+	stash.appscode.dev/stash v0.11.4
 )
 
 // release-1.18
