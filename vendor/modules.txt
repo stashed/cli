@@ -619,7 +619,7 @@ sigs.k8s.io/kustomize/pkg/types
 sigs.k8s.io/structured-merge-diff/v3/value
 # sigs.k8s.io/yaml v1.2.0
 sigs.k8s.io/yaml
-# stash.appscode.dev/apimachinery v0.11.4
+# stash.appscode.dev/apimachinery v0.11.5
 stash.appscode.dev/apimachinery/apis
 stash.appscode.dev/apimachinery/apis/repositories
 stash.appscode.dev/apimachinery/apis/repositories/v1alpha1
@@ -642,7 +642,7 @@ stash.appscode.dev/apimachinery/client/listers/stash/v1beta1
 stash.appscode.dev/apimachinery/crds
 stash.appscode.dev/apimachinery/pkg/docker
 stash.appscode.dev/apimachinery/pkg/restic
-# stash.appscode.dev/stash v0.11.4
+# stash.appscode.dev/stash v0.11.5
 stash.appscode.dev/stash/pkg/cli
 stash.appscode.dev/stash/pkg/registry/snapshot
 stash.appscode.dev/stash/pkg/util
