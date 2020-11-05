@@ -20,8 +20,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/appscode/go/log"
 	"github.com/spf13/cobra"
+	"gomodules.xyz/x/log"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	core_util "kmodules.xyz/client-go/core/v1"

@@ -28,8 +28,8 @@ import (
 
 	"stash.appscode.dev/cli/pkg"
 
-	"github.com/appscode/go/runtime"
 	"github.com/spf13/cobra/doc"
+	"gomodules.xyz/runtime"
 )
 
 var (

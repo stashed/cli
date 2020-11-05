@@ -29,9 +29,9 @@ import (
 	"stash.appscode.dev/cli/pkg/docker"
 	"stash.appscode.dev/stash/pkg/util"
 
-	"github.com/appscode/go/log"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"gomodules.xyz/x/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"

@@ -20,11 +20,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/appscode/go/log"
 	jsoniter "github.com/json-iterator/go"
 	vs_api "github.com/kubernetes-csi/external-snapshotter/v2/pkg/apis/volumesnapshot/v1beta1"
 	vs_v1alpha1 "github.com/kubernetes-csi/external-snapshotter/v2/pkg/apis/volumesnapshot/v1beta1"
 	"github.com/spf13/cobra"
+	"gomodules.xyz/x/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

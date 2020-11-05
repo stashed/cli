@@ -22,8 +22,8 @@ import (
 	"stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 	"stash.appscode.dev/apimachinery/pkg/restic"
 
-	"github.com/appscode/go/log"
 	"github.com/spf13/cobra"
+	"gomodules.xyz/x/log"
 )
 
 // RemoveIt!

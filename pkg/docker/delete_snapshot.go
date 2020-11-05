@@ -21,8 +21,8 @@ import (
 
 	"stash.appscode.dev/apimachinery/pkg/restic"
 
-	"github.com/appscode/go/log"
 	"github.com/spf13/cobra"
+	"gomodules.xyz/x/log"
 )
 
 func NewDeleteSnapshotCmd() *cobra.Command {

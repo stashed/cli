@@ -25,10 +25,10 @@ import (
 	v1beta1_util "stash.appscode.dev/apimachinery/client/clientset/versioned/typed/stash/v1beta1/util"
 	"stash.appscode.dev/stash/pkg/util"
 
-	"github.com/appscode/go/log"
-	"github.com/appscode/go/types"
 	vs "github.com/kubernetes-csi/external-snapshotter/v2/pkg/apis/volumesnapshot/v1beta1"
 	"github.com/spf13/cobra"
+	"gomodules.xyz/pointer"
+	"gomodules.xyz/x/log"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -168,7 +168,7 @@ func (opt restoreSessionOption) setRestoreTarget(restoreSession *v1beta1.Restore
 		restoreSession.Spec.Target.VolumeClaimTemplates[0].Spec.DataSource = &core.TypedLocalObjectReference{
 			Kind:     "VolumeSnapshot",
 			Name:     opt.volumeClaimTemplate.dataSource,
-			APIGroup: types.StringP(vs.GroupName),
+			APIGroup: pointer.StringP(vs.GroupName),
 		}
 	} else {
 		if opt.targetRef.Kind != "" && util.BackupModel(opt.targetRef.Kind) == apis.ModelSidecar {
