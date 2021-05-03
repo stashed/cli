@@ -616,7 +616,7 @@ k8s.io/component-base/version
 k8s.io/klog
 # k8s.io/klog/v2 v2.8.0
 k8s.io/klog/v2
-# k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7 => k8s.io/kube-openapi v0.0.0-20201113171705-d219536bb9fd
+# k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7 => k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7
 k8s.io/kube-openapi/pkg/common
 k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/util/proto/validation
@@ -638,7 +638,7 @@ k8s.io/utils/integer
 k8s.io/utils/io
 k8s.io/utils/pointer
 k8s.io/utils/trace
-# kmodules.xyz/client-go v0.0.0-20210429233600-944c5ec810d6
+# kmodules.xyz/client-go v0.0.0-20210502215034-b73197efff3f
 kmodules.xyz/client-go
 kmodules.xyz/client-go/api/v1
 kmodules.xyz/client-go/apiextensions
@@ -654,36 +654,33 @@ kmodules.xyz/client-go/tools/clientcmd
 kmodules.xyz/client-go/tools/clusterid
 kmodules.xyz/client-go/tools/exec
 kmodules.xyz/client-go/tools/pushgateway
-# kmodules.xyz/custom-resources v0.0.0-20210427204948-b63e86e6b5f6
+# kmodules.xyz/custom-resources v0.0.0-20210222235834-b3f8dc56b6a3
 kmodules.xyz/custom-resources/apis/appcatalog
 kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1
-kmodules.xyz/custom-resources/apis/metrics
-kmodules.xyz/custom-resources/apis/metrics/v1alpha1
 kmodules.xyz/custom-resources/client/clientset/versioned
 kmodules.xyz/custom-resources/client/clientset/versioned/scheme
 kmodules.xyz/custom-resources/client/clientset/versioned/typed/appcatalog/v1alpha1
-kmodules.xyz/custom-resources/client/clientset/versioned/typed/metrics/v1alpha1
 kmodules.xyz/custom-resources/crds
-# kmodules.xyz/objectstore-api v0.0.0-20210427073544-4d4b3fd133fe
+# kmodules.xyz/objectstore-api v0.0.0-20210502215550-f5d0292dff17
 kmodules.xyz/objectstore-api/api/v1
-# kmodules.xyz/offshoot-api v0.0.0-20210427074508-992086875c1e
+# kmodules.xyz/offshoot-api v0.0.0-20210502215616-234104e66819
 kmodules.xyz/offshoot-api/api/v1
 kmodules.xyz/offshoot-api/util
-# kmodules.xyz/openshift v0.0.0-20210427090503-74b639d9fc30
+# kmodules.xyz/openshift v0.0.0-20210502215728-d1a9afb41893
 kmodules.xyz/openshift/apis/apps/v1
 kmodules.xyz/openshift/apis/security/v1
 kmodules.xyz/openshift/client/clientset/versioned
 kmodules.xyz/openshift/client/clientset/versioned/scheme
 kmodules.xyz/openshift/client/clientset/versioned/typed/apps/v1
 kmodules.xyz/openshift/client/clientset/versioned/typed/security/v1
-# kmodules.xyz/prober v0.0.0-20210427091238-7208ea3e0584
+# kmodules.xyz/prober v0.0.0-20210220081020-e3067cdcc914
 kmodules.xyz/prober/api
 kmodules.xyz/prober/api/v1
 kmodules.xyz/prober/probe
 kmodules.xyz/prober/probe/exec
 kmodules.xyz/prober/probe/http
 kmodules.xyz/prober/probe/tcp
-# kmodules.xyz/webhook-runtime v0.0.0-20210427104229-ea46f3f21bbc
+# kmodules.xyz/webhook-runtime v0.0.0-20210220081624-75da115ae653
 kmodules.xyz/webhook-runtime/apis/workload/v1
 # sigs.k8s.io/kustomize/api v0.8.5
 sigs.k8s.io/kustomize/api/builtins
