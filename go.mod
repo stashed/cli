@@ -18,13 +18,11 @@ require (
 	k8s.io/client-go v0.21.0
 	k8s.io/component-base v0.21.0
 	k8s.io/kubectl v0.21.0
-	kmodules.xyz/client-go v0.0.0-20210502215034-b73197efff3f
-	kmodules.xyz/custom-resources v0.0.0-20210502220303-115fa584b8d1 // indirect
-	kmodules.xyz/objectstore-api v0.0.0-20210502215550-f5d0292dff17
-	kmodules.xyz/offshoot-api v0.0.0-20210502215616-234104e66819
-	kmodules.xyz/openshift v0.0.0-20210502215728-d1a9afb41893
-	kmodules.xyz/prober v0.0.0-20210502215750-20bdd29d9c85 // indirect
-	kmodules.xyz/webhook-runtime v0.0.0-20210502220538-4afeb79dbc7e // indirect
+	k8s.io/utils v0.0.0-20210111153108-fddb29f9d009 // indirect
+	kmodules.xyz/client-go v0.0.0-20210503064222-c8c59295a3a5
+	kmodules.xyz/objectstore-api v0.0.0-20210503064721-4fadb098d198
+	kmodules.xyz/offshoot-api v0.0.0-20210503065102-3250bbdedc8f
+	kmodules.xyz/openshift v0.0.0-20210503064748-50cdbee251d7
 	stash.appscode.dev/apimachinery v0.12.3
 	stash.appscode.dev/stash v0.12.3
 )
