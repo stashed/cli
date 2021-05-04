@@ -26,9 +26,9 @@ import (
 	v1beta1_util "stash.appscode.dev/apimachinery/client/clientset/versioned/typed/stash/v1beta1/util"
 
 	"github.com/spf13/cobra"
-	"gomodules.xyz/x/log"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog/v2"
 	"k8s.io/kubectl/pkg/util/templates"
 )
 
@@ -79,7 +79,7 @@ func NewCmdCreateBackupConfiguration() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			log.Infof("BackupConfiguration %s/%s has been created successfully.", backupConfig.Namespace, backupConfig.Name)
+			klog.Infof("BackupConfiguration %s/%s has been created successfully.", backupConfig.Namespace, backupConfig.Name)
 			return err
 
 		},

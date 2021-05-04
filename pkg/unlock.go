@@ -31,10 +31,10 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"gomodules.xyz/x/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog/v2"
 )
 
 func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
@@ -132,7 +132,7 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 			if err = runCmdViaDocker(*localDirs, "unlock", extraAgrs); err != nil {
 				return err
 			}
-			log.Infof("Repository %s/%s has been unlocked successfully", namespace, repositoryName)
+			klog.Infof("Repository %s/%s has been unlocked successfully", namespace, repositoryName)
 			return nil
 		},
 	}
@@ -160,6 +160,6 @@ func runCmdViaDocker(localDirs cliLocalDirectories, command string, extraArgs []
 
 	args = append(args, extraArgs...)
 	out, err := exec.Command("docker", args...).CombinedOutput()
-	log.Infoln("Output:", string(out))
+	klog.Infoln("Output:", string(out))
 	return err
 }

@@ -21,8 +21,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"gomodules.xyz/x/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog/v2"
 )
 
 func NewCmdCopyRepository() *cobra.Command {
@@ -55,7 +55,7 @@ func ensureRepository(name string) error {
 		return err
 	}
 
-	log.Infof("Repository %s/%s uses Storage Secret %s/%s.", repository.Namespace, repository.Name, repository.Namespace, repository.Spec.Backend.StorageSecretName)
+	klog.Infof("Repository %s/%s uses Storage Secret %s/%s.", repository.Namespace, repository.Name, repository.Namespace, repository.Spec.Backend.StorageSecretName)
 	// ensure source Repository Secret
 	err = ensureSecret(repository.Spec.Backend.StorageSecretName)
 	if err != nil {
@@ -72,6 +72,6 @@ func ensureRepository(name string) error {
 	if err != nil {
 		return err
 	}
-	log.Infof("Repository %s/%s has been copied to %s namespace successfully.", repository.Namespace, repository.Name, dstNamespace)
+	klog.Infof("Repository %s/%s has been copied to %s namespace successfully.", repository.Namespace, repository.Name, dstNamespace)
 	return err
 }

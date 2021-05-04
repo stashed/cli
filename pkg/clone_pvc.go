@@ -26,9 +26,9 @@ import (
 	"stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 
 	"github.com/spf13/cobra"
-	"gomodules.xyz/x/log"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog/v2"
 	"k8s.io/kubectl/pkg/util/templates"
 	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
@@ -66,19 +66,19 @@ func NewCmdClonePVC() *cobra.Command {
 
 			// set unique name for a Repository and create a Repository to the source namespace
 			repoName := fmt.Sprintf("%s-%s-%d", repoOpt.provider, "repo", time.Now().Unix())
-			log.Infof("Creating Repository: %s to the Namespace: %s", repoName, srcNamespace)
+			klog.Infof("Creating Repository: %s to the Namespace: %s", repoName, srcNamespace)
 			repository := newRepository(repoOpt, repoName, srcNamespace)
 			_, err = createRepository(repository, repository.ObjectMeta)
 			if err != nil {
 				return err
 			}
-			log.Infof("Repository has been created successfully.")
+			klog.Infof("Repository has been created successfully.")
 
 			err = backupPVC(pvcName, repoName)
 			if err != nil {
 				return err
 			}
-			log.Infof("The PVC %s/%s data has been backed up successfully", pvc.Namespace, pvc.Name)
+			klog.Infof("The PVC %s/%s data has been backed up successfully", pvc.Namespace, pvc.Name)
 
 			// copy repository and secret to the destination namespace
 			err = ensureRepository(repoName)
@@ -95,7 +95,7 @@ func NewCmdClonePVC() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			log.Infof("PVC has been cloned successfully!!")
+			klog.Infof("PVC has been cloned successfully!!")
 
 			return nil
 		},
@@ -132,12 +132,12 @@ func backupPVC(pvcName string, repoName string) error {
 	if err != nil {
 		return err
 	}
-	log.Infof("Creating BackupConfiguration: %s to the namespace: %s", backupConfig.Name, backupConfig.Namespace)
+	klog.Infof("Creating BackupConfiguration: %s to the namespace: %s", backupConfig.Name, backupConfig.Namespace)
 	backupConfig, err = createBackupConfiguration(backupConfig, backupConfig.ObjectMeta)
 	if err != nil {
 		return err
 	}
-	log.Infof("BackupConfiguration has been created successfully.")
+	klog.Infof("BackupConfiguration has been created successfully.")
 
 	backupSession, err := triggerBackup(backupConfig, stashClient)
 	if err != nil {
@@ -148,7 +148,7 @@ func backupPVC(pvcName string, repoName string) error {
 	if err != nil {
 		return err
 	}
-	log.Infof("BackupSession has been succeeded.")
+	klog.Infof("BackupSession has been succeeded.")
 	// delete the BackupConfiguration to stop taking backup
 	return stashClient.StashV1beta1().BackupConfigurations(srcNamespace).Delete(context.TODO(), backupConfig.Name, metav1.DeleteOptions{})
 }
@@ -183,17 +183,17 @@ func restorePVC(pvc *core.PersistentVolumeClaim, repoName string) error {
 		},
 	}
 
-	log.Infof("Creating RestoreSession: %s to the namespace: %s", restoreSession.Name, restoreSession.Namespace)
+	klog.Infof("Creating RestoreSession: %s to the namespace: %s", restoreSession.Name, restoreSession.Namespace)
 	restoreSession, err = createRestoreSession(restoreSession)
 	if err != nil {
 		return err
 	}
-	log.Infof("RestoreSession has been created successfully.")
+	klog.Infof("RestoreSession has been created successfully.")
 	err = WaitUntilRestoreSessionCompleted(restoreSession.Name, restoreSession.Namespace)
 	if err != nil {
 		return err
 	}
-	log.Infof("RestoreSession has been succeeded.")
+	klog.Infof("RestoreSession has been succeeded.")
 	// delete RestoreSession
 	return stashClient.StashV1beta1().RestoreSessions(dstNamespace).Delete(context.TODO(), restoreSession.Name, metav1.DeleteOptions{})
 }

@@ -31,10 +31,10 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"gomodules.xyz/x/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog/v2"
 )
 
 func NewCmdDeleteSnapshot(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
@@ -122,7 +122,7 @@ func NewCmdDeleteSnapshot(clientGetter genericclioptions.RESTClientGetter) *cobr
 			if err = runDeleteSnapshotViaDocker(*localDirs, snapshotId); err != nil {
 				return err
 			}
-			log.Infof("Snapshot %s deleted from repository %s/%s", snapshotId, namespace, repoName)
+			klog.Infof("Snapshot %s deleted from repository %s/%s", snapshotId, namespace, repoName)
 			return nil
 		},
 	}
@@ -150,8 +150,8 @@ func runDeleteSnapshotViaDocker(localDirs cliLocalDirectories, snapshotId string
 		"delete-snapshot",
 		"--snapshot", snapshotId,
 	}
-	log.Infoln("Running docker with args:", args)
+	klog.Infoln("Running docker with args:", args)
 	out, err := exec.Command("docker", args...).CombinedOutput()
-	log.Infoln("Output:", string(out))
+	klog.Infoln("Output:", string(out))
 	return err
 }
