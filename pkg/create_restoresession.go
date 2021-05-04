@@ -25,13 +25,13 @@ import (
 	v1beta1_util "stash.appscode.dev/apimachinery/client/clientset/versioned/typed/stash/v1beta1/util"
 	"stash.appscode.dev/stash/pkg/util"
 
-	vs "github.com/kubernetes-csi/external-snapshotter/v2/pkg/apis/volumesnapshot/v1beta1"
+	vs "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1beta1"
 	"github.com/spf13/cobra"
 	"gomodules.xyz/pointer"
-	"gomodules.xyz/x/log"
 	core "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog/v2"
 	"k8s.io/kubectl/pkg/util/templates"
 	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
@@ -91,7 +91,7 @@ func NewCmdCreateRestoreSession() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			log.Infof("RestoreSession %s/%s has been created successfully.", restoreSession.Namespace, restoreSession.Name)
+			klog.Infof("RestoreSession %s/%s has been created successfully.", restoreSession.Namespace, restoreSession.Name)
 			return err
 
 		},

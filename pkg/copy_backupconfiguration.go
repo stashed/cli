@@ -23,8 +23,8 @@ import (
 	"stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 
 	"github.com/spf13/cobra"
-	"gomodules.xyz/x/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog/v2"
 )
 
 func NewCmdCopyBackupConfiguration() *cobra.Command {
@@ -76,6 +76,6 @@ func ensureBackupConfiguration(name string) error {
 		return err
 	}
 
-	log.Infof("BackupConfiguration %s/%s has been copied to %s namespace successfully.", srcNamespace, backupConfig.Name, dstNamespace)
+	klog.Infof("BackupConfiguration %s/%s has been copied to %s namespace successfully.", srcNamespace, backupConfig.Name, dstNamespace)
 	return err
 }

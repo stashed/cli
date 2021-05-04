@@ -26,9 +26,9 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"gomodules.xyz/x/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/klog/v2"
 	core_util "kmodules.xyz/client-go/core/v1"
 )
 
@@ -102,6 +102,6 @@ func triggerBackup(backupConfig *v1beta1.BackupConfiguration, client cs.Interfac
 	if err != nil {
 		return backupSession, err
 	}
-	log.Infof("BackupSession %s/%s has been created successfully", backupSession.Namespace, backupSession.Name)
+	klog.Infof("BackupSession %s/%s has been created successfully", backupSession.Namespace, backupSession.Name)
 	return backupSession, nil
 }

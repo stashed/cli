@@ -31,10 +31,10 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"gomodules.xyz/x/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog/v2"
 )
 
 func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
@@ -124,7 +124,7 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 			if err = runRestoreViaDocker(*localDirs); err != nil {
 				return err
 			}
-			log.Infof("Repository %s/%s restored in path %s", namespace, repositoryName, restoreOpt.Destination)
+			klog.Infof("Repository %s/%s restored in path %s", namespace, repositoryName, restoreOpt.Destination)
 			return nil
 		},
 	}
@@ -159,8 +159,8 @@ func runRestoreViaDocker(localDirs cliLocalDirectories) error {
 		"docker",
 		"download-snapshots",
 	}
-	log.Infoln("Running docker with args:", args)
+	klog.Infoln("Running docker with args:", args)
 	out, err := exec.Command("docker", args...).CombinedOutput()
-	log.Infoln("Output:", string(out))
+	klog.Infoln("Output:", string(out))
 	return err
 }

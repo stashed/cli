@@ -21,9 +21,9 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"gomodules.xyz/x/log"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog/v2"
 	core_util "kmodules.xyz/client-go/core/v1"
 )
 
@@ -57,7 +57,7 @@ func ensureSecret(name string) error {
 		return err
 	}
 
-	log.Infof("Copying Storage Secret %s to %s namespace", secret.Namespace, dstNamespace)
+	klog.Infof("Copying Storage Secret %s to %s namespace", secret.Namespace, dstNamespace)
 	// copy the Secret to the destination namespace
 	meta := metav1.ObjectMeta{
 		Name:        secret.Name,
@@ -70,7 +70,7 @@ func ensureSecret(name string) error {
 		return err
 	}
 
-	log.Infof("Secret %s/%s has been copied to %s namespace successfully.", secret.Namespace, secret.Name, dstNamespace)
+	klog.Infof("Secret %s/%s has been copied to %s namespace successfully.", secret.Namespace, secret.Name, dstNamespace)
 	return err
 }
 

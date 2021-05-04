@@ -24,8 +24,8 @@ import (
 	"stash.appscode.dev/apimachinery/client/clientset/versioned/typed/stash/v1alpha1/util"
 
 	"github.com/spf13/cobra"
-	"gomodules.xyz/x/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog/v2"
 	"k8s.io/kubectl/pkg/util/templates"
 	storage "kmodules.xyz/objectstore-api/api/v1"
 )
@@ -67,7 +67,7 @@ func NewCmdCreateRepository() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			log.Infof("Repository %s/%s has been created successfully.", repository.Namespace, repository.Name)
+			klog.Infof("Repository %s/%s has been created successfully.", repository.Namespace, repository.Name)
 			return err
 
 		},

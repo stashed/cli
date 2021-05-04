@@ -22,7 +22,7 @@ import (
 	"stash.appscode.dev/apimachinery/pkg/restic"
 
 	"github.com/spf13/cobra"
-	"gomodules.xyz/x/log"
+	"k8s.io/klog/v2"
 )
 
 func NewUnlockRepositoryCmd() *cobra.Command {
@@ -44,7 +44,7 @@ func NewUnlockRepositoryCmd() *cobra.Command {
 			if err = resticWrapper.UnlockRepository(); err != nil {
 				return err
 			}
-			log.Infof("Unlock completed")
+			klog.Infof("Unlock completed")
 			return nil
 		},
 	}

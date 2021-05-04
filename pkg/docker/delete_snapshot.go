@@ -22,7 +22,7 @@ import (
 	"stash.appscode.dev/apimachinery/pkg/restic"
 
 	"github.com/spf13/cobra"
-	"gomodules.xyz/x/log"
+	"k8s.io/klog/v2"
 )
 
 func NewDeleteSnapshotCmd() *cobra.Command {
@@ -45,7 +45,7 @@ func NewDeleteSnapshotCmd() *cobra.Command {
 			if _, err = resticWrapper.DeleteSnapshots([]string{snapshotID}); err != nil {
 				return err
 			}
-			log.Infof("Delete completed")
+			klog.Infof("Delete completed")
 			return nil
 		},
 	}

@@ -23,7 +23,7 @@ import (
 	"stash.appscode.dev/apimachinery/pkg/restic"
 
 	"github.com/spf13/cobra"
-	"gomodules.xyz/x/log"
+	"k8s.io/klog/v2"
 )
 
 // RemoveIt!
@@ -51,7 +51,7 @@ func NewDownloadCmd() *cobra.Command {
 			if _, err = resticWrapper.RunRestore(*restoreOpt, v1beta1.TargetRef{}); err != nil {
 				return err
 			}
-			log.Infof("Restore completed")
+			klog.Infof("Restore completed")
 			return nil
 		},
 	}
