@@ -25,16 +25,16 @@ import (
 	_ "stash.appscode.dev/apimachinery/client/clientset/versioned/fake"
 	"stash.appscode.dev/cli/pkg"
 
+	"gomodules.xyz/kglog"
 	_ "k8s.io/client-go/kubernetes/fake"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/klog/v2"
-	"kmodules.xyz/client-go/logs"
 )
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
-	logs.InitLogs()
-	defer logs.FlushLogs()
+	kglog.InitLogs()
+	defer kglog.FlushLogs()
 
 	if len(os.Getenv("GOMAXPROCS")) == 0 {
 		runtime.GOMAXPROCS(runtime.NumCPU())
