@@ -24,7 +24,6 @@ import (
 	"stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 
 	jsonpatch "github.com/evanphx/json-patch"
-	"github.com/golang/glog"
 	vs_api "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1beta1"
 	vs "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned/typed/volumesnapshot/v1beta1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
@@ -32,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/klog/v2"
 	kutil "kmodules.xyz/client-go"
 )
 
@@ -43,7 +43,7 @@ const (
 func CreateOrPatchVolumeSnapshot(ctx context.Context, c vs.SnapshotV1beta1Interface, meta metav1.ObjectMeta, transform func(alert *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot, opts metav1.PatchOptions) (*vs_api.VolumeSnapshot, kutil.VerbType, error) {
 	cur, err := c.VolumeSnapshots(meta.Namespace).Get(context.TODO(), meta.Name, metav1.GetOptions{})
 	if kerr.IsNotFound(err) {
-		glog.V(3).Infof("Creating VolumeSnapshot %s/%s.", meta.Namespace, meta.Name)
+		klog.V(3).Infof("Creating VolumeSnapshot %s/%s.", meta.Namespace, meta.Name)
 		out, err := c.VolumeSnapshots(meta.Namespace).Create(ctx, transform(&vs_api.VolumeSnapshot{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "VolumeSnapshot",
@@ -83,7 +83,7 @@ func PatchVolumesnapshotObject(ctx context.Context, c vs.SnapshotV1beta1Interfac
 	if len(patch) == 0 || string(patch) == "{}" {
 		return cur, kutil.VerbUnchanged, nil
 	}
-	glog.V(3).Infof("Patching VolumeSnapshot %s/%s with %s.", cur.Namespace, cur.Name, string(patch))
+	klog.V(3).Infof("Patching VolumeSnapshot %s/%s with %s.", cur.Namespace, cur.Name, string(patch))
 	out, err := c.VolumeSnapshots(cur.Namespace).Patch(ctx, cur.Name, types.MergePatchType, patch, opts)
 	return out, kutil.VerbPatched, err
 }
