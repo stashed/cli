@@ -4,28 +4,26 @@ go 1.15
 
 require (
 	github.com/evanphx/json-patch v4.9.0+incompatible
-	github.com/golang/glog v0.0.0-20210429001901-424d2337a529
 	github.com/json-iterator/go v1.1.10
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.1.3
-	gomodules.xyz/kglog v0.0.1
+	gomodules.xyz/logs v0.0.2
 	gomodules.xyz/pointer v0.0.0-20201105071923-daf60fa55209
 	gomodules.xyz/runtime v0.2.0
-	gomodules.xyz/x v0.0.4
+	gomodules.xyz/x v0.0.5
 	k8s.io/api v0.21.0
 	k8s.io/apimachinery v0.21.0
 	k8s.io/cli-runtime v0.21.0
 	k8s.io/client-go v0.21.0
-	k8s.io/component-base v0.21.0
 	k8s.io/klog/v2 v2.8.0
 	k8s.io/kubectl v0.21.0
-	kmodules.xyz/client-go v0.0.0-20210505231546-fa4fb8e1d04e
+	kmodules.xyz/client-go v0.0.0-20210605021217-cabaee7b953e
 	kmodules.xyz/objectstore-api v0.0.0-20210504041638-b9e00ab1eab3
 	kmodules.xyz/offshoot-api v0.0.0-20210504040651-7951e351f0f5
 	kmodules.xyz/openshift v0.0.0-20210504040454-a3ddfc579bb7
-	stash.appscode.dev/apimachinery v0.13.1-0.20210505235659-974fc12c7593
-	stash.appscode.dev/stash v0.12.4-0.20210506000512-f8b0c245ca58
+	stash.appscode.dev/apimachinery v0.13.1-0.20210605201829-a382bbe2f22a
+	stash.appscode.dev/stash v0.12.4-0.20210605214540-ca26878d25ab
 )
 
 replace bitbucket.org/ww/goautoneg => gomodules.xyz/goautoneg v0.0.0-20120707110453-a547fc61f48d
@@ -112,8 +110,6 @@ replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20201110
 
 replace google.golang.org/grpc => google.golang.org/grpc v1.27.1
 
-replace gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.3.0
-
 replace helm.sh/helm/v3 => github.com/kubepack/helm/v3 v3.1.0-rc.1.0.20210503022716-7e2d4913a125
 
 replace k8s.io/api => k8s.io/api v0.21.0
@@ -133,7 +129,5 @@ replace k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20210305001622-591a79e
 replace k8s.io/kubernetes => github.com/kmodules/kubernetes v1.22.0-alpha.0.0.20210427080452-22d2e66bae50
 
 replace k8s.io/utils => k8s.io/utils v0.0.0-20201110183641-67b214c5f920
-
-replace kmodules.xyz/resource-metadata => kmodules.xyz/resource-metadata v0.5.0
 
 replace sigs.k8s.io/application => github.com/kmodules/application v0.8.4-0.20210427030912-90eeee3bc4ad
