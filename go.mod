@@ -12,18 +12,18 @@ require (
 	gomodules.xyz/pointer v0.0.0-20201105071923-daf60fa55209
 	gomodules.xyz/runtime v0.2.0
 	gomodules.xyz/x v0.0.5
-	k8s.io/api v0.21.0
-	k8s.io/apimachinery v0.21.0
+	k8s.io/api v0.21.1
+	k8s.io/apimachinery v0.21.1
 	k8s.io/cli-runtime v0.21.0
-	k8s.io/client-go v0.21.0
+	k8s.io/client-go v0.21.1
 	k8s.io/klog/v2 v2.8.0
 	k8s.io/kubectl v0.21.0
-	kmodules.xyz/client-go v0.0.0-20210605021217-cabaee7b953e
+	kmodules.xyz/client-go v0.0.0-20210614094429-affdb80e35c8
 	kmodules.xyz/objectstore-api v0.0.0-20210504041638-b9e00ab1eab3
 	kmodules.xyz/offshoot-api v0.0.0-20210504040651-7951e351f0f5
 	kmodules.xyz/openshift v0.0.0-20210504040454-a3ddfc579bb7
-	stash.appscode.dev/apimachinery v0.13.1-0.20210605201829-a382bbe2f22a
-	stash.appscode.dev/stash v0.12.4-0.20210605214540-ca26878d25ab
+	stash.appscode.dev/apimachinery v0.14.0
+	stash.appscode.dev/stash v0.14.0
 )
 
 replace bitbucket.org/ww/goautoneg => gomodules.xyz/goautoneg v0.0.0-20120707110453-a547fc61f48d
