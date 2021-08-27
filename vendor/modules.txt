@@ -254,7 +254,6 @@ gomodules.xyz/pointer
 ## explicit
 gomodules.xyz/runtime
 # gomodules.xyz/sets v0.2.0
-## explicit
 gomodules.xyz/sets
 # gomodules.xyz/wait v0.0.0-20210218105358-639bd9211545
 gomodules.xyz/wait
@@ -676,7 +675,8 @@ kmodules.xyz/client-go/tools/clientcmd
 kmodules.xyz/client-go/tools/clusterid
 kmodules.xyz/client-go/tools/exec
 kmodules.xyz/client-go/tools/pushgateway
-# kmodules.xyz/custom-resources v0.0.0-20210715200638-d7eae69a48fb
+# kmodules.xyz/custom-resources v0.0.0-20210812193424-1631fae03a1a
+## explicit
 kmodules.xyz/custom-resources/apis/appcatalog
 kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1
 kmodules.xyz/custom-resources/apis/auditor
@@ -689,7 +689,7 @@ kmodules.xyz/custom-resources/client/clientset/versioned/typed/appcatalog/v1alph
 kmodules.xyz/custom-resources/client/clientset/versioned/typed/auditor/v1alpha1
 kmodules.xyz/custom-resources/client/clientset/versioned/typed/metrics/v1alpha1
 kmodules.xyz/custom-resources/crds
-# kmodules.xyz/objectstore-api v0.0.0-20210618005912-71f8a80f48f9
+# kmodules.xyz/objectstore-api v0.0.0-20210817052835-df749235585e
 ## explicit
 kmodules.xyz/objectstore-api/api/v1
 # kmodules.xyz/offshoot-api v0.0.0-20210804100837-d0388be3e60d
