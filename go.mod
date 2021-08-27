@@ -4,24 +4,26 @@ go 1.15
 
 require (
 	github.com/evanphx/json-patch v4.11.0+incompatible
-	github.com/json-iterator/go v1.1.10
+	github.com/json-iterator/go v1.1.11
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.1.3
-	gomodules.xyz/logs v0.0.3
-	gomodules.xyz/pointer v0.0.0-20201105071923-daf60fa55209
+	gomodules.xyz/logs v0.0.4
+	gomodules.xyz/pointer v0.1.0
 	gomodules.xyz/runtime v0.2.0
-	gomodules.xyz/x v0.0.5
+	gomodules.xyz/sets v0.2.0 // indirect
+	gomodules.xyz/x v0.0.7
 	k8s.io/api v0.21.1
 	k8s.io/apimachinery v0.21.1
 	k8s.io/cli-runtime v0.21.1
 	k8s.io/client-go v0.21.1
 	k8s.io/klog/v2 v2.8.0
 	k8s.io/kubectl v0.21.1
-	kmodules.xyz/client-go v0.0.0-20210719120358-dd0503cf99cf
+	kmodules.xyz/client-go v0.0.0-20210827153326-54ead9c6225f
 	kmodules.xyz/objectstore-api v0.0.0-20210618005912-71f8a80f48f9
-	kmodules.xyz/offshoot-api v0.0.0-20210618005544-5217a24765da
+	kmodules.xyz/offshoot-api v0.0.0-20210804100837-d0388be3e60d
 	kmodules.xyz/openshift v0.0.0-20210618001443-f2507caa512f
+	kmodules.xyz/webhook-runtime v0.0.0-20210804101750-5c602fd5cf06 // indirect
 	stash.appscode.dev/apimachinery v0.15.0
 	stash.appscode.dev/stash v0.15.0
 )
