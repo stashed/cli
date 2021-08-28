@@ -19,7 +19,7 @@ require (
 	k8s.io/klog/v2 v2.8.0
 	k8s.io/kubectl v0.21.1
 	kmodules.xyz/client-go v0.0.0-20210827153326-54ead9c6225f
-	kmodules.xyz/custom-resources v0.0.0-20210812193424-1631fae03a1a // indirect
+	kmodules.xyz/custom-resources v0.0.0-20210824055127-e5a3d2d6c161 // indirect
 	kmodules.xyz/objectstore-api v0.0.0-20210817052835-df749235585e
 	kmodules.xyz/offshoot-api v0.0.0-20210804100837-d0388be3e60d
 	kmodules.xyz/openshift v0.0.0-20210618001443-f2507caa512f
