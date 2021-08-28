@@ -675,7 +675,7 @@ kmodules.xyz/client-go/tools/clientcmd
 kmodules.xyz/client-go/tools/clusterid
 kmodules.xyz/client-go/tools/exec
 kmodules.xyz/client-go/tools/pushgateway
-# kmodules.xyz/custom-resources v0.0.0-20210812193424-1631fae03a1a
+# kmodules.xyz/custom-resources v0.0.0-20210824055127-e5a3d2d6c161
 ## explicit
 kmodules.xyz/custom-resources/apis/appcatalog
 kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1
