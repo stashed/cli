@@ -11,17 +11,19 @@ require (
 	gomodules.xyz/logs v0.0.4
 	gomodules.xyz/pointer v0.1.0
 	gomodules.xyz/runtime v0.2.0
-	gomodules.xyz/x v0.0.7
+	gomodules.xyz/x v0.0.8
 	k8s.io/api v0.21.1
 	k8s.io/apimachinery v0.21.1
 	k8s.io/cli-runtime v0.21.1
 	k8s.io/client-go v0.21.1
 	k8s.io/klog/v2 v2.8.0
 	k8s.io/kubectl v0.21.1
-	kmodules.xyz/client-go v0.0.0-20210827153326-54ead9c6225f
-	kmodules.xyz/objectstore-api v0.0.0-20210817052835-df749235585e
+	kmodules.xyz/client-go v0.0.0-20210909114628-15cac6c74063
+	kmodules.xyz/custom-resources v0.0.0-20210829135624-c63be82e13c0 // indirect
+	kmodules.xyz/objectstore-api v0.0.0-20210829122106-d39859fc2d56
 	kmodules.xyz/offshoot-api v0.0.0-20210804100837-d0388be3e60d
 	kmodules.xyz/openshift v0.0.0-20210618001443-f2507caa512f
+	kmodules.xyz/webhook-runtime v0.0.0-20210829120758-f6ab57afa7e4 // indirect
 	stash.appscode.dev/apimachinery v0.15.0
 	stash.appscode.dev/stash v0.15.1-0.20210830100935-f23d8f420b7b
 )
