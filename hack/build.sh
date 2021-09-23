@@ -29,6 +29,11 @@ if [ -z "${VERSION:-}" ]; then
     exit 1
 fi
 
+if [ -z "${RESTIC_VER:-}" ]; then
+    echo "RESTIC_VER must be set"
+    exit 1
+fi
+
 export CGO_ENABLED=0
 export GOARCH="${ARCH}"
 export GOOS="${OS}"
@@ -47,5 +52,6 @@ go install \
       -X main.GoVersion=$(go version | cut -d " " -f 3) \
       -X main.Compiler=$(go env CC)                     \
       -X main.Platform=${OS}/${ARCH}                    \
+      -X stash.appscode.dev/cli/pkg.ResticTag=${RESTIC_VER} \
     " \
     ./...

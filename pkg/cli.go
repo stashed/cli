@@ -40,13 +40,20 @@ type cliLocalDirectories struct {
 	downloadDir string // user provided or, current working dir
 }
 
+// These variables will be set during build time
 var (
-	imgRestic = docker_image.Docker{
-		Registry: "restic",
-		Image:    "restic",
-		Tag:      "0.9.5", // TODO: update default release tag
-	}
+	ResticRegistry = "restic"
+	ResticImage    = "restic"
+	ResticTag      = "latest"
 )
+
+var imgRestic docker_image.Docker
+
+func init() {
+	imgRestic.Registry = ResticRegistry
+	imgRestic.Image = ResticImage
+	imgRestic.Tag = ResticTag
+}
 
 func (localDirs *cliLocalDirectories) prepareSecretDir(tempDir string, secret *core.Secret) error {
 	// write repository secrets in a sub-dir insider tempDir

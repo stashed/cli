@@ -56,6 +56,8 @@ ARCH := $(if $(GOARCH),$(GOARCH),$(shell go env GOARCH))
 GO_VERSION       ?= 1.17
 BUILD_IMAGE      ?= appscode/golang-dev:$(GO_VERSION)
 
+RESTIC_VER  := 0.12.1
+
 OUTBIN = bin/$(BIN)-$(OS)-$(ARCH)
 ifeq ($(OS),windows)
   OUTBIN := bin/$(BIN)-$(OS)-$(ARCH).exe
@@ -156,6 +158,7 @@ $(OUTBIN): .go/$(OUTBIN).stamp
 	        git_tag=$(git_tag)                                  \
 	        commit_hash=$(commit_hash)                          \
 	        commit_timestamp=$(commit_timestamp)                \
+	        RESTIC_VER=$(RESTIC_VER)                            \
 	        ./hack/build.sh                                     \
 	    "
 	@if ! cmp -s .go/bin/$(OS)_$(ARCH)/$(BIN) $(OUTBIN); then   \
