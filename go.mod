@@ -18,12 +18,12 @@ require (
 	k8s.io/client-go v0.21.1
 	k8s.io/klog/v2 v2.8.0
 	k8s.io/kubectl v0.21.1
-	kmodules.xyz/client-go v0.0.0-20210921150324-f005c6dfcb32
-	kmodules.xyz/custom-resources v0.0.0-20210829135624-c63be82e13c0 // indirect
-	kmodules.xyz/objectstore-api v0.0.0-20210829122106-d39859fc2d56
-	kmodules.xyz/offshoot-api v0.0.0-20210804100837-d0388be3e60d
+	kmodules.xyz/client-go v0.0.0-20210928133955-8df5bb467db6
+	kmodules.xyz/custom-resources v0.0.0-20211007080833-72bd9e8cae6e // indirect
+	kmodules.xyz/objectstore-api v0.0.0-20210928135706-fdf68f88ea6e
+	kmodules.xyz/offshoot-api v0.0.0-20210829122105-6f4d481b0c61
 	kmodules.xyz/openshift v0.0.0-20210618001443-f2507caa512f
-	kmodules.xyz/webhook-runtime v0.0.0-20210829120758-f6ab57afa7e4 // indirect
+	kmodules.xyz/webhook-runtime v0.0.0-20210928141616-7f73c2ab318a // indirect
 	stash.appscode.dev/apimachinery v0.15.0
 	stash.appscode.dev/stash v0.15.1-0.20210830100935-f23d8f420b7b
 )
@@ -133,3 +133,5 @@ replace k8s.io/utils => k8s.io/utils v0.0.0-20201110183641-67b214c5f920
 replace sigs.k8s.io/application => github.com/kmodules/application v0.8.4-0.20210427030912-90eeee3bc4ad
 
 replace github.com/satori/go.uuid => github.com/gofrs/uuid v4.0.0+incompatible
+
+replace github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt v3.2.1+incompatible
