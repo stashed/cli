@@ -22,8 +22,8 @@ require (
 	kmodules.xyz/objectstore-api v0.0.0-20211116180107-8720be0c9bf7
 	kmodules.xyz/offshoot-api v0.0.0-20210829122105-6f4d481b0c61
 	kmodules.xyz/openshift v0.0.0-20210618001443-f2507caa512f
-	stash.appscode.dev/apimachinery v0.16.0
-	stash.appscode.dev/stash v0.16.1-0.20211124055405-a3acd49982ab
+	stash.appscode.dev/apimachinery v0.17.0
+	stash.appscode.dev/stash v0.17.0
 )
 
 replace bitbucket.org/ww/goautoneg => gomodules.xyz/goautoneg v0.0.0-20120707110453-a547fc61f48d
