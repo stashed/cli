@@ -19,13 +19,13 @@ package pkg
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"os/user"
+	"path/filepath"
 
 	cs "stash.appscode.dev/apimachinery/client/clientset/versioned"
-	"stash.appscode.dev/cli/pkg/docker"
+	"stash.appscode.dev/apimachinery/pkg/restic"
 	"stash.appscode.dev/stash/pkg/registry/snapshot"
 	"stash.appscode.dev/stash/pkg/util"
 
@@ -35,6 +35,13 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
+	"k8s.io/kubectl/pkg/util/templates"
+)
+
+var (
+	deleteExample = templates.Examples(`
+		# Delete Snapshot
+		stash delete snapshot gcs-repo-c063d146 -n demo`)
 )
 
 func NewCmdDeleteSnapshot(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
@@ -47,6 +54,7 @@ func NewCmdDeleteSnapshot(clientGetter genericclioptions.RESTClientGetter) *cobr
 		Short:             `Delete a snapshot from repository backend`,
 		Long:              `Delete a snapshot from repository backend`,
 		DisableAutoGenTag: true,
+		Example:           deleteExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return fmt.Errorf("snapshot name not provided")
@@ -82,7 +90,7 @@ func NewCmdDeleteSnapshot(clientGetter genericclioptions.RESTClientGetter) *cobr
 			// delete from local backend
 			if repository.Spec.Backend.Local != nil {
 				r := snapshot.NewREST(cfg)
-				return r.ForgetVersionedSnapshots(repository, []string{snapshotId}, false)
+				return r.ForgetSnapshotsFromBackend(repository, []string{snapshotId}, false)
 			}
 
 			// get source repository secret
@@ -91,35 +99,46 @@ func NewCmdDeleteSnapshot(clientGetter genericclioptions.RESTClientGetter) *cobr
 				return err
 			}
 
+			if err = os.MkdirAll(ScratchDir, 0755); err != nil {
+				return err
+			}
+			defer os.RemoveAll(ScratchDir)
+
 			// configure restic wrapper
 			extraOpt := util.ExtraOptions{
-				SecretDir:   docker.SecretDir,
-				EnableCache: false,
-				ScratchDir:  docker.ScratchDir,
+				StorageSecret: secret,
+				ScratchDir:    ScratchDir,
 			}
+			// configure setupOption
 			setupOpt, err := util.SetupOptionsForRepository(*repository, extraOpt)
 			if err != nil {
 				return fmt.Errorf("setup option for repository failed")
 			}
 
-			// write secret and config in a temp dir
-			// cleanup whole tempDir dir at the end
-			tempDir, err := ioutil.TempDir("", "stash-cli")
+			resticWrapper, err := restic.NewResticWrapper(setupOpt)
 			if err != nil {
 				return err
 			}
-			defer os.RemoveAll(tempDir)
 
-			// prepare local dirs
-			if err = localDirs.prepareSecretDir(tempDir, secret); err != nil {
+			localDirs.configDir = filepath.Join(ScratchDir, configDirName)
+			// dump restic's environments into `restic-env` file.
+			// we will pass this env file to restic docker container.
+			err = resticWrapper.DumpEnv(localDirs.configDir, ResticEnvs)
+			if err != nil {
 				return err
 			}
-			if err = localDirs.prepareConfigDir(tempDir, &setupOpt, nil); err != nil {
-				return err
+
+			extraAgrs := []string{
+				"--no-cache",
+			}
+
+			// For TLS secured Minio/REST server, specify cert path
+			if resticWrapper.GetCaPath() != "" {
+				extraAgrs = append(extraAgrs, "--cacert", resticWrapper.GetCaPath())
 			}
 
 			// run unlock inside docker
-			if err = runDeleteSnapshotViaDocker(*localDirs, snapshotId); err != nil {
+			if err = runDeleteSnapshotViaDocker(*localDirs, extraAgrs, snapshotId); err != nil {
 				return err
 			}
 			klog.Infof("Snapshot %s deleted from repository %s/%s", snapshotId, namespace, repoName)
@@ -133,7 +152,7 @@ func NewCmdDeleteSnapshot(clientGetter genericclioptions.RESTClientGetter) *cobr
 	return cmd
 }
 
-func runDeleteSnapshotViaDocker(localDirs cliLocalDirectories, snapshotId string) error {
+func runDeleteSnapshotViaDocker(localDirs cliLocalDirectories, extraArgs []string, snapshotId string) error {
 	// get current user
 	currentUser, err := user.Current()
 	if err != nil {
@@ -143,13 +162,15 @@ func runDeleteSnapshotViaDocker(localDirs cliLocalDirectories, snapshotId string
 		"run",
 		"--rm",
 		"-u", currentUser.Uid,
-		"-v", localDirs.configDir + ":" + docker.ConfigDir,
-		"-v", localDirs.secretDir + ":" + docker.SecretDir,
+		"-v", ScratchDir + ":" + ScratchDir,
+		"--env", "HTTP_PROXY=" + os.Getenv("HTTP_PROXY"),
+		"--env", "HTTPS_PROXY=" + os.Getenv("HTTPS_PROXY"),
+		"--env-file", filepath.Join(localDirs.configDir, ResticEnvs),
 		imgRestic.ToContainerImage(),
-		"docker",
-		"delete-snapshot",
-		"--snapshot", snapshotId,
+		"forget", snapshotId,
+		"--prune",
 	}
+	args = append(args, extraArgs...)
 	klog.Infoln("Running docker with args:", args)
 	out, err := exec.Command("docker", args...).CombinedOutput()
 	klog.Infoln("Output:", string(out))

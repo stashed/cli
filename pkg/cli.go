@@ -17,77 +17,39 @@ limitations under the License.
 package pkg
 
 import (
-	"io/ioutil"
 	"os"
-	"path/filepath"
 
-	docker_image "stash.appscode.dev/apimachinery/pkg/docker"
-	"stash.appscode.dev/apimachinery/pkg/restic"
-	"stash.appscode.dev/cli/pkg/docker"
-
-	core "k8s.io/api/core/v1"
+	"stash.appscode.dev/apimachinery/pkg/docker"
 )
 
 const (
-	secretDirName = "secret"
 	configDirName = "config"
 	ResticEnvs    = "restic-envs"
 )
 
 type cliLocalDirectories struct {
-	secretDir   string // temp dir
 	configDir   string // temp dir
 	downloadDir string // user provided or, current working dir
 }
 
 // These variables will be set during build time
+const (
+	ScratchDir     = "/tmp/scratch"
+	DestinationDir = "/tmp/destination"
+)
+
 var (
 	ResticRegistry = "restic"
 	ResticImage    = "restic"
 	ResticTag      = "latest"
 )
 
-var imgRestic docker_image.Docker
+var imgRestic docker.Docker
 
 func init() {
 	imgRestic.Registry = ResticRegistry
 	imgRestic.Image = ResticImage
 	imgRestic.Tag = ResticTag
-}
-
-func (localDirs *cliLocalDirectories) prepareSecretDir(tempDir string, secret *core.Secret) error {
-	// write repository secrets in a sub-dir insider tempDir
-	localDirs.secretDir = filepath.Join(tempDir, secretDirName)
-	if err := os.MkdirAll(localDirs.secretDir, 0755); err != nil {
-		return err
-	}
-	for key, value := range secret.Data {
-		if err := ioutil.WriteFile(filepath.Join(localDirs.secretDir, key), value, 0755); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (localDirs *cliLocalDirectories) prepareConfigDir(tempDir string, setupOpt *restic.SetupOptions, restoreOpt *restic.RestoreOptions) error {
-	// write restic options in a sub-dir insider tempDir
-	localDirs.configDir = filepath.Join(tempDir, configDirName)
-	if err := os.MkdirAll(localDirs.secretDir, 0755); err != nil {
-		return err
-	}
-	if setupOpt != nil {
-		err := docker.WriteSetupOptionToFile(setupOpt, filepath.Join(localDirs.configDir, docker.SetupOptionsFile))
-		if err != nil {
-			return err
-		}
-	}
-	if restoreOpt != nil {
-		err := docker.WriteRestoreOptionToFile(restoreOpt, filepath.Join(localDirs.configDir, docker.RestoreOptionsFile))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (localDirs *cliLocalDirectories) prepareDownloadDir() (err error) {
@@ -98,20 +60,4 @@ func (localDirs *cliLocalDirectories) prepareDownloadDir() (err error) {
 		}
 	}
 	return os.MkdirAll(localDirs.downloadDir, 0755)
-}
-
-// Write Storage Secret credentials in secret dir inside tempDir
-func (localDirs *cliLocalDirectories) dumpSecret(temDir string, secret *core.Secret) error {
-	localDirs.secretDir = filepath.Join(temDir, secretDirName)
-	if err := os.MkdirAll(localDirs.secretDir, 0755); err != nil {
-		return err
-	}
-
-	for key, val := range secret.Data {
-		if err := ioutil.WriteFile(filepath.Join(localDirs.secretDir, key), []byte(val), 0755); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

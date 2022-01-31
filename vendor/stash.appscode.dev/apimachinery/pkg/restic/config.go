@@ -26,6 +26,7 @@ import (
 	"stash.appscode.dev/apimachinery/apis/stash/v1alpha1"
 
 	shell "gomodules.xyz/go-sh"
+	core "k8s.io/api/core/v1"
 	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
 
@@ -84,11 +85,11 @@ type SetupOptions struct {
 	Endpoint       string
 	Region         string
 	Path           string
-	SecretDir      string
 	CacertFile     string
 	ScratchDir     string
 	EnableCache    bool
 	MaxConnections int64
+	StorageSecret  *core.Secret
 	Nice           *ofst.NiceSettings
 	IONice         *ofst.IONiceSettings
 }
@@ -106,17 +107,34 @@ func NewResticWrapper(options SetupOptions) (*ResticWrapper, error) {
 		sh:     shell.NewSession(),
 		config: options,
 	}
-	wrapper.sh.SetDir(wrapper.config.ScratchDir)
-	wrapper.sh.ShowCMD = true
-	wrapper.sh.PipeFail = true
-	wrapper.sh.PipeStdErrors = true
 
-	// Setup restic environments
-	err := wrapper.setupEnv()
+	err := wrapper.configure()
 	if err != nil {
 		return nil, err
 	}
 	return wrapper, nil
+}
+
+func NewResticWrapperFromShell(options SetupOptions, sh *shell.Session) (*ResticWrapper, error) {
+	wrapper := &ResticWrapper{
+		sh:     sh,
+		config: options,
+	}
+	err := wrapper.configure()
+	if err != nil {
+		return nil, err
+	}
+	return wrapper, nil
+}
+
+func (w *ResticWrapper) configure() error {
+	w.sh.SetDir(w.config.ScratchDir)
+	w.sh.ShowCMD = true
+	w.sh.PipeFail = true
+	w.sh.PipeStdErrors = true
+
+	// Setup restic environments
+	return w.setupEnv()
 }
 
 func (w *ResticWrapper) SetEnv(key, value string) {
@@ -125,6 +143,16 @@ func (w *ResticWrapper) SetEnv(key, value string) {
 	}
 }
 
+func (w *ResticWrapper) GetEnv(key string) string {
+	if w.sh != nil {
+		return w.sh.Env[key]
+	}
+	return ""
+}
+
+func (w *ResticWrapper) GetCaPath() string {
+	return w.config.CacertFile
+}
 func (w *ResticWrapper) DumpEnv(path string, dumpedFile string) error {
 	if err := os.MkdirAll(path, 0755); err != nil {
 		return err
