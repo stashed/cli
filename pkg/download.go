@@ -19,14 +19,13 @@ package pkg
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"os/user"
+	"path/filepath"
 
 	cs "stash.appscode.dev/apimachinery/client/clientset/versioned"
 	"stash.appscode.dev/apimachinery/pkg/restic"
-	"stash.appscode.dev/cli/pkg/docker"
 	"stash.appscode.dev/stash/pkg/util"
 
 	"github.com/pkg/errors"
@@ -42,10 +41,9 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 		localDirs  = &cliLocalDirectories{}
 		restoreOpt = restic.RestoreOptions{
 			SourceHost:  restic.DefaultHost,
-			Destination: docker.DestinationDir,
+			Destination: DestinationDir,
 		}
 	)
-
 	var cmd = &cobra.Command{
 		Use:               "download",
 		Short:             `Download snapshots`,
@@ -75,56 +73,68 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 				return err
 			}
 
-			// get source repository
 			repository, err := client.StashV1alpha1().Repositories(namespace).Get(context.TODO(), repositoryName, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
-			// unlock local backend
+
 			if repository.Spec.Backend.Local != nil {
 				return fmt.Errorf("can't restore from repository with local backend")
 			}
-			// get repository secret
+
+			// get source repository secret
 			secret, err := kc.CoreV1().Secrets(namespace).Get(context.TODO(), repository.Spec.Backend.StorageSecretName, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
 
+			if err = localDirs.prepareDownloadDir(); err != nil {
+				return err
+			}
+
+			if err = os.MkdirAll(ScratchDir, 0755); err != nil {
+				return err
+			}
+			defer os.RemoveAll(ScratchDir)
+
 			// configure restic wrapper
 			extraOpt := util.ExtraOptions{
-				SecretDir:   docker.SecretDir,
-				EnableCache: false,
-				ScratchDir:  docker.ScratchDir,
+				StorageSecret: secret,
+				ScratchDir:    ScratchDir,
 			}
+			// configure setupOption
 			setupOpt, err := util.SetupOptionsForRepository(*repository, extraOpt)
 			if err != nil {
 				return fmt.Errorf("setup option for repository failed")
 			}
 
-			// write secret and config in a temp dir
-			// cleanup whole tempDir dir at the end
-			tempDir, err := ioutil.TempDir("", "stash-cli")
+			resticWrapper, err := restic.NewResticWrapper(setupOpt)
 			if err != nil {
 				return err
 			}
-			defer os.RemoveAll(tempDir)
 
-			// prepare local dirs
-			if err = localDirs.prepareSecretDir(tempDir, secret); err != nil {
+			localDirs.configDir = filepath.Join(ScratchDir, configDirName)
+			// dump restic's environments into `restic-env` file.
+			// we will pass this env file to restic docker container.
+			err = resticWrapper.DumpEnv(localDirs.configDir, ResticEnvs)
+			if err != nil {
 				return err
 			}
-			if err = localDirs.prepareConfigDir(tempDir, &setupOpt, &restoreOpt); err != nil {
-				return err
+
+			extraAgrs := []string{
+				"--no-cache",
 			}
-			if err = localDirs.prepareDownloadDir(); err != nil {
-				return err
+
+			// For TLS secured Minio/REST server, specify cert path
+			if resticWrapper.GetCaPath() != "" {
+				extraAgrs = append(extraAgrs, "--cacert", resticWrapper.GetCaPath())
 			}
 
 			// run restore inside docker
-			if err = runRestoreViaDocker(*localDirs); err != nil {
+			if err = runRestoreViaDocker(*localDirs, extraAgrs, restoreOpt.Snapshots); err != nil {
 				return err
 			}
-			klog.Infof("Repository %s/%s restored in path %s", namespace, repositoryName, restoreOpt.Destination)
+			klog.Infof("Snapshots: %v of Repository %s/%s restored in path %s", restoreOpt.Snapshots, namespace, repositoryName, localDirs.downloadDir)
 			return nil
 		},
 	}
@@ -141,26 +151,34 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 	return cmd
 }
 
-// FixIt! directly call restic/restic to restore hosts in (parallel ?)
-func runRestoreViaDocker(localDirs cliLocalDirectories) error {
+func runRestoreViaDocker(localDirs cliLocalDirectories, extraArgs []string, snapshots []string) error {
 	// get current user
 	currentUser, err := user.Current()
 	if err != nil {
 		return err
 	}
-	args := []string{
+	restoreArgs := []string{
 		"run",
 		"--rm",
 		"-u", currentUser.Uid,
-		"-v", localDirs.configDir + ":" + docker.ConfigDir,
-		"-v", localDirs.secretDir + ":" + docker.SecretDir,
-		"-v", localDirs.downloadDir + ":" + docker.DestinationDir,
+		"-v", ScratchDir + ":" + ScratchDir,
+		"-v", localDirs.downloadDir + ":" + DestinationDir,
+		"--env", "HTTP_PROXY=" + os.Getenv("HTTP_PROXY"),
+		"--env", "HTTPS_PROXY=" + os.Getenv("HTTPS_PROXY"),
+		"--env-file", filepath.Join(localDirs.configDir, ResticEnvs),
 		imgRestic.ToContainerImage(),
-		"docker",
-		"download-snapshots",
 	}
-	klog.Infoln("Running docker with args:", args)
-	out, err := exec.Command("docker", args...).CombinedOutput()
-	klog.Infoln("Output:", string(out))
-	return err
+
+	restoreArgs = append(restoreArgs, extraArgs...)
+	restoreArgs = append(restoreArgs, "restore")
+	for _, snapshot := range snapshots {
+		args := append(restoreArgs, snapshot, "--target", filepath.Join(DestinationDir, snapshot))
+		klog.Infoln("Running docker with args:", args)
+		out, err := exec.Command("docker", args...).CombinedOutput()
+		if err != nil {
+			return err
+		}
+		klog.Infoln("Output:", string(out))
+	}
+	return nil
 }

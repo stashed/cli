@@ -30,6 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 	"k8s.io/kubectl/pkg/util/templates"
+	kmapi "kmodules.xyz/client-go/api/v1"
 	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
 
@@ -74,7 +75,9 @@ func NewCmdClonePVC() *cobra.Command {
 			}
 			klog.Infof("Repository has been created successfully.")
 
-			err = backupPVC(pvcName, repoName)
+			err = backupPVC(pvcName, kmapi.ObjectReference{
+				Name: repository.Name,
+			})
 			if err != nil {
 				return err
 			}
@@ -85,8 +88,13 @@ func NewCmdClonePVC() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
-			err = restorePVC(pvc, repoName)
+			err = ensurePVC(pvc)
+			if err != nil {
+				return err
+			}
+			err = restorePVC(pvc.Name, kmapi.ObjectReference{
+				Name: repoName,
+			})
 			if err != nil {
 				return err
 			}
@@ -111,12 +119,12 @@ func NewCmdClonePVC() *cobra.Command {
 
 // at first, create BackupConfiguration to take backup
 // after successful taking backup, delete the BackupConfiguration to stop taking backup
-func backupPVC(pvcName string, repoName string) error {
+func backupPVC(pvcName string, repository kmapi.ObjectReference) error {
 	// configure BackupConfiguration
 	opt := backupConfigOption{
 		task:       "pvc-backup",
 		schedule:   "*/59 * * * *", // we have to set a large value then trigger an instant backup immediately.
-		repository: repoName,
+		repository: repository,
 		retentionPolicy: v1alpha1.RetentionPolicy{
 			Name:     "keep-last-5",
 			KeepLast: 5,
@@ -155,32 +163,25 @@ func backupPVC(pvcName string, repoName string) error {
 
 // create RestoreSession to create a new PVC in the destination namespace
 // then restore the backed up data into the PVC
-func restorePVC(pvc *core.PersistentVolumeClaim, repoName string) error {
+
+func restorePVC(pvcName string, repository kmapi.ObjectReference) error {
 	// configure RestoreSession
 	opt := restoreSessionOption{
-		repository: repoName,
+		repository: repository,
 		task:       "pvc-restore",
 		rule: v1beta1.Rule{
 			Snapshots: []string{"latest"},
 		},
+		targetRef: v1beta1.TargetRef{
+			Name:       pvcName,
+			Kind:       apis.KindPersistentVolumeClaim,
+			APIVersion: core.SchemeGroupVersion.String(),
+		},
 	}
 
-	restoreSession, err := opt.newRestoreSession(fmt.Sprintf("%s-%s", pvc.Name, "restore"), dstNamespace)
+	restoreSession, err := opt.newRestoreSession(fmt.Sprintf("%s-%s", pvcName, "restore"), dstNamespace)
 	if err != nil {
 		return err
-	}
-	restoreSession.Spec.Target.VolumeClaimTemplates = []ofst.PersistentVolumeClaim{
-		{
-			PartialObjectMeta: ofst.PartialObjectMeta{
-				Name:      pvc.Name,
-				Namespace: dstNamespace,
-			},
-			Spec: core.PersistentVolumeClaimSpec{
-				StorageClassName: pvc.Spec.StorageClassName,
-				Resources:        pvc.Spec.Resources,
-				AccessModes:      pvc.Spec.AccessModes,
-			},
-		},
 	}
 
 	klog.Infof("Creating RestoreSession: %s to the namespace: %s", restoreSession.Name, restoreSession.Namespace)
@@ -196,6 +197,30 @@ func restorePVC(pvc *core.PersistentVolumeClaim, repoName string) error {
 	klog.Infof("RestoreSession has been succeeded.")
 	// delete RestoreSession
 	return stashClient.StashV1beta1().RestoreSessions(dstNamespace).Delete(context.TODO(), restoreSession.Name, metav1.DeleteOptions{})
+}
+func ensurePVC(pvc *core.PersistentVolumeClaim) error {
+	klog.Infof("Creating pvc in %s namespace", pvc.Namespace)
+	pvcTemplates := []ofst.PersistentVolumeClaim{
+		{
+			PartialObjectMeta: ofst.PartialObjectMeta{
+				Name:      pvc.Name,
+				Namespace: dstNamespace,
+			},
+			Spec: core.PersistentVolumeClaimSpec{
+				StorageClassName: pvc.Spec.StorageClassName,
+				Resources:        pvc.Spec.Resources,
+				AccessModes:      pvc.Spec.AccessModes,
+			},
+		},
+	}
+	claim := pvcTemplates[0].DeepCopy().ToCorePVC()
+	_, err := kubeClient.CoreV1().PersistentVolumeClaims(dstNamespace).Create(context.TODO(), claim, metav1.CreateOptions{})
+
+	if err != nil {
+		return err
+	}
+	klog.Infof("PVC %q has been created successfully in %s namespace", pvc.Name, pvc.Namespace)
+	return nil
 }
 
 func cleanupRepository(repoName string) error {

@@ -20,10 +20,8 @@ import (
 	"context"
 	"fmt"
 
-	"stash.appscode.dev/apimachinery/apis"
 	"stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 	v1beta1_util "stash.appscode.dev/apimachinery/client/clientset/versioned/typed/stash/v1beta1/util"
-	"stash.appscode.dev/stash/pkg/util"
 
 	vs "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1beta1"
 	"github.com/spf13/cobra"
@@ -33,6 +31,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 	"k8s.io/kubectl/pkg/util/templates"
+	kmapi "kmodules.xyz/client-go/api/v1"
 	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
 
@@ -41,7 +40,7 @@ var (
 		# Create a RestoreSession
 		# stash create restore --namespace=demo <restore session name> [Flag]
         # For Restic driver
-         stash create restoresession ss-restore --namespace=demo --repository=gcs-repo --target-apiversion=apps/v1 --target-kind=StatefulSet --target-name=stash-recovered --paths=/source/data --volume-mounts=source-data:/source/data
+         stash create restoresession ss-restore --namespace=demo --repo-name=gcs-repo --target-apiversion=apps/v1 --target-kind=StatefulSet --target-name=stash-recovered --paths=/source/data --volume-mounts=source-data:/source/data
         # For VolumeSnapshotter driver
          stash create restoresession restore-pvc --namespace=demo --driver=VolumeSnapshotter --replica=3 --claim.name=restore-data-restore-demo-${POD_ORDINAL} --claim.access-modes=ReadWriteOnce --claim.storageclass=standard --claim.size=1Gi --claim.datasource=source-data-stash-demo-0-1567146010`)
 )
@@ -50,7 +49,7 @@ type restoreSessionOption struct {
 	volumeMounts []string
 	task         string
 	targetRef    v1beta1.TargetRef
-	repository   string
+	repository   kmapi.ObjectReference
 	driver       string
 	replica      int32
 	alias        string
@@ -101,7 +100,8 @@ func NewCmdCreateRestoreSession() *cobra.Command {
 	cmd.Flags().StringVar(&restoreSessionOpt.targetRef.Kind, "target-kind", restoreSessionOpt.targetRef.Kind, "Kind of the target resource")
 	cmd.Flags().StringVar(&restoreSessionOpt.targetRef.Name, "target-name", restoreSessionOpt.targetRef.Name, "Name of the target resource")
 
-	cmd.Flags().StringVar(&restoreSessionOpt.repository, "repository", restoreSessionOpt.repository, "Name of the Repository")
+	cmd.Flags().StringVar(&restoreSessionOpt.repository.Name, "repo-name", restoreSessionOpt.repository.Name, "Name of the Repository")
+	cmd.Flags().StringVar(&restoreSessionOpt.repository.Namespace, "repo-namespace", namespace, "Namespace of the Repository")
 	cmd.Flags().StringVar(&restoreSessionOpt.driver, "driver", restoreSessionOpt.driver, "Driver indicates the mechanism used to backup (i.e. VolumeSnapshotter, Restic)")
 	cmd.Flags().StringVar(&restoreSessionOpt.task, "task", restoreSessionOpt.task, "Name of the Task")
 	cmd.Flags().Int32Var(&restoreSessionOpt.replica, "replica", restoreSessionOpt.replica, "Replica specifies the number of replicas whose data should be backed up")
@@ -132,11 +132,12 @@ func (opt restoreSessionOption) newRestoreSession(name string, namespace string)
 		restoreSession.Spec.Driver = v1beta1.Snapshotter(opt.driver)
 	} else {
 		restoreSession.Spec = v1beta1.RestoreSessionSpec{
-			Repository: core.LocalObjectReference{Name: opt.repository},
+			Repository: kmapi.ObjectReference{
+				Name:      opt.repository.Name,
+				Namespace: opt.repository.Namespace},
 		}
 		restoreSession.Spec.Task = v1beta1.TaskRef{Name: opt.task}
 	}
-
 	err := opt.setRestoreTarget(restoreSession)
 	if err != nil {
 		return nil, err
@@ -171,16 +172,17 @@ func (opt restoreSessionOption) setRestoreTarget(restoreSession *v1beta1.Restore
 			APIGroup: pointer.StringP(vs.GroupName),
 		}
 	} else {
-		if opt.targetRef.Kind != "" && util.BackupModel(opt.targetRef.Kind) == apis.ModelSidecar {
+		if opt.volumeClaimTemplate.name != "" && opt.volumeClaimTemplate.size != "" {
+			restoreSession.Spec.Target = &v1beta1.RestoreTarget{
+				VolumeClaimTemplates: opt.getRestoredPVCTemplates(),
+			}
+		} else {
 			restoreSession.Spec.Target = &v1beta1.RestoreTarget{
 				Ref: opt.targetRef,
 			}
 
-		} else {
-			restoreSession.Spec.Target = &v1beta1.RestoreTarget{
-				VolumeClaimTemplates: opt.getRestoredPVCTemplates(),
-			}
 		}
+
 		if len(opt.volumeMounts) > 0 {
 			volumeMounts, err := getVolumeMounts(opt.volumeMounts)
 			if err != nil {

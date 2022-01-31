@@ -30,6 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 	"k8s.io/kubectl/pkg/util/templates"
+	kmapi "kmodules.xyz/client-go/api/v1"
 )
 
 var (
@@ -37,7 +38,7 @@ var (
 		# Create a new BackupConfiguration
 		# stash create backupconfig --namespace=<namespace> gcs-repo [Flag]
         # For Restic driver
-        stash create backupconfig ss-backup --namespace=demo --repository=gcs-repo --schedule="*/4 * * * *" --target-apiversion=apps/v1 --target-kind=StatefulSet --target-name=stash-demo --paths=/source/data --volume-mounts=source-data:/source/data --keep-last=5 --prune=true
+        stash create backupconfig ss-backup --namespace=demo --repo-name=gcs-repo --schedule="*/4 * * * *" --target-apiversion=apps/v1 --target-kind=StatefulSet --target-name=stash-demo --paths=/source/data --volume-mounts=source-data:/source/data --keep-last=5 --prune=true
         # For VolumeSnapshotter driver
          stash create backupconfig statefulset-volume-snapshot --namespace=demo --driver=VolumeSnapshotter --schedule="*/4 * * * *" --target-apiversion=apps/v1 --target-kind=StatefulSet --target-name=stash-demo --replica=1 --volumesnpashotclass=default-snapshot-class --keep-last=5 --prune=true`)
 )
@@ -48,7 +49,7 @@ type backupConfigOption struct {
 
 	targetRef           v1beta1.TargetRef
 	retentionPolicy     v1alpha1.RetentionPolicy
-	repository          string
+	repository          kmapi.ObjectReference
 	schedule            string
 	driver              string
 	volumesnpashotclass string
@@ -88,7 +89,8 @@ func NewCmdCreateBackupConfiguration() *cobra.Command {
 	cmd.Flags().StringVar(&backupConfigOpt.targetRef.APIVersion, "target-apiversion", backupConfigOpt.targetRef.APIVersion, "API-Version of the target resource")
 	cmd.Flags().StringVar(&backupConfigOpt.targetRef.Kind, "target-kind", backupConfigOpt.targetRef.Kind, "Kind of the target resource")
 	cmd.Flags().StringVar(&backupConfigOpt.targetRef.Name, "target-name", backupConfigOpt.targetRef.Name, "Name of the target resource")
-	cmd.Flags().StringVar(&backupConfigOpt.repository, "repository", backupConfigOpt.repository, "Name of the Repository")
+	cmd.Flags().StringVar(&backupConfigOpt.repository.Name, "repo-name", backupConfigOpt.repository.Name, "Name of the Repository")
+	cmd.Flags().StringVar(&backupConfigOpt.repository.Namespace, "repo-namespace", namespace, "Namespace of the Repository")
 	cmd.Flags().StringVar(&backupConfigOpt.schedule, "schedule", backupConfigOpt.schedule, "Schedule of the Backup")
 	cmd.Flags().StringVar(&backupConfigOpt.driver, "driver", backupConfigOpt.driver, "Driver indicates the mechanism used to backup (i.e. VolumeSnapshotter, Restic)")
 	cmd.Flags().StringVar(&backupConfigOpt.task, "task", backupConfigOpt.task, "Name of the Task")
@@ -126,7 +128,9 @@ func (opt backupConfigOption) newBackupConfiguration(name string, namespace stri
 	if v1beta1.Snapshotter(opt.driver) == v1beta1.VolumeSnapshotter {
 		backupConfig.Spec.Driver = v1beta1.Snapshotter(opt.driver)
 	} else {
-		backupConfig.Spec.Repository = core.LocalObjectReference{Name: opt.repository}
+		backupConfig.Spec.Repository = kmapi.ObjectReference{
+			Name:      opt.repository.Name,
+			Namespace: opt.repository.Namespace}
 		backupConfig.Spec.Task = v1beta1.TaskRef{Name: opt.task}
 	}
 

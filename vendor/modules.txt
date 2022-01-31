@@ -161,8 +161,6 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/robfig/cron/v3 v3.0.1
-github.com/robfig/cron/v3
 # github.com/russross/blackfriday v1.5.2
 github.com/russross/blackfriday
 # github.com/russross/blackfriday/v2 v2.0.1
@@ -216,7 +214,7 @@ golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
 golang.org/x/term
-# golang.org/x/text v0.3.6
+# golang.org/x/text v0.3.7
 golang.org/x/text/encoding
 golang.org/x/text/encoding/internal
 golang.org/x/text/encoding/internal/identifier
@@ -654,20 +652,18 @@ k8s.io/utils/integer
 k8s.io/utils/io
 k8s.io/utils/pointer
 k8s.io/utils/trace
-# kmodules.xyz/client-go v0.0.0-20211122091731-6c471b24a4ea
+# kmodules.xyz/client-go v0.0.0-20220108081101-27afc2ac4ebe
 ## explicit
 kmodules.xyz/client-go
 kmodules.xyz/client-go/api/v1
 kmodules.xyz/client-go/apiextensions
 kmodules.xyz/client-go/apiextensions/v1
-kmodules.xyz/client-go/apiextensions/v1beta1
 kmodules.xyz/client-go/core/v1
-kmodules.xyz/client-go/discovery
 kmodules.xyz/client-go/meta
 kmodules.xyz/client-go/tools/clientcmd
 kmodules.xyz/client-go/tools/exec
 kmodules.xyz/client-go/tools/pushgateway
-# kmodules.xyz/custom-resources v0.0.0-20211122142737-3bf3dbd8ac52
+# kmodules.xyz/custom-resources v0.0.0-20220104123914-3c036dd7c1cd
 kmodules.xyz/custom-resources/apis/appcatalog
 kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1
 kmodules.xyz/custom-resources/apis/auditor
@@ -705,7 +701,10 @@ kmodules.xyz/prober/probe/tcp
 # kmodules.xyz/webhook-runtime v0.0.0-20211116181908-909a755cc9d1
 kmodules.xyz/webhook-runtime/apis/workload/v1
 # sigs.k8s.io/controller-runtime v0.9.0
+sigs.k8s.io/controller-runtime/pkg/client
 sigs.k8s.io/controller-runtime/pkg/client/apiutil
+sigs.k8s.io/controller-runtime/pkg/log
+sigs.k8s.io/controller-runtime/pkg/scheme
 # sigs.k8s.io/kustomize/api v0.8.8
 sigs.k8s.io/kustomize/api/builtins
 sigs.k8s.io/kustomize/api/filesys
@@ -787,7 +786,7 @@ sigs.k8s.io/structured-merge-diff/v4/typed
 sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0
 sigs.k8s.io/yaml
-# stash.appscode.dev/apimachinery v0.17.0
+# stash.appscode.dev/apimachinery v0.17.1-0.20220131063340-553a63a8479a
 ## explicit
 stash.appscode.dev/apimachinery/apis
 stash.appscode.dev/apimachinery/apis/repositories
@@ -795,6 +794,8 @@ stash.appscode.dev/apimachinery/apis/repositories/v1alpha1
 stash.appscode.dev/apimachinery/apis/stash
 stash.appscode.dev/apimachinery/apis/stash/v1alpha1
 stash.appscode.dev/apimachinery/apis/stash/v1beta1
+stash.appscode.dev/apimachinery/apis/ui
+stash.appscode.dev/apimachinery/apis/ui/v1alpha1
 stash.appscode.dev/apimachinery/client/clientset/versioned
 stash.appscode.dev/apimachinery/client/clientset/versioned/fake
 stash.appscode.dev/apimachinery/client/clientset/versioned/scheme
@@ -806,15 +807,15 @@ stash.appscode.dev/apimachinery/client/clientset/versioned/typed/stash/v1alpha1/
 stash.appscode.dev/apimachinery/client/clientset/versioned/typed/stash/v1beta1
 stash.appscode.dev/apimachinery/client/clientset/versioned/typed/stash/v1beta1/fake
 stash.appscode.dev/apimachinery/client/clientset/versioned/typed/stash/v1beta1/util
-stash.appscode.dev/apimachinery/client/listers/stash/v1alpha1
+stash.appscode.dev/apimachinery/client/clientset/versioned/typed/ui/v1alpha1
+stash.appscode.dev/apimachinery/client/clientset/versioned/typed/ui/v1alpha1/fake
 stash.appscode.dev/apimachinery/client/listers/stash/v1beta1
 stash.appscode.dev/apimachinery/crds
 stash.appscode.dev/apimachinery/pkg/docker
 stash.appscode.dev/apimachinery/pkg/invoker
 stash.appscode.dev/apimachinery/pkg/restic
-# stash.appscode.dev/stash v0.17.0
+# stash.appscode.dev/stash v0.17.1-0.20220125101015-1e41192e71c8
 ## explicit
-stash.appscode.dev/stash/pkg/cli
 stash.appscode.dev/stash/pkg/registry/snapshot
 stash.appscode.dev/stash/pkg/util
 # bitbucket.org/ww/goautoneg => gomodules.xyz/goautoneg v0.0.0-20120707110453-a547fc61f48d

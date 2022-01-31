@@ -19,7 +19,6 @@ package pkg
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"os/user"
@@ -49,7 +48,7 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			if len(args) == 0 || args[0] == "" {
-				return fmt.Errorf("Repository name not found")
+				return fmt.Errorf("repository name not found")
 			}
 			repositoryName := args[0]
 
@@ -83,37 +82,31 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 				return err
 			}
 
-			tempDir, err := ioutil.TempDir("", "stash-cli")
-			if err != nil {
+			if err = os.MkdirAll(ScratchDir, 0755); err != nil {
 				return err
 			}
-			defer os.RemoveAll(tempDir)
-
-			// dump secret into a temporary directory.
-			// we will pass the secret files into restic docker container.
-			if err = localDirs.dumpSecret(tempDir, secret); err != nil {
-				return err
-			}
+			defer os.RemoveAll(ScratchDir)
 
 			// configure restic wrapper
 			extraOpt := util.ExtraOptions{
-				SecretDir: localDirs.secretDir,
+				StorageSecret: secret,
+				ScratchDir:    ScratchDir,
 			}
 			// configure setupOption
 			setupOpt, err := util.SetupOptionsForRepository(*repository, extraOpt)
 			if err != nil {
 				return fmt.Errorf("setup option for repository failed")
 			}
-
 			// init restic wrapper
 			resticWrapper, err := restic.NewResticWrapper(setupOpt)
 			if err != nil {
 				return err
 			}
 
-			localDirs.configDir = filepath.Join(tempDir, configDirName)
+			localDirs.configDir = filepath.Join(ScratchDir, configDirName)
 			// dump restic's environments into `restic-env` file.
 			// we will pass this env file to restic docker container.
+
 			err = resticWrapper.DumpEnv(localDirs.configDir, ResticEnvs)
 			if err != nil {
 				return err
@@ -124,8 +117,8 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 			}
 
 			// For TLS secured Minio/REST server, specify cert path
-			if _, err := os.Stat(filepath.Join(localDirs.secretDir, restic.CA_CERT_DATA)); err == nil {
-				extraAgrs = append(extraAgrs, "--cacert", filepath.Join(localDirs.secretDir, restic.CA_CERT_DATA))
+			if resticWrapper.GetCaPath() != "" {
+				extraAgrs = append(extraAgrs, "--cacert", resticWrapper.GetCaPath())
 			}
 
 			// run unlock inside docker
@@ -150,7 +143,7 @@ func runCmdViaDocker(localDirs cliLocalDirectories, command string, extraArgs []
 		"run",
 		"--rm",
 		"-u", currentUser.Uid,
-		"-v", localDirs.secretDir + ":" + localDirs.secretDir,
+		"-v", ScratchDir + ":" + ScratchDir,
 		"--env", "HTTP_PROXY=" + os.Getenv("HTTP_PROXY"),
 		"--env", "HTTPS_PROXY=" + os.Getenv("HTTPS_PROXY"),
 		"--env-file", filepath.Join(localDirs.configDir, ResticEnvs),
