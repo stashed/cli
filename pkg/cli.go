@@ -39,7 +39,7 @@ const (
 )
 
 var (
-	ResticRegistry = "restic"
+	ResticRegistry = "stashed"
 	ResticImage    = "restic"
 	ResticTag      = "latest"
 )
