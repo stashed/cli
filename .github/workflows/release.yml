@@ -37,6 +37,7 @@ jobs:
         with:
           files: |
             bin/kubectl-stash-darwin-amd64.tar.gz
+            bin/kubectl-stash-darwin-arm64.tar.gz
             bin/kubectl-stash-linux-amd64.tar.gz
             bin/kubectl-stash-linux-arm.tar.gz
             bin/kubectl-stash-linux-arm64.tar.gz
