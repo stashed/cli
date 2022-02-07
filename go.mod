@@ -7,20 +7,23 @@ require (
 	github.com/json-iterator/go v1.1.11
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.1.0
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/cobra v1.1.3
+	github.com/sergi/go-diff v1.2.0 // indirect
+	github.com/spf13/cobra v1.2.1
 	gomodules.xyz/logs v0.0.6
 	gomodules.xyz/pointer v0.1.0
 	gomodules.xyz/runtime v0.2.0
-	gomodules.xyz/x v0.0.8
+	gomodules.xyz/x v0.0.10
 	k8s.io/api v0.21.1
 	k8s.io/apimachinery v0.21.1
 	k8s.io/cli-runtime v0.21.1
 	k8s.io/client-go v0.21.1
-	k8s.io/klog/v2 v2.8.0
+	k8s.io/klog/v2 v2.9.0
+	k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e // indirect
 	k8s.io/kubectl v0.21.1
-	kmodules.xyz/client-go v0.0.0-20220108081101-27afc2ac4ebe
-	kmodules.xyz/objectstore-api v0.0.0-20211116180107-8720be0c9bf7
-	kmodules.xyz/offshoot-api v0.0.0-20210829122105-6f4d481b0c61
+	kmodules.xyz/client-go v0.0.0-20220203031013-1de48437aaf3
+	kmodules.xyz/custom-resources v0.0.0-20220126201139-be014631db0c // indirect
+	kmodules.xyz/objectstore-api v0.0.0-20211207131029-3271069de43e
+	kmodules.xyz/offshoot-api v0.0.0-20211207130839-cc7187e020cf
 	kmodules.xyz/openshift v0.0.0-20210618001443-f2507caa512f
 	stash.appscode.dev/apimachinery v0.17.1-0.20220131063340-553a63a8479a
 	stash.appscode.dev/stash v0.17.1-0.20220125101015-1e41192e71c8
@@ -114,7 +117,7 @@ replace k8s.io/api => k8s.io/api v0.21.1
 
 replace k8s.io/apimachinery => github.com/kmodules/apimachinery v0.21.2-rc.0.0.20210617231004-332981b97d2d
 
-replace k8s.io/apiserver => github.com/kmodules/apiserver v0.21.2-0.20210716212718-83e5493ac170
+replace k8s.io/apiserver => github.com/kmodules/apiserver v0.21.2-0.20220112070009-e3f6e88991d9
 
 replace k8s.io/cli-runtime => k8s.io/cli-runtime v0.21.1
 
