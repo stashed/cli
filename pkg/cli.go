@@ -44,6 +44,11 @@ var (
 	ResticTag      = "latest"
 )
 
+var (
+	backupConfig string
+	backupBatch  string
+)
+
 var imgRestic docker.Docker
 
 func init() {

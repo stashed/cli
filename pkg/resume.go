@@ -24,10 +24,10 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-func NewCmdPause(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
+func NewCmdResume(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:               "pause",
-		Short:             `pause stash resources`,
+		Use:               "resume",
+		Short:             `resume stash resources`,
 		DisableAutoGenTag: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 
@@ -49,7 +49,7 @@ func NewCmdPause(clientGetter genericclioptions.RESTClientGetter) *cobra.Command
 			return nil
 		},
 	}
-	cmd.AddCommand(NewCmdPauseBackup())
+	cmd.AddCommand(NewCmdResumeBackup())
 	cmd.PersistentFlags().StringVar(&backupConfig, "backup-config", backupConfig, "Name of the Backupconfiguration")
 	cmd.PersistentFlags().StringVar(&backupBatch, "backup-batch", backupBatch, "Name of the BackupBatch")
 	return cmd

@@ -30,18 +30,18 @@ import (
 )
 
 var (
-	pauseBackupExample = templates.Examples(`
+	resumeBackupExample = templates.Examples(`
 		# Pause a BackupConfigration
-		stash pause backup --namespace=<namespace> --backup-config=<backup-configuration-name>
-        stash pause backup --backup-config=asample-mongodb -n demo`)
+		stash resume backup --namespace=<namespace> --backup-config=<backup-configuration-name>
+        stash resume backup --backup-config=asample-mongodb -n demo`)
 )
 
-func NewCmdPauseBackup() *cobra.Command {
+func NewCmdResumeBackup() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:               "backup",
-		Short:             `Pause backup`,
-		Long:              `Pause backup by patching Backupconfiguration/BackupBatch`,
-		Example:           pauseBackupExample,
+		Short:             `resume backup`,
+		Long:              `resume backup by patching Backupconfiguration/BackupBatch`,
+		Example:           resumeBackupExample,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if backupConfig == "" && backupBatch == "" {
@@ -49,15 +49,15 @@ func NewCmdPauseBackup() *cobra.Command {
 			}
 			var err error
 			if backupConfig != "" {
-				err = pauseBackupconfiguration()
+				err = resumeBackupconfiguration()
 				if err == nil {
-					klog.Infof("BackupConfiguration %s/%s has been paused successfully.", namespace, backupConfig)
+					klog.Infof("BackupConfiguration %s/%s has been resumed successfully.", namespace, backupConfig)
 				}
 			}
 			if backupBatch != "" {
-				err = pauseBackupBatch()
+				err = resumeBackupBatch()
 				if err == nil {
-					klog.Infof("BackupBatch %s/%s has been paused successfully.", namespace, backupBatch)
+					klog.Infof("BackupBatch %s/%s has been resumed successfully.", namespace, backupBatch)
 				}
 			}
 			return err
@@ -67,7 +67,7 @@ func NewCmdPauseBackup() *cobra.Command {
 	return cmd
 }
 
-func pauseBackupconfiguration() error {
+func resumeBackupconfiguration() error {
 	bc, err := stashClient.StashV1beta1().BackupConfigurations(namespace).Get(context.TODO(), backupConfig, metav1.GetOptions{})
 	if err != nil {
 		return err
@@ -77,14 +77,14 @@ func pauseBackupconfiguration() error {
 		stashClient.StashV1beta1(),
 		bc,
 		func(in *v1beta1.BackupConfiguration) *v1beta1.BackupConfiguration {
-			in.Spec.Paused = true
+			in.Spec.Paused = false
 			return in
 		},
 		metav1.PatchOptions{},
 	)
 	return err
 }
-func pauseBackupBatch() error {
+func resumeBackupBatch() error {
 	bb, err := stashClient.StashV1beta1().BackupBatches(namespace).Get(context.TODO(), backupBatch, metav1.GetOptions{})
 	if err != nil {
 		return err
@@ -94,7 +94,7 @@ func pauseBackupBatch() error {
 		stashClient.StashV1beta1(),
 		bb,
 		func(in *v1beta1.BackupBatch) *v1beta1.BackupBatch {
-			in.Spec.Paused = true
+			in.Spec.Paused = false
 			return in
 		},
 		metav1.PatchOptions{},
