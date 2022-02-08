@@ -27,7 +27,7 @@ import (
 func NewCmdPause(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "pause",
-		Short:             `pause stash resources`,
+		Short:             `Pause Stash backup temporarily`,
 		DisableAutoGenTag: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 
@@ -50,7 +50,7 @@ func NewCmdPause(clientGetter genericclioptions.RESTClientGetter) *cobra.Command
 		},
 	}
 	cmd.AddCommand(NewCmdPauseBackup())
-	cmd.PersistentFlags().StringVar(&backupConfig, "backup-config", backupConfig, "Name of the Backupconfiguration")
-	cmd.PersistentFlags().StringVar(&backupBatch, "backup-batch", backupBatch, "Name of the BackupBatch")
+	cmd.PersistentFlags().StringVar(&backupConfig, "backupconfig", backupConfig, "Name of the Backupconfiguration to pause")
+	cmd.PersistentFlags().StringVar(&backupBatch, "backupbatch", backupBatch, "Name of the BackupBatch to pause")
 	return cmd
 }

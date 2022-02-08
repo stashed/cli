@@ -17,87 +17,46 @@ limitations under the License.
 package pkg
 
 import (
-	"context"
 	"fmt"
 
-	"stash.appscode.dev/apimachinery/apis/stash/v1beta1"
-	v1beta1_util "stash.appscode.dev/apimachinery/client/clientset/versioned/typed/stash/v1beta1/util"
-
 	"github.com/spf13/cobra"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 	"k8s.io/kubectl/pkg/util/templates"
 )
 
 var (
 	resumeBackupExample = templates.Examples(`
-		# Pause a BackupConfigration
-		stash resume backup --namespace=<namespace> --backup-config=<backup-configuration-name>
-        stash resume backup --backup-config=asample-mongodb -n demo`)
+		# Resume a BackupConfigration
+		stash resume backup --namespace=<namespace> --backupconfig=<backup-configuration-name>
+        stash resume backup --backup-config=sample-mongodb -n demo`)
 )
 
 func NewCmdResumeBackup() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:               "backup",
-		Short:             `resume backup`,
-		Long:              `resume backup by patching Backupconfiguration/BackupBatch`,
+		Short:             `Resume backup`,
+		Long:              `Resume backup by setting paused field of BackupConfiguration/BackupBatch to false`,
 		Example:           resumeBackupExample,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if backupConfig == "" && backupBatch == "" {
-				return fmt.Errorf("BackupConfiguration/BackupBatch name has been not provided")
+				return fmt.Errorf("neither BackupConfiguration nor BackupBatch name has been provided")
 			}
-			var err error
+
 			if backupConfig != "" {
-				err = resumeBackupconfiguration()
-				if err == nil {
-					klog.Infof("BackupConfiguration %s/%s has been resumed successfully.", namespace, backupConfig)
+				if err := setBackupConfigurationPausedField(false); err != nil {
+					return err
 				}
-			}
-			if backupBatch != "" {
-				err = resumeBackupBatch()
-				if err == nil {
-					klog.Infof("BackupBatch %s/%s has been resumed successfully.", namespace, backupBatch)
+				klog.Infof("BackupConfiguration %s/%s has been resumed successfully.", namespace, backupConfig)
+			} else {
+				if err := setBackupBatchPausedField(false); err != nil {
+					return err
 				}
+				klog.Infof("BackupBatch %s/%s has been resumed successfully.", namespace, backupBatch)
 			}
-			return err
+			return nil
 		},
 	}
 
 	return cmd
-}
-
-func resumeBackupconfiguration() error {
-	bc, err := stashClient.StashV1beta1().BackupConfigurations(namespace).Get(context.TODO(), backupConfig, metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-	_, _, err = v1beta1_util.PatchBackupConfiguration(
-		context.TODO(),
-		stashClient.StashV1beta1(),
-		bc,
-		func(in *v1beta1.BackupConfiguration) *v1beta1.BackupConfiguration {
-			in.Spec.Paused = false
-			return in
-		},
-		metav1.PatchOptions{},
-	)
-	return err
-}
-func resumeBackupBatch() error {
-	bb, err := stashClient.StashV1beta1().BackupBatches(namespace).Get(context.TODO(), backupBatch, metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-	_, _, err = v1beta1_util.PatchBackupBatch(
-		context.TODO(),
-		stashClient.StashV1beta1(),
-		bb,
-		func(in *v1beta1.BackupBatch) *v1beta1.BackupBatch {
-			in.Spec.Paused = false
-			return in
-		},
-		metav1.PatchOptions{},
-	)
-	return err
 }

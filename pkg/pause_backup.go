@@ -32,42 +32,39 @@ import (
 var (
 	pauseBackupExample = templates.Examples(`
 		# Pause a BackupConfigration
-		stash pause backup --namespace=<namespace> --backup-config=<backup-configuration-name>
-        stash pause backup --backup-config=asample-mongodb -n demo`)
+		stash pause backup --namespace=<namespace> --backupconfig=<backup-configuration-name>
+        stash pause backup --backup-config=sample-mongodb -n demo`)
 )
 
 func NewCmdPauseBackup() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:               "backup",
 		Short:             `Pause backup`,
-		Long:              `Pause backup by patching Backupconfiguration/BackupBatch`,
+		Long:              `Pause backup by setting paused field of BackupConfiguration/BackupBatch to true`,
 		Example:           pauseBackupExample,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if backupConfig == "" && backupBatch == "" {
-				return fmt.Errorf("BackupConfiguration/BackupBatch name has been not provided")
+				return fmt.Errorf("neither BackupConfiguration nor BackupBatch name has been provided")
 			}
-			var err error
 			if backupConfig != "" {
-				err = pauseBackupconfiguration()
-				if err == nil {
-					klog.Infof("BackupConfiguration %s/%s has been paused successfully.", namespace, backupConfig)
+				if err := setBackupConfigurationPausedField(true); err != nil {
+					return err
 				}
-			}
-			if backupBatch != "" {
-				err = pauseBackupBatch()
-				if err == nil {
-					klog.Infof("BackupBatch %s/%s has been paused successfully.", namespace, backupBatch)
+				klog.Infof("BackupConfiguration %s/%s has been paused successfully.", namespace, backupConfig)
+			} else {
+				if err := setBackupBatchPausedField(true); err != nil {
+					return err
 				}
+				klog.Infof("BackupBatch %s/%s has been paused successfully.", namespace, backupBatch)
 			}
-			return err
+			return nil
 		},
 	}
-
 	return cmd
 }
 
-func pauseBackupconfiguration() error {
+func setBackupConfigurationPausedField(value bool) error {
 	bc, err := stashClient.StashV1beta1().BackupConfigurations(namespace).Get(context.TODO(), backupConfig, metav1.GetOptions{})
 	if err != nil {
 		return err
@@ -77,14 +74,15 @@ func pauseBackupconfiguration() error {
 		stashClient.StashV1beta1(),
 		bc,
 		func(in *v1beta1.BackupConfiguration) *v1beta1.BackupConfiguration {
-			in.Spec.Paused = true
+			in.Spec.Paused = value
 			return in
 		},
 		metav1.PatchOptions{},
 	)
 	return err
 }
-func pauseBackupBatch() error {
+
+func setBackupBatchPausedField(value bool) error {
 	bb, err := stashClient.StashV1beta1().BackupBatches(namespace).Get(context.TODO(), backupBatch, metav1.GetOptions{})
 	if err != nil {
 		return err
@@ -94,7 +92,7 @@ func pauseBackupBatch() error {
 		stashClient.StashV1beta1(),
 		bb,
 		func(in *v1beta1.BackupBatch) *v1beta1.BackupBatch {
-			in.Spec.Paused = true
+			in.Spec.Paused = value
 			return in
 		},
 		metav1.PatchOptions{},

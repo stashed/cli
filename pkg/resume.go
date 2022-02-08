@@ -27,7 +27,7 @@ import (
 func NewCmdResume(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "resume",
-		Short:             `resume stash resources`,
+		Short:             `Resume stash resources`,
 		DisableAutoGenTag: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 
@@ -50,7 +50,7 @@ func NewCmdResume(clientGetter genericclioptions.RESTClientGetter) *cobra.Comman
 		},
 	}
 	cmd.AddCommand(NewCmdResumeBackup())
-	cmd.PersistentFlags().StringVar(&backupConfig, "backup-config", backupConfig, "Name of the Backupconfiguration")
-	cmd.PersistentFlags().StringVar(&backupBatch, "backup-batch", backupBatch, "Name of the BackupBatch")
+	cmd.PersistentFlags().StringVar(&backupConfig, "backupconfig", backupConfig, "Name of the Backupconfiguration")
+	cmd.PersistentFlags().StringVar(&backupBatch, "backupbatch", backupBatch, "Name of the BackupBatch")
 	return cmd
 }
