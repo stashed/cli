@@ -21,7 +21,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e // indirect
 	k8s.io/kubectl v0.21.1
 	kmodules.xyz/client-go v0.0.0-20220203031013-1de48437aaf3
-	kmodules.xyz/custom-resources v0.0.0-20220126201139-be014631db0c // indirect
+	kmodules.xyz/custom-resources v0.0.0-20220208103158-61b298634e43 // indirect
 	kmodules.xyz/objectstore-api v0.0.0-20211207131029-3271069de43e
 	kmodules.xyz/offshoot-api v0.0.0-20211207130839-cc7187e020cf
 	kmodules.xyz/openshift v0.0.0-20210618001443-f2507caa512f
