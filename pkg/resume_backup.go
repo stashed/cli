@@ -35,7 +35,7 @@ func NewCmdResumeBackup() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:               "backup",
 		Short:             `Resume backup`,
-		Long:              `Resume backup by setting paused field of BackupConfiguration/BackupBatch to false`,
+		Long:              `Resume backup by setting "paused" field of BackupConfiguration/BackupBatch to "false"`,
 		Example:           resumeBackupExample,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {

@@ -40,7 +40,7 @@ func NewCmdPauseBackup() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:               "backup",
 		Short:             `Pause backup`,
-		Long:              `Pause backup by setting paused field of BackupConfiguration/BackupBatch to true`,
+		Long:              `Pause backup by setting "paused" field of BackupConfiguration/BackupBatch to "true"`,
 		Example:           pauseBackupExample,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
