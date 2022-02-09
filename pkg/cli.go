@@ -17,26 +17,33 @@ limitations under the License.
 package pkg
 
 import (
+	"context"
+	"fmt"
 	"os"
+	"strings"
 
 	"stash.appscode.dev/apimachinery/pkg/docker"
+
+	core "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
-	configDirName = "config"
-	ResticEnvs    = "restic-envs"
+	configDirName     = "config"
+	ResticEnvs        = "restic-envs"
+	OperatorNamespace = "kube-system"
 )
-
-type cliLocalDirectories struct {
-	configDir   string // temp dir
-	downloadDir string // user provided or, current working dir
-}
 
 // These variables will be set during build time
 const (
 	ScratchDir     = "/tmp/scratch"
 	DestinationDir = "/tmp/destination"
 )
+
+type cliLocalDirectories struct {
+	configDir   string // temp dir
+	downloadDir string // user provided or, current working dir
+}
 
 var (
 	ResticRegistry = "stashed"
@@ -65,4 +72,21 @@ func (localDirs *cliLocalDirectories) prepareDownloadDir() (err error) {
 		}
 	}
 	return os.MkdirAll(localDirs.downloadDir, 0o755)
+}
+func GetOperatorPod() (*core.Pod, error) {
+	podList, err := kubeClient.CoreV1().Pods(OperatorNamespace).List(context.TODO(), metav1.ListOptions{})
+
+	if err != nil {
+		return nil, err
+	}
+	for _, pod := range podList.Items {
+		if strings.HasPrefix(pod.Name, "stash") {
+			for _, c := range pod.Spec.Containers {
+				if c.Name == "operator" {
+					return &pod, nil
+				}
+			}
+		}
+	}
+	return nil, fmt.Errorf("operator pod not found")
 }
