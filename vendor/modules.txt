@@ -166,7 +166,6 @@ github.com/russross/blackfriday
 # github.com/russross/blackfriday/v2 v2.0.1
 github.com/russross/blackfriday/v2
 # github.com/sergi/go-diff v1.2.0
-## explicit
 github.com/sergi/go-diff/diffmatchpatch
 # github.com/shurcooL/sanitized_anchor_name v1.0.0
 github.com/shurcooL/sanitized_anchor_name
@@ -631,7 +630,6 @@ k8s.io/component-base/version
 ## explicit
 k8s.io/klog/v2
 # k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e => k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7
-## explicit
 k8s.io/kube-openapi/pkg/common
 k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/util/proto/validation
@@ -664,9 +662,7 @@ kmodules.xyz/client-go/core/v1
 kmodules.xyz/client-go/meta
 kmodules.xyz/client-go/tools/clientcmd
 kmodules.xyz/client-go/tools/exec
-kmodules.xyz/client-go/tools/pushgateway
 # kmodules.xyz/custom-resources v0.0.0-20220208103158-61b298634e43
-## explicit
 kmodules.xyz/custom-resources/apis/appcatalog
 kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1
 kmodules.xyz/custom-resources/apis/auditor
@@ -789,7 +785,7 @@ sigs.k8s.io/structured-merge-diff/v4/typed
 sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0
 sigs.k8s.io/yaml
-# stash.appscode.dev/apimachinery v0.17.1-0.20220131063340-553a63a8479a
+# stash.appscode.dev/apimachinery v0.18.0
 ## explicit
 stash.appscode.dev/apimachinery/apis
 stash.appscode.dev/apimachinery/apis/repositories
@@ -816,8 +812,9 @@ stash.appscode.dev/apimachinery/client/listers/stash/v1beta1
 stash.appscode.dev/apimachinery/crds
 stash.appscode.dev/apimachinery/pkg/docker
 stash.appscode.dev/apimachinery/pkg/invoker
+stash.appscode.dev/apimachinery/pkg/metrics
 stash.appscode.dev/apimachinery/pkg/restic
-# stash.appscode.dev/stash v0.17.1-0.20220125101015-1e41192e71c8
+# stash.appscode.dev/stash v0.18.0
 ## explicit
 stash.appscode.dev/stash/pkg/registry/snapshot
 stash.appscode.dev/stash/pkg/util

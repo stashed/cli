@@ -94,14 +94,6 @@ type SetupOptions struct {
 	IONice         *ofst.IONiceSettings
 }
 
-type MetricsOptions struct {
-	Enabled        bool
-	PushgatewayURL string
-	MetricFileDir  string
-	Labels         []string
-	JobName        string
-}
-
 func NewResticWrapper(options SetupOptions) (*ResticWrapper, error) {
 	wrapper := &ResticWrapper{
 		sh:     shell.NewSession(),
