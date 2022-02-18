@@ -52,8 +52,10 @@ var (
 )
 
 var (
-	backupConfig string
-	backupBatch  string
+	backupConfig   string
+	backupBatch    string
+	restoreSession string
+	restoreBatch   string
 )
 
 var imgRestic docker.Docker

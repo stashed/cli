@@ -28,7 +28,7 @@ import (
 func NewCmdDebug(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "debug",
-		Short:             `debug backup`,
+		Short:             `debug by describing stash resources or showing logs from pods`,
 		DisableAutoGenTag: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 
@@ -56,7 +56,7 @@ func NewCmdDebug(clientGetter genericclioptions.RESTClientGetter) *cobra.Command
 		},
 	}
 	cmd.AddCommand(NewCmdDebugBackup())
-	cmd.PersistentFlags().StringVar(&backupConfig, "backupconfig", backupConfig, "Name of the Backupconfiguration to debug")
-	cmd.PersistentFlags().StringVar(&backupBatch, "backupbatch", backupBatch, "Name of the BackupBatch to debug")
+	cmd.AddCommand(NewCmdDebugRestore())
+	cmd.AddCommand(NewCmdDebugOperator())
 	return cmd
 }
