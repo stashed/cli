@@ -19,6 +19,7 @@ package pkg
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"stash.appscode.dev/apimachinery/apis/stash/v1beta1"
@@ -26,6 +27,7 @@ import (
 	jsonpatch "github.com/evanphx/json-patch"
 	vs_api "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1beta1"
 	vs "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned/typed/volumesnapshot/v1beta1"
+	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -116,4 +118,26 @@ func WaitUntilRestoreSessionCompleted(name string, namespace string) error {
 		}
 		return false, nil
 	})
+}
+
+func GetOperatorPod() (*core.Pod, error) {
+	apiSvc, err := aggrClient.ApiregistrationV1beta1().APIServices().Get(context.TODO(), "v1alpha1.admission.stash.appscode.com", metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	podList, err := kubeClient.CoreV1().Pods(apiSvc.Spec.Service.Namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, pod := range podList.Items {
+		if strings.Contains(pod.Name, "stash") {
+			for _, c := range pod.Spec.Containers {
+				if c.Name == "operator" {
+					return &pod, nil
+				}
+			}
+		}
+	}
+	return nil, fmt.Errorf("operator pod not found")
 }

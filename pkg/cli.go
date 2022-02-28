@@ -17,27 +17,26 @@ limitations under the License.
 package pkg
 
 import (
-	"context"
-	"fmt"
 	"os"
-	"strings"
 
+	cs "stash.appscode.dev/apimachinery/client/clientset/versioned"
 	"stash.appscode.dev/apimachinery/pkg/docker"
 
-	core "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
-
-const (
-	configDirName     = "config"
-	ResticEnvs        = "restic-envs"
-	OperatorNamespace = "kube-system"
+	vs_cs "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 )
 
 // These variables will be set during build time
 const (
 	ScratchDir     = "/tmp/scratch"
 	DestinationDir = "/tmp/destination"
+	configDirName  = "config"
+
+	ResticEnvs     = "restic-envs"
+	ResticRegistry = "stashed"
+	ResticImage    = "restic"
+	ResticTag      = "latest"
 )
 
 type cliLocalDirectories struct {
@@ -46,19 +45,19 @@ type cliLocalDirectories struct {
 }
 
 var (
-	ResticRegistry = "stashed"
-	ResticImage    = "restic"
-	ResticTag      = "latest"
-)
+	dstNamespace string
+	srcNamespace string
+	kubeClient   *kubernetes.Clientset
+	stashClient  *cs.Clientset
+	aggrClient   *clientset.Clientset
+	vsClient     *vs_cs.Clientset
+	imgRestic    docker.Docker
 
-var (
 	backupConfig   string
 	backupBatch    string
 	restoreSession string
 	restoreBatch   string
 )
-
-var imgRestic docker.Docker
 
 func init() {
 	imgRestic.Registry = ResticRegistry
@@ -74,21 +73,4 @@ func (localDirs *cliLocalDirectories) prepareDownloadDir() (err error) {
 		}
 	}
 	return os.MkdirAll(localDirs.downloadDir, 0o755)
-}
-func GetOperatorPod() (*core.Pod, error) {
-	podList, err := kubeClient.CoreV1().Pods(OperatorNamespace).List(context.TODO(), metav1.ListOptions{})
-
-	if err != nil {
-		return nil, err
-	}
-	for _, pod := range podList.Items {
-		if strings.HasPrefix(pod.Name, "stash") {
-			for _, c := range pod.Spec.Containers {
-				if c.Name == "operator" {
-					return &pod, nil
-				}
-			}
-		}
-	}
-	return nil, fmt.Errorf("operator pod not found")
 }

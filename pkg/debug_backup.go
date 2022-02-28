@@ -19,6 +19,7 @@ package pkg
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"stash.appscode.dev/apimachinery/apis"
 	"stash.appscode.dev/apimachinery/apis/stash/v1beta1"
@@ -46,7 +47,7 @@ func NewCmdDebugBackup() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:               "backup",
 		Short:             `Debug backup`,
-		Long:              `Debug backup by describing and showing logs of backup resources`,
+		Long:              `Debug common Stash backup issues`,
 		Example:           debugBackupExample,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -94,9 +95,14 @@ func showVersionInformation() error {
 	if err != nil {
 		return err
 	}
+	var stashBinary string
+	if strings.Contains(pod.Name, "stash-enterprise") {
+		stashBinary = "/stash-enterprise"
+	} else {
+		stashBinary = "/stash"
+	}
 	klog.Infoln("\n\n\n===============[ Operator's binary version information ]===============")
-
-	if err := sh.Command("kubectl", "exec", "-it", "-n", pod.Namespace, pod.Name, "-c", "operator", "--", "/stash-enterprise", "version").Run(); err != nil {
+	if err := sh.Command("kubectl", "exec", "-it", "-n", pod.Namespace, pod.Name, "-c", "operator", "--", stashBinary, "version").Run(); err != nil {
 		return err
 	}
 	return nil

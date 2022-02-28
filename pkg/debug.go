@@ -23,12 +23,13 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	aggclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 )
 
 func NewCmdDebug(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "debug",
-		Short:             `debug by describing stash resources or showing logs from pods`,
+		Short:             `Debug common Stash issues`,
 		DisableAutoGenTag: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 
@@ -52,6 +53,10 @@ func NewCmdDebug(clientGetter genericclioptions.RESTClientGetter) *cobra.Command
 				return err
 			}
 
+			aggrClient, err = aggclient.NewForConfig(cfg)
+			if err != nil {
+				return err
+			}
 			return nil
 		},
 	}
