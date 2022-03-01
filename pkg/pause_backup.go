@@ -33,7 +33,6 @@ var pauseBackupExample = templates.Examples(`
 		# Pause a BackupConfigration
 		stash pause backup --namespace=<namespace> --backupconfig=<backupconfiguration-name>
         stash pause backup --namespace=demo --backupconfig=sample-mongodb-backup`)
-)
 
 func NewCmdPauseBackup() *cobra.Command {
 	cmd := &cobra.Command{

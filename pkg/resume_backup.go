@@ -28,7 +28,6 @@ var resumeBackupExample = templates.Examples(`
 		# Resume a BackupConfigration
 		stash resume backup --namespace=<namespace> --backupconfig=<backupconfiguration-name>
         stash resume backup --namespace=demo --backupconfig=sample-mongodb-backup`)
-)
 
 func NewCmdResumeBackup() *cobra.Command {
 	cmd := &cobra.Command{

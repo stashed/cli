@@ -32,7 +32,6 @@ func NewCmdDebug(clientGetter genericclioptions.RESTClientGetter) *cobra.Command
 		Short:             `Debug common Stash issues`,
 		DisableAutoGenTag: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-
 			cfg, err := clientGetter.ToRESTConfig()
 			if err != nil {
 				return errors.Wrap(err, "failed to read kubeconfig")

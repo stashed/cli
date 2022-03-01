@@ -30,15 +30,13 @@ import (
 	"k8s.io/kubectl/pkg/util/templates"
 )
 
-var (
-	debugRestoreExample = templates.Examples(`
+var debugRestoreExample = templates.Examples(`
 		# Debug a RestoreSession
 		stash debug restore --namespace=<namespace> --restoresession=<restoresession-name>
        stash debug restore --namespace=demo --restoresession=sample-mongodb-restore`)
-)
 
 func NewCmdDebugRestore() *cobra.Command {
-	var cmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:               "restore",
 		Short:             `Debug restore`,
 		Long:              `Show debugging information for restore process`,
@@ -88,7 +86,6 @@ func debugRestoreSession(restoreSession *v1beta1.RestoreSession) error {
 			if err := debugSidecar(restoreSession.Spec.Target.Ref, apis.StashInitContainer); err != nil {
 				return err
 			}
-
 		} else if restoreModel == apis.ModelCronJob {
 			if err := debugJob(restoreSession); err != nil {
 				return err

@@ -21,15 +21,13 @@ import (
 	"k8s.io/kubectl/pkg/util/templates"
 )
 
-var (
-	debugOperatorExample = templates.Examples(`
+var debugOperatorExample = templates.Examples(`
 		# Debug operator pod
 		stash debug operator --namespace=<namespace>
         stash debug operator -n kube-system`)
-)
 
 func NewCmdDebugOperator() *cobra.Command {
-	var cmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:               "operator",
 		Short:             `Debug Stash operator`,
 		Long:              `Show debugging information for Stash operator`,

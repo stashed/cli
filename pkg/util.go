@@ -203,7 +203,6 @@ func getWorkloadPods(targetRef v1beta1.TargetRef) (*core.PodList, error) {
 	podList, err := kubeClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: matchLabels,
 	})
-
 	if err != nil {
 		return nil, err
 	}

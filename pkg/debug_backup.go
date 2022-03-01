@@ -33,15 +33,13 @@ import (
 	"k8s.io/kubectl/pkg/util/templates"
 )
 
-var (
-	debugBackupExample = templates.Examples(`
+var debugBackupExample = templates.Examples(`
 		# Debug a BackupConfigration
 		stash debug backup --namespace=<namespace> --backupconfig=<backupconfiguration-name>
         stash debug backup --namespace=demo --backupconfig=sample-mongodb-backup`)
-)
 
 func NewCmdDebugBackup() *cobra.Command {
-	var cmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:               "backup",
 		Short:             `Debug backup`,
 		Long:              `Debug common Stash backup issues`,
