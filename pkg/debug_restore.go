@@ -25,9 +25,8 @@ import (
 	"stash.appscode.dev/stash/pkg/util"
 
 	"github.com/spf13/cobra"
-	v1 "k8s.io/api/batch/v1"
-	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog/v2"
 	"k8s.io/kubectl/pkg/util/templates"
 )
 
@@ -35,14 +34,14 @@ var (
 	debugRestoreExample = templates.Examples(`
 		# Debug a RestoreSession
 		stash debug restore --namespace=<namespace> --restoresession=<restoresession-name>
-        stash debug restore --namespace=demo --restoresession=sample-mongodb-restore`)
+       stash debug restore --namespace=demo --restoresession=sample-mongodb-restore`)
 )
 
 func NewCmdDebugRestore() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:               "restore",
 		Short:             `Debug restore`,
-		Long:              `Debug restore by describing and showing logs of restore resources`,
+		Long:              `Show debugging information for restore process`,
 		Example:           debugRestoreExample,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -84,18 +83,14 @@ func debugRestoreSession(restoreSession *v1beta1.RestoreSession) error {
 		if err := describeObject(restoreSession, v1beta1.ResourceKindRestoreSession); err != nil {
 			return err
 		}
-		jobList, podList, err := getAllJobsAndPods()
-		if err != nil {
-			return err
-		}
 		restoreModel := util.RestoreModel(restoreSession.Spec.Target.Ref.Kind)
 		if restoreModel == apis.ModelSidecar {
-			if err := debugWorkloadPods(restoreSession.Spec.Target.Ref, apis.StashInitContainer); err != nil {
+			if err := debugSidecar(restoreSession.Spec.Target.Ref, apis.StashInitContainer); err != nil {
 				return err
 			}
 
 		} else if restoreModel == apis.ModelCronJob {
-			if err := debugRestoreJobs(restoreSession, jobList, podList); err != nil {
+			if err := debugJob(restoreSession); err != nil {
 				return err
 			}
 		}
@@ -108,33 +103,17 @@ func debugRestoreBatch(restoreBatch *v1beta1.RestoreBatch) error {
 		if err := describeObject(restoreBatch, v1beta1.ResourceKindRestoreBatch); err != nil {
 			return err
 		}
-		jobList, podList, err := getAllJobsAndPods()
-		if err != nil {
-			return err
-		}
 		for _, member := range restoreBatch.Spec.Members {
+			klog.Infof("\n\n\n\n\n\n===============[ Debugging restore for %s ]===============", member.Target.Ref.Name)
 			restoreModel := util.BackupModel(member.Target.Ref.Kind)
 			if restoreModel == apis.ModelSidecar {
-				if err := debugWorkloadPods(member.Target.Ref, apis.StashInitContainer); err != nil {
+				if err := debugSidecar(member.Target.Ref, apis.StashInitContainer); err != nil {
 					return err
 				}
 			} else if restoreModel == apis.ModelCronJob {
-				if err := debugRestoreJobs(restoreBatch, jobList, podList); err != nil {
+				if err := debugJob(restoreBatch); err != nil {
 					return err
 				}
-			}
-		}
-	}
-	return nil
-}
-
-func debugRestoreJobs(restoreInvoker metav1.Object, jobList *v1.JobList, podList *core.PodList) error {
-	restoreJobs := getOwnedJobs(jobList, restoreInvoker)
-	for _, restoreJob := range restoreJobs {
-		restorePod := getOwnedPod(podList, &restoreJob)
-		if restorePod != nil {
-			if err := showAllContainersLogs(restorePod); err != nil {
-				return err
 			}
 		}
 	}

@@ -27,13 +27,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"gomodules.xyz/go-sh"
-	v1 "k8s.io/api/batch/v1"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/klog/v2"
 	"k8s.io/kubectl/pkg/util/templates"
-	core_util "kmodules.xyz/client-go/core/v1"
 )
 
 var (
@@ -86,7 +83,7 @@ func NewCmdDebugBackup() *cobra.Command {
 }
 
 func showVersionInformation() error {
-	klog.Infoln("\n\n\n===============[ Client and Server version information ]===============")
+	klog.Infoln("\n\n\n===============[ Kubernetes Version ]===============")
 	if err := sh.Command("kubectl", "version", "--short").Run(); err != nil {
 		return err
 	}
@@ -101,7 +98,7 @@ func showVersionInformation() error {
 	} else {
 		stashBinary = "/stash"
 	}
-	klog.Infoln("\n\n\n===============[ Operator's binary version information ]===============")
+	klog.Infoln("\n\n\n===============[ Stash Version ]===============")
 	if err := sh.Command("kubectl", "exec", "-it", "-n", pod.Namespace, pod.Name, "-c", "operator", "--", stashBinary, "version").Run(); err != nil {
 		return err
 	}
@@ -114,26 +111,9 @@ func debugBackupConfig(backupConfig *v1beta1.BackupConfiguration) error {
 		if err != nil {
 			return err
 		}
-		jobList, podList, err := getAllJobsAndPods()
-		if err != nil {
-			return err
-		}
 		for _, backupSession := range backupSessions {
-			if backupSession.Status.Phase == v1beta1.BackupSessionFailed {
-				if err := describeObject(&backupSession, v1beta1.ResourceKindBackupSession); err != nil {
-					return err
-				}
-				backupModel := util.BackupModel(backupConfig.Spec.Target.Ref.Kind)
-				if backupModel == apis.ModelSidecar {
-					if err := debugWorkloadPods(backupConfig.Spec.Target.Ref, apis.StashContainer); err != nil {
-						return err
-					}
-
-				} else if backupModel == apis.ModelCronJob {
-					if err := debugBackupJob(&backupSession, jobList, podList); err != nil {
-						return err
-					}
-				}
+			if err := debugBackupSession(&backupSession, []v1beta1.BackupConfigurationTemplateSpec{backupConfig.Spec.BackupConfigurationTemplateSpec}); err != nil {
+				return err
 			}
 		}
 	} else {
@@ -145,33 +125,14 @@ func debugBackupConfig(backupConfig *v1beta1.BackupConfiguration) error {
 }
 
 func debugBackupBatch(backupBatch *v1beta1.BackupBatch) error {
-	klog.Infoln(backupBatch.Status.Phase)
 	if backupBatch.Status.Phase == v1beta1.BackupInvokerReady {
 		backupSessions, err := getOwnedBackupSessions(backupBatch)
 		if err != nil {
 			return err
 		}
-		jobList, podList, err := getAllJobsAndPods()
-		if err != nil {
-			return err
-		}
 		for _, backupSession := range backupSessions {
-			if backupSession.Status.Phase == v1beta1.BackupSessionFailed {
-				if err := describeObject(&backupSession, v1beta1.ResourceKindBackupSession); err != nil {
-					return err
-				}
-				for _, member := range backupBatch.Spec.Members {
-					backupModel := util.BackupModel(member.Target.Ref.Kind)
-					if backupModel == apis.ModelSidecar {
-						if err := debugWorkloadPods(member.Target.Ref, apis.StashContainer); err != nil {
-							return err
-						}
-					} else if backupModel == apis.ModelCronJob {
-						if err := debugBackupJob(&backupSession, jobList, podList); err != nil {
-							return err
-						}
-					}
-				}
+			if err := debugBackupSession(&backupSession, backupBatch.Spec.Members); err != nil {
+				return err
 			}
 		}
 	} else {
@@ -182,99 +143,56 @@ func debugBackupBatch(backupBatch *v1beta1.BackupBatch) error {
 	return nil
 }
 
-func getOwnedBackupSessions(backupInvoker metav1.Object) ([]v1beta1.BackupSession, error) {
-	backupSessionList, err := stashClient.StashV1beta1().BackupSessions(backupInvoker.GetNamespace()).List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	var ownedBackupsessions []v1beta1.BackupSession
-	for _, backupSession := range backupSessionList.Items {
-		owned, _ := core_util.IsOwnedBy(&backupSession, backupInvoker)
-		if owned {
-			ownedBackupsessions = append(ownedBackupsessions, backupSession)
+func debugBackupSession(backupSession *v1beta1.BackupSession, members []v1beta1.BackupConfigurationTemplateSpec) error {
+	if backupSession.Status.Phase == v1beta1.BackupSessionFailed {
+		if err := describeObject(backupSession, v1beta1.ResourceKindBackupSession); err != nil {
+			return err
 		}
-	}
-	return ownedBackupsessions, nil
-}
-
-func getAllJobsAndPods() (*v1.JobList, *core.PodList, error) {
-	jobList, err := kubeClient.BatchV1().Jobs(namespace).List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		return nil, nil, err
-	}
-	podList, err := kubeClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		return nil, nil, err
-	}
-	return jobList, podList, err
-}
-
-func describeObject(object metav1.Object, resourceKind string) error {
-	klog.Infof("\n\n\n\n\n\n===============[ Describing %s: %s ]===============", resourceKind, object.GetName())
-	if err := sh.Command("kubectl", "describe", resourceKind, "-n", object.GetNamespace(), object.GetName()).Run(); err != nil {
-		return err
+		for _, member := range members {
+			klog.Infof("\n\n\n\n\n\n===============[ Debugging backup for %s ]===============", member.Target.Ref.Name)
+			backupModel := util.BackupModel(member.Target.Ref.Kind)
+			if backupModel == apis.ModelSidecar {
+				if err := debugSidecar(member.Target.Ref, apis.StashContainer); err != nil {
+					return err
+				}
+			} else if backupModel == apis.ModelCronJob {
+				if err := debugJob(backupSession); err != nil {
+					return err
+				}
+			}
+		}
 	}
 	return nil
 }
 
-func debugWorkloadPods(targetRef v1beta1.TargetRef, container string) error {
+func debugSidecar(targetRef v1beta1.TargetRef, container string) error {
 	workloadPods, err := getWorkloadPods(targetRef)
 	if err != nil {
 		return err
 	}
 	for _, workloadPods := range workloadPods.Items {
-		if err := showContainerLogs(&workloadPods, container); err != nil {
+		if err := showLogs(&workloadPods, "-c", container); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func getWorkloadPods(targetRef v1beta1.TargetRef) (*core.PodList, error) {
-	var podList *core.PodList
-	if targetRef.Kind == apis.KindDeployment {
-		deployment, err := kubeClient.AppsV1().Deployments(namespace).Get(context.TODO(), targetRef.Name, metav1.GetOptions{})
-		if err != nil {
-			return nil, err
-		}
-		podList, err = kubeClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
-			LabelSelector: labels.SelectorFromSet(deployment.Spec.Selector.MatchLabels).String(),
-		})
-		if err != nil {
-			return nil, err
-		}
-	} else if targetRef.Kind == apis.KindStatefulSet {
-		statefulset, err := kubeClient.AppsV1().StatefulSets(namespace).Get(context.TODO(), targetRef.Name, metav1.GetOptions{})
-		if err != nil {
-			return nil, err
-		}
-		podList, err = kubeClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
-			LabelSelector: labels.SelectorFromSet(statefulset.Spec.Selector.MatchLabels).String(),
-		})
-		if err != nil {
-			return nil, err
-		}
-	} else if targetRef.Kind == apis.KindDaemonSet {
-		daemonset, err := kubeClient.AppsV1().DaemonSets(namespace).Get(context.TODO(), targetRef.Name, metav1.GetOptions{})
-		if err != nil {
-			return nil, err
-		}
-		podList, err = kubeClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
-			LabelSelector: labels.SelectorFromSet(daemonset.Spec.Selector.MatchLabels).String(),
-		})
-		if err != nil {
-			return nil, err
-		}
+func debugJob(session metav1.Object) error {
+	jobs, err := getOwnedJobs(session)
+	if err != nil {
+		return err
 	}
-	return podList, nil
-}
-
-func debugBackupJob(backupSession *v1beta1.BackupSession, jobList *v1.JobList, podList *core.PodList) error {
-	backupJobs := getOwnedJobs(jobList, backupSession)
-	for _, backupJob := range backupJobs {
-		backupPod := getOwnedPod(podList, &backupJob)
-		if backupPod != nil {
-			if err := showAllContainersLogs(backupPod); err != nil {
+	for _, job := range jobs {
+		pod, err := getOwnedPod(&job)
+		if err != nil {
+			return err
+		}
+		if pod != nil {
+			if err := describeObject(pod, apis.KindPod); err != nil {
+				return err
+			}
+			if err := showLogs(pod, "--all-containers"); err != nil {
 				return err
 			}
 		}
@@ -282,38 +200,19 @@ func debugBackupJob(backupSession *v1beta1.BackupSession, jobList *v1.JobList, p
 	return nil
 }
 
-func getOwnedJobs(jobList *v1.JobList, owner metav1.Object) []v1.Job {
-	var backupJobs []v1.Job
-	for _, job := range jobList.Items {
-		owned, _ := core_util.IsOwnedBy(&job, owner)
-		if owned {
-			backupJobs = append(backupJobs, job)
-		}
-	}
-	return backupJobs
-}
-
-func getOwnedPod(podList *core.PodList, job *v1.Job) *core.Pod {
-	for _, pod := range podList.Items {
-		owned, _ := core_util.IsOwnedBy(&pod, job)
-		if owned {
-			return &pod
-		}
-	}
-	return nil
-}
-
-func showAllContainersLogs(pod *core.Pod) error {
+func showLogs(pod *core.Pod, args ...string) error {
 	klog.Infof("\n\n\n\n\n\n===============[ Logs from pod: %s ]===============", pod.Name)
-	if err := sh.Command("kubectl", "logs", "-n", pod.Namespace, "--all-containers", pod.Name).Run(); err != nil {
+	cmdArgs := []string{"logs", "-n", pod.Namespace, pod.Name}
+	cmdArgs = append(cmdArgs, args...)
+	if err := sh.Command("kubectl", cmdArgs).Run(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func showContainerLogs(pod *core.Pod, container string) error {
-	klog.Infof("\n\n\n\n===============[ logs from pod: %s, container: %s ]===============", pod.Name, container)
-	if err := sh.Command("kubectl", "logs", "-n", pod.Namespace, "-c", container, pod.Name).Run(); err != nil {
+func describeObject(object metav1.Object, resourceKind string) error {
+	klog.Infof("\n\n\n\n\n\n===============[ Describing %s: %s ]===============", resourceKind, object.GetName())
+	if err := sh.Command("kubectl", "describe", resourceKind, "-n", object.GetNamespace(), object.GetName()).Run(); err != nil {
 		return err
 	}
 	return nil

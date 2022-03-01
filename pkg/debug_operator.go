@@ -32,7 +32,7 @@ func NewCmdDebugOperator() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:               "operator",
 		Short:             `Debug Stash operator`,
-		Long:              `Debug Stash operator by showing logs from operator pod`,
+		Long:              `Show debugging information for Stash operator`,
 		Example:           debugOperatorExample,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -50,7 +50,7 @@ func debugOperator() error {
 	if err != nil {
 		return err
 	}
-	if err := showContainerLogs(pod, "operator"); err != nil {
+	if err := showLogs(pod, "-c", "operator"); err != nil {
 		return err
 	}
 	return nil
