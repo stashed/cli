@@ -38,18 +38,14 @@ import (
 	"k8s.io/kubectl/pkg/util/templates"
 )
 
-var (
-	deleteExample = templates.Examples(`
+var deleteExample = templates.Examples(`
 		# Delete Snapshot
 		stash delete snapshot gcs-repo-c063d146 -n demo`)
-)
 
 func NewCmdDeleteSnapshot(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
-	var (
-		localDirs = &cliLocalDirectories{}
-	)
+	localDirs := &cliLocalDirectories{}
 
-	var cmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:               "snapshot",
 		Short:             `Delete a snapshot from repository backend`,
 		Long:              `Delete a snapshot from repository backend`,
@@ -99,7 +95,7 @@ func NewCmdDeleteSnapshot(clientGetter genericclioptions.RESTClientGetter) *cobr
 				return err
 			}
 
-			if err = os.MkdirAll(ScratchDir, 0755); err != nil {
+			if err = os.MkdirAll(ScratchDir, 0o755); err != nil {
 				return err
 			}
 			defer os.RemoveAll(ScratchDir)

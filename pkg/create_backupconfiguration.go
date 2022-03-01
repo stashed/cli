@@ -33,15 +33,13 @@ import (
 	kmapi "kmodules.xyz/client-go/api/v1"
 )
 
-var (
-	createBackupConfigExample = templates.Examples(`
+var createBackupConfigExample = templates.Examples(`
 		# Create a new BackupConfiguration
 		# stash create backupconfig --namespace=<namespace> gcs-repo [Flag]
         # For Restic driver
         stash create backupconfig ss-backup --namespace=demo --repo-name=gcs-repo --schedule="*/4 * * * *" --target-apiversion=apps/v1 --target-kind=StatefulSet --target-name=stash-demo --paths=/source/data --volume-mounts=source-data:/source/data --keep-last=5 --prune=true
         # For VolumeSnapshotter driver
          stash create backupconfig statefulset-volume-snapshot --namespace=demo --driver=VolumeSnapshotter --schedule="*/4 * * * *" --target-apiversion=apps/v1 --target-kind=StatefulSet --target-name=stash-demo --replica=1 --volumesnpashotclass=default-snapshot-class --keep-last=5 --prune=true`)
-)
 
 type backupConfigOption struct {
 	paths        []string
@@ -58,8 +56,8 @@ type backupConfigOption struct {
 }
 
 func NewCmdCreateBackupConfiguration() *cobra.Command {
-	var backupConfigOpt = backupConfigOption{}
-	var cmd = &cobra.Command{
+	backupConfigOpt := backupConfigOption{}
+	cmd := &cobra.Command{
 		Use:               "backupconfig",
 		Short:             `Create a new BackupConfiguration`,
 		Long:              `Create a new BackupConfiguration to backup a target`,
@@ -82,7 +80,6 @@ func NewCmdCreateBackupConfiguration() *cobra.Command {
 			}
 			klog.Infof("BackupConfiguration %s/%s has been created successfully.", backupConfig.Namespace, backupConfig.Name)
 			return err
-
 		},
 	}
 
@@ -113,7 +110,6 @@ func NewCmdCreateBackupConfiguration() *cobra.Command {
 }
 
 func (opt backupConfigOption) newBackupConfiguration(name string, namespace string) (*v1beta1.BackupConfiguration, error) {
-
 	backupConfig := &v1beta1.BackupConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -130,7 +126,8 @@ func (opt backupConfigOption) newBackupConfiguration(name string, namespace stri
 	} else {
 		backupConfig.Spec.Repository = kmapi.ObjectReference{
 			Name:      opt.repository.Name,
-			Namespace: opt.repository.Namespace}
+			Namespace: opt.repository.Namespace,
+		}
 		backupConfig.Spec.Task = v1beta1.TaskRef{Name: opt.task}
 	}
 
@@ -156,7 +153,6 @@ func createBackupConfiguration(backupConfig *v1beta1.BackupConfiguration, meta m
 }
 
 func (opt backupConfigOption) setBackupTarget(backupConfig *v1beta1.BackupConfiguration) error {
-
 	if v1beta1.Snapshotter(opt.driver) == v1beta1.VolumeSnapshotter {
 		backupConfig.Spec.Target = &v1beta1.BackupTarget{
 			Ref:                     opt.targetRef,

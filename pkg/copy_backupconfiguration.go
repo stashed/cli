@@ -28,13 +28,12 @@ import (
 )
 
 func NewCmdCopyBackupConfiguration() *cobra.Command {
-	var cmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:               "backupconfig",
 		Short:             `Copy BackupConfiguration from one namespace to another namespace`,
 		Long:              `Copy BackupConfiguration with respective Repository and Secret if they are not present in the target namespace`,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			if len(args) == 0 || args[0] == "" {
 				return fmt.Errorf("BackupConfiguration name is not provided")
 			}

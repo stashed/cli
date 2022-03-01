@@ -34,15 +34,13 @@ import (
 	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
 
-var (
-	cloneExample = templates.Examples(`
+var cloneExample = templates.Examples(`
 		# Clone PVC
 		stash clone pvc source-pvc -n demo --to-namespace=demo1 --secret=<secret> --bucket=<bucket> --prefix=<prefix> --provider=<provider>`)
-)
 
 func NewCmdClonePVC() *cobra.Command {
-	var repoOpt = repositoryOption{}
-	var cmd = &cobra.Command{
+	repoOpt := repositoryOption{}
+	cmd := &cobra.Command{
 		Use:               "pvc",
 		Short:             `Clone PVC`,
 		Long:              `Use Backup and Restore process for cloning PVC`,
@@ -198,6 +196,7 @@ func restorePVC(pvcName string, repository kmapi.ObjectReference) error {
 	// delete RestoreSession
 	return stashClient.StashV1beta1().RestoreSessions(dstNamespace).Delete(context.TODO(), restoreSession.Name, metav1.DeleteOptions{})
 }
+
 func ensurePVC(pvc *core.PersistentVolumeClaim) error {
 	klog.Infof("Creating pvc in %s namespace", pvc.Namespace)
 	pvcTemplates := []ofst.PersistentVolumeClaim{
@@ -215,7 +214,6 @@ func ensurePVC(pvc *core.PersistentVolumeClaim) error {
 	}
 	claim := pvcTemplates[0].DeepCopy().ToCorePVC()
 	_, err := kubeClient.CoreV1().PersistentVolumeClaims(dstNamespace).Create(context.TODO(), claim, metav1.CreateOptions{})
-
 	if err != nil {
 		return err
 	}

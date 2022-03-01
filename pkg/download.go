@@ -44,7 +44,7 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 			Destination: DestinationDir,
 		}
 	)
-	var cmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:               "download",
 		Short:             `Download snapshots`,
 		Long:              `Download contents of snapshots from Repository`,
@@ -92,7 +92,7 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 				return err
 			}
 
-			if err = os.MkdirAll(ScratchDir, 0755); err != nil {
+			if err = os.MkdirAll(ScratchDir, 0o755); err != nil {
 				return err
 			}
 			defer os.RemoveAll(ScratchDir)

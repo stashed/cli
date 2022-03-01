@@ -24,15 +24,13 @@ import (
 	"k8s.io/kubectl/pkg/util/templates"
 )
 
-var (
-	resumeBackupExample = templates.Examples(`
+var resumeBackupExample = templates.Examples(`
 		# Resume a BackupConfigration
 		stash resume backup --namespace=<namespace> --backupconfig=<backup-configuration-name>
         stash resume backup --backup-config=sample-mongodb -n demo`)
-)
 
 func NewCmdResumeBackup() *cobra.Command {
-	var cmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:               "backup",
 		Short:             `Resume backup`,
 		Long:              `Resume backup by setting "paused" field of BackupConfiguration/BackupBatch to "false"`,

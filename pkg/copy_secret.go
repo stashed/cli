@@ -28,13 +28,12 @@ import (
 )
 
 func NewCmdCopySecret() *cobra.Command {
-	var cmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:               "secret",
 		Short:             `Copy Secret`,
 		Long:              `Copy Secret from one namespace to another namespace`,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			if len(args) == 0 || args[0] == "" {
 				return fmt.Errorf("secret name is not provided")
 			}

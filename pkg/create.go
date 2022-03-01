@@ -25,9 +25,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-var (
-	namespace string
-)
+var namespace string
 
 func NewCmdCreate(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	cmd := &cobra.Command{
@@ -35,7 +33,6 @@ func NewCmdCreate(clientGetter genericclioptions.RESTClientGetter) *cobra.Comman
 		Short:             `create stash resources`,
 		DisableAutoGenTag: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-
 			cfg, err := clientGetter.ToRESTConfig()
 			if err != nil {
 				return errors.Wrap(err, "failed to read kubeconfig")
