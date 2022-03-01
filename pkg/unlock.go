@@ -37,16 +37,13 @@ import (
 )
 
 func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
-	var (
-		localDirs = &cliLocalDirectories{}
-	)
-	var cmd = &cobra.Command{
+	localDirs := &cliLocalDirectories{}
+	cmd := &cobra.Command{
 		Use:               "unlock",
 		Short:             `Unlock Restic Repository`,
 		Long:              `Unlock Restic Repository`,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			if len(args) == 0 || args[0] == "" {
 				return fmt.Errorf("repository name not found")
 			}
@@ -82,7 +79,7 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 				return err
 			}
 
-			if err = os.MkdirAll(ScratchDir, 0755); err != nil {
+			if err = os.MkdirAll(ScratchDir, 0o755); err != nil {
 				return err
 			}
 			defer os.RemoveAll(ScratchDir)

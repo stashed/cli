@@ -33,7 +33,7 @@ import (
 )
 
 func NewCmdTriggerBackup(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
-	var cmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:               "trigger",
 		Short:             `Trigger a backup`,
 		Long:              `Trigger a backup by creating BackupSession`,

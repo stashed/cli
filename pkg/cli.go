@@ -64,5 +64,5 @@ func (localDirs *cliLocalDirectories) prepareDownloadDir() (err error) {
 			return err
 		}
 	}
-	return os.MkdirAll(localDirs.downloadDir, 0755)
+	return os.MkdirAll(localDirs.downloadDir, 0o755)
 }

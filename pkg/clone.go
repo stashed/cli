@@ -31,7 +31,6 @@ func NewCmdClone(clientGetter genericclioptions.RESTClientGetter) *cobra.Command
 		Short:             `Clone Kubernetes resources`,
 		DisableAutoGenTag: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-
 			cfg, err := clientGetter.ToRESTConfig()
 			if err != nil {
 				return errors.Wrap(err, "failed to read kubeconfig")

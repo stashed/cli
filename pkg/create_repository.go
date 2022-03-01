@@ -30,12 +30,10 @@ import (
 	storage "kmodules.xyz/objectstore-api/api/v1"
 )
 
-var (
-	createRepositoryExample = templates.Examples(`
+var createRepositoryExample = templates.Examples(`
 		# Create a new repository
 		stash create repository --namespace=<namespace> <repository-name> [Flag]
         stash create repository gcs-repo --namespace=demo --secret=gcs-secret --bucket=appscode-qa --prefix=/source/data --provider=gcs`)
-)
 
 type repositoryOption struct {
 	provider       string
@@ -47,8 +45,8 @@ type repositoryOption struct {
 }
 
 func NewCmdCreateRepository() *cobra.Command {
-	var repoOpt = repositoryOption{}
-	var cmd = &cobra.Command{
+	repoOpt := repositoryOption{}
+	cmd := &cobra.Command{
 		Use:               "repository",
 		Short:             `Create a new repository`,
 		Long:              "Create a new Repository using Backend Credential",
@@ -69,7 +67,6 @@ func NewCmdCreateRepository() *cobra.Command {
 			}
 			klog.Infof("Repository %s/%s has been created successfully.", repository.Namespace, repository.Name)
 			return err
-
 		},
 	}
 	cmd.Flags().StringVar(&repoOpt.provider, "provider", repoOpt.provider, "Backend provider (i.e. gcs, s3, azure etc)")

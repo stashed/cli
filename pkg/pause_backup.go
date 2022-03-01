@@ -29,15 +29,13 @@ import (
 	"k8s.io/kubectl/pkg/util/templates"
 )
 
-var (
-	pauseBackupExample = templates.Examples(`
+var pauseBackupExample = templates.Examples(`
 		# Pause a BackupConfigration
 		stash pause backup --namespace=<namespace> --backupconfig=<backup-configuration-name>
         stash pause backup --backup-config=sample-mongodb -n demo`)
-)
 
 func NewCmdPauseBackup() *cobra.Command {
-	var cmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:               "backup",
 		Short:             `Pause backup`,
 		Long:              `Pause backup by setting "paused" field of BackupConfiguration/BackupBatch to "true"`,

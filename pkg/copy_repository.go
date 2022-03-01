@@ -26,14 +26,12 @@ import (
 )
 
 func NewCmdCopyRepository() *cobra.Command {
-
-	var cmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:               "repository",
 		Short:             `Copy Repository and Secret`,
 		Long:              `Copy Repository and Secret from one namespace to another namespace`,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			if len(args) == 0 || args[0] == "" {
 				return fmt.Errorf("Repository name is not provided")
 			}

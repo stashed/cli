@@ -30,7 +30,6 @@ func NewCmdResume(clientGetter genericclioptions.RESTClientGetter) *cobra.Comman
 		Short:             `Resume stash resources`,
 		DisableAutoGenTag: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-
 			cfg, err := clientGetter.ToRESTConfig()
 			if err != nil {
 				return errors.Wrap(err, "failed to read kubeconfig")

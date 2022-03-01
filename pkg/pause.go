@@ -30,7 +30,6 @@ func NewCmdPause(clientGetter genericclioptions.RESTClientGetter) *cobra.Command
 		Short:             `Pause Stash backup temporarily`,
 		DisableAutoGenTag: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-
 			cfg, err := clientGetter.ToRESTConfig()
 			if err != nil {
 				return errors.Wrap(err, "failed to read kubeconfig")

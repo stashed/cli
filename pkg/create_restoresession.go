@@ -35,15 +35,13 @@ import (
 	ofst "kmodules.xyz/offshoot-api/api/v1"
 )
 
-var (
-	createRestoreSessionExample = templates.Examples(`
+var createRestoreSessionExample = templates.Examples(`
 		# Create a RestoreSession
 		# stash create restore --namespace=demo <restore session name> [Flag]
         # For Restic driver
          stash create restoresession ss-restore --namespace=demo --repo-name=gcs-repo --target-apiversion=apps/v1 --target-kind=StatefulSet --target-name=stash-recovered --paths=/source/data --volume-mounts=source-data:/source/data
         # For VolumeSnapshotter driver
          stash create restoresession restore-pvc --namespace=demo --driver=VolumeSnapshotter --replica=3 --claim.name=restore-data-restore-demo-${POD_ORDINAL} --claim.access-modes=ReadWriteOnce --claim.storageclass=standard --claim.size=1Gi --claim.datasource=source-data-stash-demo-0-1567146010`)
-)
 
 type restoreSessionOption struct {
 	volumeMounts []string
@@ -67,8 +65,8 @@ type volumeclaimTemplate struct {
 }
 
 func NewCmdCreateRestoreSession() *cobra.Command {
-	var restoreSessionOpt = restoreSessionOption{}
-	var cmd = &cobra.Command{
+	restoreSessionOpt := restoreSessionOption{}
+	cmd := &cobra.Command{
 		Use:               "restoresession",
 		Short:             `Create a new RestoreSession`,
 		Long:              `Create a new RestoreSession to restore backed up data`,
@@ -92,7 +90,6 @@ func NewCmdCreateRestoreSession() *cobra.Command {
 			}
 			klog.Infof("RestoreSession %s/%s has been created successfully.", restoreSession.Namespace, restoreSession.Name)
 			return err
-
 		},
 	}
 
@@ -134,7 +131,8 @@ func (opt restoreSessionOption) newRestoreSession(name string, namespace string)
 		restoreSession.Spec = v1beta1.RestoreSessionSpec{
 			Repository: kmapi.ObjectReference{
 				Name:      opt.repository.Name,
-				Namespace: opt.repository.Namespace},
+				Namespace: opt.repository.Namespace,
+			},
 		}
 		restoreSession.Spec.Task = v1beta1.TaskRef{Name: opt.task}
 	}
@@ -180,7 +178,6 @@ func (opt restoreSessionOption) setRestoreTarget(restoreSession *v1beta1.Restore
 			restoreSession.Spec.Target = &v1beta1.RestoreTarget{
 				Ref: opt.targetRef,
 			}
-
 		}
 
 		if len(opt.volumeMounts) > 0 {

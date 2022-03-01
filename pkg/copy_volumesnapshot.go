@@ -31,13 +31,12 @@ import (
 var json = jsoniter.ConfigFastest
 
 func NewCmdCopyVolumeSnapshot() *cobra.Command {
-	var cmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:               "volumesnapshot",
 		Short:             `Copy VolumeSnapshot`,
 		Long:              `Copy VolumeSnapshot from one namespace to another namespace`,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			if len(args) == 0 || args[0] == "" {
 				return fmt.Errorf("volumeSnapshot name not found")
 			}

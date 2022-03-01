@@ -29,7 +29,7 @@ import (
 )
 
 func NewRootCmd() *cobra.Command {
-	var rootCmd = &cobra.Command{
+	rootCmd := &cobra.Command{
 		Use:               "kubectl-stash",
 		Short:             `kubectl plugin for Stash by AppsCode`,
 		Long:              `kubectl plugin for Stash by AppsCode. For more information, visit here: https://appscode.com/products/stash`,
