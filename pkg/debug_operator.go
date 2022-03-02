@@ -17,6 +17,8 @@ limitations under the License.
 package pkg
 
 import (
+	dbg "stash.appscode.dev/cli/pkg/debugger"
+
 	"github.com/spf13/cobra"
 	"k8s.io/kubectl/pkg/util/templates"
 )
@@ -34,22 +36,17 @@ func NewCmdDebugOperator() *cobra.Command {
 		Example:           debugOperatorExample,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := debugOperator(); err != nil {
+			opt := dbg.DebugOptions{
+				KubeClient:  kubeClient,
+				StashClient: stashClient,
+				AggrClient:  aggrClient,
+				Namespace:   namespace,
+			}
+			if err := opt.DebugOperator(); err != nil {
 				return err
 			}
 			return nil
 		},
 	}
 	return cmd
-}
-
-func debugOperator() error {
-	pod, err := GetOperatorPod()
-	if err != nil {
-		return err
-	}
-	if err := showLogs(pod, "-c", "operator"); err != nil {
-		return err
-	}
-	return nil
 }

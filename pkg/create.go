@@ -25,8 +25,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-var namespace string
-
 func NewCmdCreate(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "create",

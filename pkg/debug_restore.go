@@ -20,13 +20,10 @@ import (
 	"context"
 	"fmt"
 
-	"stash.appscode.dev/apimachinery/apis"
-	"stash.appscode.dev/apimachinery/apis/stash/v1beta1"
-	"stash.appscode.dev/stash/pkg/util"
+	dbg "stash.appscode.dev/cli/pkg/debugger"
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/klog/v2"
 	"k8s.io/kubectl/pkg/util/templates"
 )
 
@@ -43,20 +40,24 @@ func NewCmdDebugRestore() *cobra.Command {
 		Example:           debugRestoreExample,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			opt := dbg.DebugOptions{
+				KubeClient:  kubeClient,
+				StashClient: stashClient,
+				AggrClient:  aggrClient,
+				Namespace:   namespace,
+			}
 			if restoreSession == "" && restoreBatch == "" {
 				return fmt.Errorf("neither RestoreSession nor RestoreBatch name has been provided")
 			}
-
-			if err := showVersionInformation(); err != nil {
+			if err := opt.ShowVersionInformation(); err != nil {
 				return err
 			}
-
 			if restoreSession != "" {
 				rs, err := stashClient.StashV1beta1().RestoreSessions(namespace).Get(context.TODO(), restoreSession, metav1.GetOptions{})
 				if err != nil {
 					return err
 				}
-				if err := debugRestoreSession(rs); err != nil {
+				if err := opt.DebugRestoreSession(rs); err != nil {
 					return err
 				}
 			} else {
@@ -64,7 +65,7 @@ func NewCmdDebugRestore() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				if err := debugRestoreBatch(rb); err != nil {
+				if err := opt.DebugRestoreBatch(rb); err != nil {
 					return err
 				}
 			}
@@ -74,45 +75,4 @@ func NewCmdDebugRestore() *cobra.Command {
 	cmd.Flags().StringVar(&restoreSession, "restoresession", backupConfig, "Name of the RestoreSession to debug")
 	cmd.Flags().StringVar(&restoreBatch, "restorebatch", backupBatch, "Name of the RestoreBatch to debug")
 	return cmd
-}
-
-func debugRestoreSession(restoreSession *v1beta1.RestoreSession) error {
-	if restoreSession.Status.Phase != v1beta1.RestoreSucceeded {
-		if err := describeObject(restoreSession, v1beta1.ResourceKindRestoreSession); err != nil {
-			return err
-		}
-		restoreModel := util.RestoreModel(restoreSession.Spec.Target.Ref.Kind)
-		if restoreModel == apis.ModelSidecar {
-			if err := debugSidecar(restoreSession.Spec.Target.Ref, apis.StashInitContainer); err != nil {
-				return err
-			}
-		} else if restoreModel == apis.ModelCronJob {
-			if err := debugJob(restoreSession); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func debugRestoreBatch(restoreBatch *v1beta1.RestoreBatch) error {
-	if restoreBatch.Status.Phase != v1beta1.RestoreSucceeded {
-		if err := describeObject(restoreBatch, v1beta1.ResourceKindRestoreBatch); err != nil {
-			return err
-		}
-		for _, member := range restoreBatch.Spec.Members {
-			klog.Infof("\n\n\n\n\n\n===============[ Debugging restore for %s ]===============", member.Target.Ref.Name)
-			restoreModel := util.BackupModel(member.Target.Ref.Kind)
-			if restoreModel == apis.ModelSidecar {
-				if err := debugSidecar(member.Target.Ref, apis.StashInitContainer); err != nil {
-					return err
-				}
-			} else if restoreModel == apis.ModelCronJob {
-				if err := debugJob(restoreBatch); err != nil {
-					return err
-				}
-			}
-		}
-	}
-	return nil
 }

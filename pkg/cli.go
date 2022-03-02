@@ -47,11 +47,13 @@ type cliLocalDirectories struct {
 var (
 	dstNamespace string
 	srcNamespace string
-	kubeClient   *kubernetes.Clientset
-	stashClient  *cs.Clientset
-	aggrClient   *clientset.Clientset
-	vsClient     *vs_cs.Clientset
-	imgRestic    docker.Docker
+	namespace    string
+
+	kubeClient  *kubernetes.Clientset
+	stashClient *cs.Clientset
+	aggrClient  *clientset.Clientset
+	vsClient    *vs_cs.Clientset
+	imgRestic   docker.Docker
 
 	backupConfig   string
 	backupBatch    string
