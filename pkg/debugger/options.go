@@ -17,20 +17,24 @@ limitations under the License.
 package debugger
 
 import (
-	"stash.appscode.dev/apimachinery/apis"
-	"stash.appscode.dev/apimachinery/apis/stash/v1beta1"
-	"stash.appscode.dev/stash/pkg/util"
+	cs "stash.appscode.dev/apimachinery/client/clientset/versioned"
+
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 )
 
-func (opt *options) DebugRestoreSession(restoreSession *v1beta1.RestoreSession) error {
-	if err := opt.describeObject(restoreSession.Name, v1beta1.ResourceKindRestoreSession); err != nil {
-		return err
+type options struct {
+	kubeClient  *kubernetes.Clientset
+	stashClient *cs.Clientset
+	aggrClient  *clientset.Clientset
+	namespace   string
+}
+
+func NewDebugger(kubeClient *kubernetes.Clientset, stashClient *cs.Clientset, aggrClient *clientset.Clientset, namespace string) *options {
+	return &options{
+		kubeClient:  kubeClient,
+		stashClient: stashClient,
+		aggrClient:  aggrClient,
+		namespace:   namespace,
 	}
-	if restoreSession.Status.Phase == v1beta1.RestorePending {
-		return nil
-	}
-	if util.RestoreModel(restoreSession.Spec.Target.Ref.Kind) == apis.ModelSidecar {
-		return opt.debugSidecar(restoreSession.Spec.Target.Ref, apis.StashInitContainer)
-	}
-	return opt.debugJob(restoreSession)
 }

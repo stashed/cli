@@ -20,7 +20,7 @@ import (
 	"context"
 	"fmt"
 
-	dbg "stash.appscode.dev/cli/pkg/debugger"
+	"stash.appscode.dev/cli/pkg/debugger"
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,16 +40,11 @@ func NewCmdDebugRestore() *cobra.Command {
 		Example:           debugRestoreExample,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			opt := dbg.DebugOptions{
-				KubeClient:  kubeClient,
-				StashClient: stashClient,
-				AggrClient:  aggrClient,
-				Namespace:   namespace,
-			}
+			dbgr := debugger.NewDebugger(kubeClient, stashClient, aggrClient, namespace)
 			if restoreSession == "" && restoreBatch == "" {
 				return fmt.Errorf("neither RestoreSession nor RestoreBatch name has been provided")
 			}
-			if err := opt.ShowVersionInformation(); err != nil {
+			if err := dbgr.ShowVersionInformation(); err != nil {
 				return err
 			}
 			if restoreSession != "" {
@@ -57,7 +52,7 @@ func NewCmdDebugRestore() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				if err := opt.DebugRestoreSession(rs); err != nil {
+				if err := dbgr.DebugRestoreSession(rs); err != nil {
 					return err
 				}
 			} else {
@@ -65,7 +60,7 @@ func NewCmdDebugRestore() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				if err := opt.DebugRestoreBatch(rb); err != nil {
+				if err := dbgr.DebugRestoreBatch(rb); err != nil {
 					return err
 				}
 			}

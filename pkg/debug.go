@@ -23,7 +23,7 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
-	aggclient "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
+	aggcs "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 )
 
 func NewCmdDebug(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
@@ -52,7 +52,7 @@ func NewCmdDebug(clientGetter genericclioptions.RESTClientGetter) *cobra.Command
 				return err
 			}
 
-			aggrClient, err = aggclient.NewForConfig(cfg)
+			aggrClient, err = aggcs.NewForConfig(cfg)
 			if err != nil {
 				return err
 			}

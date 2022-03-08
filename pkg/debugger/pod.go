@@ -1,3 +1,19 @@
+/*
+Copyright AppsCode Inc. and Contributors
+
+Licensed under the AppsCode Community License 1.0.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    https://github.com/appscode/licenses/raw/1.0.0/AppsCode-Community-1.0.0.md
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package debugger
 
 import (
@@ -13,48 +29,51 @@ import (
 	core_util "kmodules.xyz/client-go/core/v1"
 )
 
-func (opt *DebugOptions) getWorkloadPods(targetRef v1beta1.TargetRef) (*core.PodList, error) {
+func (opt *options) getWorkloadPods(targetRef v1beta1.TargetRef) (*core.PodList, error) {
 	var matchLabels string
 	switch targetRef.Kind {
 	case apis.KindDeployment:
-		deployment, err := opt.KubeClient.AppsV1().Deployments(opt.Namespace).Get(context.TODO(), targetRef.Name, metav1.GetOptions{})
+		deployment, err := opt.kubeClient.AppsV1().Deployments(opt.namespace).Get(context.TODO(), targetRef.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
 		matchLabels = labels.SelectorFromSet(deployment.Spec.Selector.MatchLabels).String()
 	case apis.KindStatefulSet:
-		statefulset, err := opt.KubeClient.AppsV1().StatefulSets(opt.Namespace).Get(context.TODO(), targetRef.Name, metav1.GetOptions{})
+		statefulset, err := opt.kubeClient.AppsV1().StatefulSets(opt.namespace).Get(context.TODO(), targetRef.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
 		matchLabels = labels.SelectorFromSet(statefulset.Spec.Selector.MatchLabels).String()
 	case apis.KindDaemonSet:
-		daemonset, err := opt.KubeClient.AppsV1().DaemonSets(opt.Namespace).Get(context.TODO(), targetRef.Name, metav1.GetOptions{})
+		daemonset, err := opt.kubeClient.AppsV1().DaemonSets(opt.namespace).Get(context.TODO(), targetRef.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
 		matchLabels = labels.SelectorFromSet(daemonset.Spec.Selector.MatchLabels).String()
 	}
 
-	podList, err := opt.KubeClient.CoreV1().Pods(opt.Namespace).List(context.TODO(), metav1.ListOptions{
+	return opt.kubeClient.CoreV1().Pods(opt.namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: matchLabels,
 	})
-	if err != nil {
-		return nil, err
-	}
-	return podList, nil
 }
 
-func (opt *DebugOptions) getOwnedPod(job *v1.Job) (*core.Pod, error) {
-	podList, err := opt.KubeClient.CoreV1().Pods(opt.Namespace).List(context.TODO(), metav1.ListOptions{})
+func (opt *options) getOwnedPods(job *v1.Job) ([]core.Pod, error) {
+	podList, err := opt.kubeClient.CoreV1().Pods(opt.namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
-	for _, pod := range podList.Items {
-		owned, _ := core_util.IsOwnedBy(&pod, job)
-		if owned {
-			return &pod, nil
+	var pods []core.Pod
+	for i := range podList.Items {
+		if owned, _ := core_util.IsOwnedBy(&podList.Items[i], job); owned {
+			pods = append(pods, podList.Items[i])
 		}
 	}
-	return nil, nil
+	return pods, nil
+}
+
+func (opt *options) debugPod(pod *core.Pod) error {
+	if err := opt.describeObject(pod.Name, apis.KindPod); err != nil {
+		return err
+	}
+	return showLogs(pod, "--all-containers")
 }

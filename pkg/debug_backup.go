@@ -20,7 +20,7 @@ import (
 	"context"
 	"fmt"
 
-	dbg "stash.appscode.dev/cli/pkg/debugger"
+	"stash.appscode.dev/cli/pkg/debugger"
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,16 +40,11 @@ func NewCmdDebugBackup() *cobra.Command {
 		Example:           debugBackupExample,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			opt := dbg.DebugOptions{
-				KubeClient:  kubeClient,
-				StashClient: stashClient,
-				AggrClient:  aggrClient,
-				Namespace:   namespace,
-			}
+			dbgr := debugger.NewDebugger(kubeClient, stashClient, aggrClient, namespace)
 			if backupConfig == "" && backupBatch == "" {
 				return fmt.Errorf("neither BackupConfiguration nor BackupBatch name has been provided")
 			}
-			if err := opt.ShowVersionInformation(); err != nil {
+			if err := dbgr.ShowVersionInformation(); err != nil {
 				return err
 			}
 
@@ -58,7 +53,7 @@ func NewCmdDebugBackup() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				if err := opt.DebugBackupConfig(bc); err != nil {
+				if err := dbgr.DebugBackupConfig(bc); err != nil {
 					return err
 				}
 			} else {
@@ -66,7 +61,7 @@ func NewCmdDebugBackup() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				if err := opt.DebugBackupBatch(bb); err != nil {
+				if err := dbgr.DebugBackupBatch(bb); err != nil {
 					return err
 				}
 
