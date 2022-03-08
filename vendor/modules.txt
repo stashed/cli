@@ -254,6 +254,7 @@ gomodules.xyz/sets
 gomodules.xyz/wait
 # gomodules.xyz/x v0.0.10
 ## explicit
+gomodules.xyz/x/arrays
 gomodules.xyz/x/strings
 gomodules.xyz/x/version
 # google.golang.org/appengine v1.6.7
@@ -795,7 +796,7 @@ sigs.k8s.io/structured-merge-diff/v4/typed
 sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0
 sigs.k8s.io/yaml
-# stash.appscode.dev/apimachinery v0.18.0
+# stash.appscode.dev/apimachinery v0.18.1-0.20220308093046-7df8eca4f066
 ## explicit
 stash.appscode.dev/apimachinery/apis
 stash.appscode.dev/apimachinery/apis/repositories
@@ -824,7 +825,7 @@ stash.appscode.dev/apimachinery/pkg/docker
 stash.appscode.dev/apimachinery/pkg/invoker
 stash.appscode.dev/apimachinery/pkg/metrics
 stash.appscode.dev/apimachinery/pkg/restic
-# stash.appscode.dev/stash v0.18.0
+# stash.appscode.dev/stash v0.18.1-0.20220308112550-f1c381ec7e7a
 ## explicit
 stash.appscode.dev/stash/pkg/registry/snapshot
 stash.appscode.dev/stash/pkg/util
