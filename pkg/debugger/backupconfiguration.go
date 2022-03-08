@@ -35,7 +35,7 @@ func (opt *options) DebugBackupConfig(backupConfig *v1beta1.BackupConfiguration)
 			return err
 		}
 		for _, backupSession := range backupSessions {
-			if backupSession.Status.Phase == v1beta1.BackupSessionFailed {
+			if backupSession.Status.Phase != v1beta1.BackupSessionSucceeded {
 				if err := opt.debugBackupSession(&backupSession, []v1beta1.BackupConfigurationTemplateSpec{backupConfig.Spec.BackupConfigurationTemplateSpec}); err != nil {
 					return err
 				}
