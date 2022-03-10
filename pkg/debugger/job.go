@@ -38,20 +38,29 @@ func (opt *options) getOwnedJobs(owner metav1.Object) ([]v1.Job, error) {
 	return jobs, nil
 }
 
-func (opt *options) debugJob(owner metav1.Object) error {
+func (opt *options) debugJobs(owner metav1.Object) error {
 	jobs, err := opt.getOwnedJobs(owner)
 	if err != nil {
 		return err
 	}
 	for i := range jobs {
-		pods, err := opt.getOwnedPods(&jobs[i])
+		err := opt.debugJob(&jobs[i])
 		if err != nil {
 			return err
 		}
-		for i := range pods {
-			if err := opt.debugPod(&pods[i]); err != nil {
-				return err
-			}
+
+	}
+	return nil
+}
+
+func (opt *options) debugJob(job *v1.Job) error {
+	pods, err := opt.getOwnedPods(job)
+	if err != nil {
+		return err
+	}
+	for i := range pods {
+		if err := opt.debugPod(&pods[i]); err != nil {
+			return err
 		}
 	}
 	return nil

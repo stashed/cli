@@ -32,5 +32,5 @@ func (opt *options) DebugRestoreSession(restoreSession *v1beta1.RestoreSession) 
 	if util.RestoreModel(restoreSession.Spec.Target.Ref.Kind) == apis.ModelSidecar {
 		return opt.debugSidecar(restoreSession.Spec.Target.Ref, apis.StashInitContainer)
 	}
-	return opt.debugJob(restoreSession)
+	return opt.debugJobs(restoreSession)
 }

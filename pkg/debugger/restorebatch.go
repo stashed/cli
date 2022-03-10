@@ -38,7 +38,7 @@ func (opt *options) DebugRestoreBatch(restoreBatch *v1beta1.RestoreBatch) error 
 				return err
 			}
 		} else {
-			if err := opt.debugJob(restoreBatch); err != nil {
+			if err := opt.debugJobs(restoreBatch); err != nil {
 				return err
 			}
 		}

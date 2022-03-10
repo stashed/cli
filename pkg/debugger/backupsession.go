@@ -42,7 +42,7 @@ func (opt *options) debugBackupSession(backupSession *v1beta1.BackupSession, mem
 				return err
 			}
 		} else {
-			if err := opt.debugJob(backupSession); err != nil {
+			if err := opt.debugJobs(backupSession); err != nil {
 				return err
 			}
 		}
