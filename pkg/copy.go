@@ -26,14 +26,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-var (
-	dstNamespace string
-	srcNamespace string
-	kubeClient   *kubernetes.Clientset
-	stashClient  *cs.Clientset
-	vsClient     *vs_cs.Clientset
-)
-
 func NewCmdCopy(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "cp",

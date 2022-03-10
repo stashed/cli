@@ -19,12 +19,24 @@ package pkg
 import (
 	"os"
 
+	cs "stash.appscode.dev/apimachinery/client/clientset/versioned"
 	"stash.appscode.dev/apimachinery/pkg/docker"
+
+	vs_cs "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 )
 
+// These variables will be set during build time
 const (
-	configDirName = "config"
-	ResticEnvs    = "restic-envs"
+	ScratchDir     = "/tmp/scratch"
+	DestinationDir = "/tmp/destination"
+	configDirName  = "config"
+
+	ResticEnvs     = "restic-envs"
+	ResticRegistry = "stashed"
+	ResticImage    = "restic"
+	ResticTag      = "latest"
 )
 
 type cliLocalDirectories struct {
@@ -32,24 +44,22 @@ type cliLocalDirectories struct {
 	downloadDir string // user provided or, current working dir
 }
 
-// These variables will be set during build time
-const (
-	ScratchDir     = "/tmp/scratch"
-	DestinationDir = "/tmp/destination"
-)
-
 var (
-	ResticRegistry = "stashed"
-	ResticImage    = "restic"
-	ResticTag      = "latest"
-)
+	dstNamespace string
+	srcNamespace string
+	namespace    string
 
-var (
-	backupConfig string
-	backupBatch  string
-)
+	kubeClient  *kubernetes.Clientset
+	stashClient *cs.Clientset
+	aggrClient  *clientset.Clientset
+	vsClient    *vs_cs.Clientset
+	imgRestic   docker.Docker
 
-var imgRestic docker.Docker
+	backupConfig   string
+	backupBatch    string
+	restoreSession string
+	restoreBatch   string
+)
 
 func init() {
 	imgRestic.Registry = ResticRegistry

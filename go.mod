@@ -8,6 +8,7 @@ require (
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.2.1
+	gomodules.xyz/go-sh v0.1.0
 	gomodules.xyz/logs v0.0.6
 	gomodules.xyz/pointer v0.1.0
 	gomodules.xyz/runtime v0.2.0
@@ -17,13 +18,14 @@ require (
 	k8s.io/cli-runtime v0.21.1
 	k8s.io/client-go v0.21.1
 	k8s.io/klog/v2 v2.9.0
+	k8s.io/kube-aggregator v0.21.1
 	k8s.io/kubectl v0.21.1
 	kmodules.xyz/client-go v0.0.0-20220203031013-1de48437aaf3
 	kmodules.xyz/objectstore-api v0.0.0-20211207131029-3271069de43e
 	kmodules.xyz/offshoot-api v0.0.0-20211207130839-cc7187e020cf
 	kmodules.xyz/openshift v0.0.0-20210618001443-f2507caa512f
-	stash.appscode.dev/apimachinery v0.18.0
-	stash.appscode.dev/stash v0.18.0
+	stash.appscode.dev/apimachinery v0.18.1-0.20220308093046-7df8eca4f066
+	stash.appscode.dev/stash v0.18.1-0.20220308112550-f1c381ec7e7a
 )
 
 replace bitbucket.org/ww/goautoneg => gomodules.xyz/goautoneg v0.0.0-20120707110453-a547fc61f48d

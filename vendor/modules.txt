@@ -233,6 +233,7 @@ gomodules.xyz/clock
 # gomodules.xyz/flags v0.1.3
 gomodules.xyz/flags
 # gomodules.xyz/go-sh v0.1.0
+## explicit
 gomodules.xyz/go-sh
 # gomodules.xyz/jsonpatch/v2 v2.2.0
 gomodules.xyz/jsonpatch/v2
@@ -253,6 +254,7 @@ gomodules.xyz/sets
 gomodules.xyz/wait
 # gomodules.xyz/x v0.0.10
 ## explicit
+gomodules.xyz/x/arrays
 gomodules.xyz/x/strings
 gomodules.xyz/x/version
 # google.golang.org/appengine v1.6.7
@@ -629,6 +631,15 @@ k8s.io/component-base/version
 # k8s.io/klog/v2 v2.9.0
 ## explicit
 k8s.io/klog/v2
+# k8s.io/kube-aggregator v0.21.1
+## explicit
+k8s.io/kube-aggregator/pkg/apis/apiregistration
+k8s.io/kube-aggregator/pkg/apis/apiregistration/v1
+k8s.io/kube-aggregator/pkg/apis/apiregistration/v1beta1
+k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset
+k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/scheme
+k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1
+k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1beta1
 # k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e => k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7
 k8s.io/kube-openapi/pkg/common
 k8s.io/kube-openapi/pkg/util/proto
@@ -785,7 +796,7 @@ sigs.k8s.io/structured-merge-diff/v4/typed
 sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.2.0
 sigs.k8s.io/yaml
-# stash.appscode.dev/apimachinery v0.18.0
+# stash.appscode.dev/apimachinery v0.18.1-0.20220308093046-7df8eca4f066
 ## explicit
 stash.appscode.dev/apimachinery/apis
 stash.appscode.dev/apimachinery/apis/repositories
@@ -814,7 +825,7 @@ stash.appscode.dev/apimachinery/pkg/docker
 stash.appscode.dev/apimachinery/pkg/invoker
 stash.appscode.dev/apimachinery/pkg/metrics
 stash.appscode.dev/apimachinery/pkg/restic
-# stash.appscode.dev/stash v0.18.0
+# stash.appscode.dev/stash v0.18.1-0.20220308112550-f1c381ec7e7a
 ## explicit
 stash.appscode.dev/stash/pkg/registry/snapshot
 stash.appscode.dev/stash/pkg/util

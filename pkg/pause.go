@@ -49,7 +49,7 @@ func NewCmdPause(clientGetter genericclioptions.RESTClientGetter) *cobra.Command
 		},
 	}
 	cmd.AddCommand(NewCmdPauseBackup())
-	cmd.PersistentFlags().StringVar(&backupConfig, "backupconfig", backupConfig, "Name of the Backupconfiguration to pause")
+	cmd.PersistentFlags().StringVar(&backupConfig, "backupconfig", backupConfig, "Name of the BackupConfiguration to pause")
 	cmd.PersistentFlags().StringVar(&backupBatch, "backupbatch", backupBatch, "Name of the BackupBatch to pause")
 	return cmd
 }

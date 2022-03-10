@@ -27,7 +27,7 @@ import (
 func NewCmdResume(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "resume",
-		Short:             `Resume stash resources`,
+		Short:             `Resume Stash backup`,
 		DisableAutoGenTag: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := clientGetter.ToRESTConfig()
