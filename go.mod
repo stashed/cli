@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/evanphx/json-patch v4.11.0+incompatible
-	github.com/json-iterator/go v1.1.11
+	github.com/json-iterator/go v1.1.12
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.2.1
