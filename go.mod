@@ -3,28 +3,50 @@ module stash.appscode.dev/cli
 go 1.15
 
 require (
-	github.com/evanphx/json-patch v4.11.0+incompatible
+	github.com/evanphx/json-patch v4.12.0+incompatible
+	github.com/go-openapi/jsonpointer v0.19.5 // indirect
+	github.com/go-openapi/jsonreference v0.19.5 // indirect
+	github.com/go-openapi/spec v0.19.8 // indirect
+	github.com/go-openapi/swag v0.19.14 // indirect
+	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
+	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/json-iterator/go v1.1.12
 	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.1.0
+	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/onsi/ginkgo v1.16.5 // indirect
+	github.com/onsi/gomega v1.17.0 // indirect
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus/common v0.28.0 // indirect
 	github.com/spf13/cobra v1.2.1
+	go.uber.org/zap v1.19.1 // indirect
+	golang.org/x/net v0.0.0-20211209124913-491a49abca63 // indirect
+	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
+	golang.org/x/sys v0.0.0-20211029165221-6e7872819dc8 // indirect
+	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect
 	golang.org/x/text v0.3.7
 	gomodules.xyz/go-sh v0.1.0
 	gomodules.xyz/logs v0.0.6
 	gomodules.xyz/pointer v0.1.0
 	gomodules.xyz/runtime v0.2.0
-	gomodules.xyz/x v0.0.10
+	gomodules.xyz/x v0.0.13
+	google.golang.org/protobuf v1.27.1 // indirect
 	k8s.io/api v0.21.1
 	k8s.io/apimachinery v0.21.1
 	k8s.io/cli-runtime v0.21.1
 	k8s.io/client-go v0.21.1
 	k8s.io/klog/v2 v2.9.0
 	k8s.io/kube-aggregator v0.21.1
+	k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65 // indirect
 	k8s.io/kubectl v0.21.1
-	kmodules.xyz/client-go v0.0.0-20220203031013-1de48437aaf3
-	kmodules.xyz/objectstore-api v0.0.0-20211207131029-3271069de43e
-	kmodules.xyz/offshoot-api v0.0.0-20211207130839-cc7187e020cf
+	k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b // indirect
+	kmodules.xyz/client-go v0.0.0-20220317213815-2a6d5a5784f2
+	kmodules.xyz/custom-resources v0.0.0-20220317220154-7beb809b1f5e // indirect
+	kmodules.xyz/objectstore-api v0.0.0-20220317220441-f1d593d0a778
+	kmodules.xyz/offshoot-api v0.0.0-20220323112402-3b0fd2ea77d6
 	kmodules.xyz/openshift v0.0.0-20210618001443-f2507caa512f
+	kmodules.xyz/webhook-runtime v0.0.0-20220317222714-0ddfc9e4c221 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.2.0 // indirect
+	sigs.k8s.io/yaml v1.3.0 // indirect
 	stash.appscode.dev/apimachinery v0.18.1-0.20220308093046-7df8eca4f066
 	stash.appscode.dev/stash v0.18.1-0.20220308112550-f1c381ec7e7a
 )
