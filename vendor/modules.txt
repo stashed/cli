@@ -50,31 +50,21 @@ github.com/exponent-io/jsonpath
 github.com/fatih/structs
 # github.com/form3tech-oss/jwt-go v3.2.2+incompatible => github.com/form3tech-oss/jwt-go v3.2.5+incompatible
 github.com/form3tech-oss/jwt-go
-# github.com/gabriel-vasile/mimetype v1.2.0
-github.com/gabriel-vasile/mimetype
-github.com/gabriel-vasile/mimetype/internal/json
-github.com/gabriel-vasile/mimetype/internal/matchers
 # github.com/go-errors/errors v1.0.1
 github.com/go-errors/errors
 # github.com/go-logr/logr v0.4.0
 github.com/go-logr/logr
 # github.com/go-openapi/jsonpointer v0.19.5 => github.com/go-openapi/jsonpointer v0.19.3
-## explicit
 github.com/go-openapi/jsonpointer
 # github.com/go-openapi/jsonreference v0.19.5 => github.com/go-openapi/jsonreference v0.19.3
-## explicit
 github.com/go-openapi/jsonreference
 # github.com/go-openapi/spec v0.19.8 => github.com/go-openapi/spec v0.19.5
-## explicit
 github.com/go-openapi/spec
 # github.com/go-openapi/swag v0.19.14 => github.com/go-openapi/swag v0.19.5
-## explicit
 github.com/go-openapi/swag
 # github.com/gogo/protobuf v1.3.2 => github.com/gogo/protobuf v1.3.2
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
-# github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da
-## explicit
 # github.com/golang/protobuf v1.5.2 => github.com/golang/protobuf v1.4.3
 github.com/golang/protobuf/jsonpb
 github.com/golang/protobuf/proto
@@ -91,7 +81,6 @@ github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
 # github.com/google/gofuzz v1.2.0
-## explicit
 github.com/google/gofuzz
 github.com/google/gofuzz/bytesource
 # github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
@@ -128,7 +117,6 @@ github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned/typ
 # github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de
 github.com/liggitt/tabwriter
 # github.com/mailru/easyjson v0.7.7
-## explicit
 github.com/mailru/easyjson/buffer
 github.com/mailru/easyjson/jlexer
 github.com/mailru/easyjson/jwriter
@@ -150,10 +138,6 @@ github.com/modern-go/concurrent
 github.com/modern-go/reflect2
 # github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00
 github.com/monochromegane/go-gitignore
-# github.com/onsi/ginkgo v1.16.5
-## explicit
-# github.com/onsi/gomega v1.17.0
-## explicit
 # github.com/peterbourgon/diskv v2.0.1+incompatible
 github.com/peterbourgon/diskv
 # github.com/pkg/errors v0.9.1
@@ -169,7 +153,6 @@ github.com/prometheus/client_golang/prometheus/push
 # github.com/prometheus/client_model v0.2.0
 github.com/prometheus/client_model/go
 # github.com/prometheus/common v0.28.0
-## explicit
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
 github.com/prometheus/common/model
@@ -207,13 +190,10 @@ go.starlark.net/resolve
 go.starlark.net/starlark
 go.starlark.net/starlarkstruct
 go.starlark.net/syntax
-# go.uber.org/zap v1.19.1
-## explicit
 # golang.org/x/crypto v0.0.0-20210314154223-e6e6c4f2bb5b
 golang.org/x/crypto/pkcs12
 golang.org/x/crypto/pkcs12/internal/rc2
 # golang.org/x/net v0.0.0-20211209124913-491a49abca63
-## explicit
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/http/httpguts
@@ -221,7 +201,6 @@ golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 # golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
-## explicit
 golang.org/x/oauth2
 golang.org/x/oauth2/authhandler
 golang.org/x/oauth2/google
@@ -230,13 +209,11 @@ golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
 # golang.org/x/sys v0.0.0-20211029165221-6e7872819dc8
-## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b
-## explicit
 golang.org/x/term
 # golang.org/x/text v0.3.7
 ## explicit
@@ -300,7 +277,6 @@ google.golang.org/appengine/internal/remote_api
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
 # google.golang.org/protobuf v1.27.1
-## explicit
 google.golang.org/protobuf/encoding/protojson
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
@@ -672,7 +648,6 @@ k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/scheme
 k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1
 k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1beta1
 # k8s.io/kube-openapi v0.0.0-20211115234752-e816edb12b65 => k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7
-## explicit
 k8s.io/kube-openapi/pkg/common
 k8s.io/kube-openapi/pkg/util/proto
 k8s.io/kube-openapi/pkg/util/proto/validation
@@ -689,11 +664,9 @@ k8s.io/kubectl/pkg/validation
 # k8s.io/kubernetes v1.21.1 => github.com/kmodules/kubernetes v1.22.0-alpha.0.0.20210617232219-a432af45d932
 k8s.io/kubernetes/pkg/util/hash
 # k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b => k8s.io/utils v0.0.0-20201110183641-67b214c5f920
-## explicit
 k8s.io/utils/buffer
 k8s.io/utils/exec
 k8s.io/utils/integer
-k8s.io/utils/io
 k8s.io/utils/pointer
 k8s.io/utils/trace
 # kmodules.xyz/client-go v0.0.0-20220317213815-2a6d5a5784f2
@@ -705,9 +678,7 @@ kmodules.xyz/client-go/apiextensions/v1
 kmodules.xyz/client-go/core/v1
 kmodules.xyz/client-go/meta
 kmodules.xyz/client-go/tools/clientcmd
-kmodules.xyz/client-go/tools/exec
 # kmodules.xyz/custom-resources v0.0.0-20220317220154-7beb809b1f5e
-## explicit
 kmodules.xyz/custom-resources/apis/appcatalog
 kmodules.xyz/custom-resources/apis/appcatalog/v1alpha1
 kmodules.xyz/custom-resources/apis/auditor
@@ -723,7 +694,7 @@ kmodules.xyz/custom-resources/crds
 # kmodules.xyz/objectstore-api v0.0.0-20220317220441-f1d593d0a778
 ## explicit
 kmodules.xyz/objectstore-api/api/v1
-# kmodules.xyz/offshoot-api v0.0.0-20220323112402-3b0fd2ea77d6
+# kmodules.xyz/offshoot-api v0.0.0-20220329041708-c076b2bcb0f8
 ## explicit
 kmodules.xyz/offshoot-api/api/v1
 kmodules.xyz/offshoot-api/util
@@ -735,15 +706,9 @@ kmodules.xyz/openshift/client/clientset/versioned
 kmodules.xyz/openshift/client/clientset/versioned/scheme
 kmodules.xyz/openshift/client/clientset/versioned/typed/apps/v1
 kmodules.xyz/openshift/client/clientset/versioned/typed/security/v1
-# kmodules.xyz/prober v0.0.0-20210618020259-5836fb959027
-kmodules.xyz/prober/api
+# kmodules.xyz/prober v0.0.0-20220317043828-5ae0114adcad
 kmodules.xyz/prober/api/v1
-kmodules.xyz/prober/probe
-kmodules.xyz/prober/probe/exec
-kmodules.xyz/prober/probe/http
-kmodules.xyz/prober/probe/tcp
 # kmodules.xyz/webhook-runtime v0.0.0-20220317222714-0ddfc9e4c221
-## explicit
 kmodules.xyz/webhook-runtime/apis/workload/v1
 # sigs.k8s.io/controller-runtime v0.9.0
 sigs.k8s.io/controller-runtime/pkg/client
@@ -825,15 +790,13 @@ sigs.k8s.io/kustomize/kyaml/yaml/merge3
 sigs.k8s.io/kustomize/kyaml/yaml/schema
 sigs.k8s.io/kustomize/kyaml/yaml/walk
 # sigs.k8s.io/structured-merge-diff/v4 v4.2.0
-## explicit
 sigs.k8s.io/structured-merge-diff/v4/fieldpath
 sigs.k8s.io/structured-merge-diff/v4/schema
 sigs.k8s.io/structured-merge-diff/v4/typed
 sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.3.0
-## explicit
 sigs.k8s.io/yaml
-# stash.appscode.dev/apimachinery v0.18.1-0.20220308093046-7df8eca4f066
+# stash.appscode.dev/apimachinery v0.19.0
 ## explicit
 stash.appscode.dev/apimachinery/apis
 stash.appscode.dev/apimachinery/apis/repositories
@@ -862,7 +825,7 @@ stash.appscode.dev/apimachinery/pkg/docker
 stash.appscode.dev/apimachinery/pkg/invoker
 stash.appscode.dev/apimachinery/pkg/metrics
 stash.appscode.dev/apimachinery/pkg/restic
-# stash.appscode.dev/stash v0.18.1-0.20220308112550-f1c381ec7e7a
+# stash.appscode.dev/stash v0.19.0
 ## explicit
 stash.appscode.dev/stash/pkg/registry/snapshot
 stash.appscode.dev/stash/pkg/util
