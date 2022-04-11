@@ -11,6 +11,7 @@ require (
 	golang.org/x/text v0.3.7
 	gomodules.xyz/go-sh v0.1.0
 	gomodules.xyz/logs v0.0.6
+	gomodules.xyz/mergo v0.3.13-0.20220214162359-48efe39fd402 // indirect
 	gomodules.xyz/pointer v0.1.0
 	gomodules.xyz/runtime v0.2.0
 	gomodules.xyz/x v0.0.13
@@ -21,7 +22,7 @@ require (
 	k8s.io/klog/v2 v2.9.0
 	k8s.io/kube-aggregator v0.21.1
 	k8s.io/kubectl v0.21.1
-	kmodules.xyz/client-go v0.0.0-20220317213815-2a6d5a5784f2
+	kmodules.xyz/client-go v0.0.0-20220404224906-af7b092cfac5
 	kmodules.xyz/objectstore-api v0.0.0-20220317220441-f1d593d0a778
 	kmodules.xyz/offshoot-api v0.0.0-20220329041708-c076b2bcb0f8
 	kmodules.xyz/openshift v0.0.0-20210618001443-f2507caa512f
