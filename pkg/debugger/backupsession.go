@@ -37,7 +37,7 @@ func (opt *options) debugBackupSession(backupSession *v1beta1.BackupSession, mem
 	}
 	for _, member := range members {
 		klog.Infof("\n\n\n\n\n\n==================[ Debugging backup for target %s %s/%s ]==================", member.Target.Ref.Kind, opt.namespace, member.Target.Ref.Name)
-		if util.BackupModel(member.Target.Ref.Kind) == apis.ModelSidecar {
+		if util.BackupModel(member.Target.Ref.Kind, member.Task.Name) == apis.ModelSidecar {
 			if err := opt.debugSidecar(member.Target.Ref, apis.StashContainer); err != nil {
 				return err
 			}
