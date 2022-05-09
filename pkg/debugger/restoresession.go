@@ -29,7 +29,7 @@ func (opt *options) DebugRestoreSession(restoreSession *v1beta1.RestoreSession) 
 	if restoreSession.Status.Phase == v1beta1.RestorePending {
 		return nil
 	}
-	if util.RestoreModel(restoreSession.Spec.Target.Ref.Kind) == apis.ModelSidecar {
+	if util.RestoreModel(restoreSession.Spec.Target.Ref.Kind, restoreSession.Spec.Task.Name) == apis.ModelSidecar {
 		return opt.debugSidecar(restoreSession.Spec.Target.Ref, apis.StashInitContainer)
 	}
 	return opt.debugJobs(restoreSession)

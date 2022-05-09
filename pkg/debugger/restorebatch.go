@@ -33,7 +33,7 @@ func (opt *options) DebugRestoreBatch(restoreBatch *v1beta1.RestoreBatch) error 
 	}
 	for _, member := range restoreBatch.Spec.Members {
 		klog.Infof("\n\n\n\n\n\n==================[ Debugging backup for target %s %s/%s ]==================", member.Target.Ref.Kind, opt.namespace, member.Target.Ref.Name)
-		if util.RestoreModel(member.Target.Ref.Kind) == apis.ModelSidecar {
+		if util.RestoreModel(member.Target.Ref.Kind, member.Task.Name) == apis.ModelSidecar {
 			if err := opt.debugSidecar(member.Target.Ref, apis.StashInitContainer); err != nil {
 				return err
 			}

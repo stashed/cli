@@ -24,9 +24,9 @@ require (
 	kmodules.xyz/client-go v0.0.0-20220427165208-36281a681909
 	kmodules.xyz/objectstore-api v0.0.0-20220317220441-f1d593d0a778
 	kmodules.xyz/offshoot-api v0.0.0-20220420055916-fefb02c26514
-	kmodules.xyz/openshift v0.0.0-20210618001443-f2507caa512f
-	stash.appscode.dev/apimachinery v0.19.0
-	stash.appscode.dev/stash v0.19.0
+	kmodules.xyz/openshift v0.0.0-20220317220943-4cb898e77b51
+	stash.appscode.dev/apimachinery v0.20.0
+	stash.appscode.dev/stash v0.20.0
 )
 
 require (
@@ -101,7 +101,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210314154223-e6e6c4f2bb5b // indirect
 	golang.org/x/net v0.0.0-20211209124913-491a49abca63 // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
-	golang.org/x/sys v0.0.0-20211029165221-6e7872819dc8 // indirect
+	golang.org/x/sys v0.0.0-20220227234510-4e6760a101f9 // indirect
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	gomodules.xyz/clock v0.0.0-20200817085942-06523dba733f // indirect
@@ -122,7 +122,7 @@ require (
 	k8s.io/kubernetes v1.21.1 // indirect
 	k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b // indirect
 	kmodules.xyz/custom-resources v0.0.0-20220422215041-237eae1d7ddd // indirect
-	kmodules.xyz/prober v0.0.0-20220317043828-5ae0114adcad // indirect
+	kmodules.xyz/prober v0.0.0-20220317221229-28d263b091df // indirect
 	kmodules.xyz/webhook-runtime v0.0.0-20220317222714-0ddfc9e4c221 // indirect
 	sigs.k8s.io/controller-runtime v0.9.0 // indirect
 	sigs.k8s.io/kustomize/api v0.8.8 // indirect
