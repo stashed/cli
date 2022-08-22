@@ -37,6 +37,9 @@ func NewCmdDebugOperator() *cobra.Command {
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			dbgr := debugger.NewDebugger(kubeClient, stashClient, aggrClient, namespace)
+			if err := dbgr.ShowVersionInformation(); err != nil {
+				return err
+			}
 			return dbgr.DebugOperator()
 		},
 	}
