@@ -26,7 +26,7 @@ import (
 )
 
 func (opt *options) getOperatorPod() (*core.Pod, error) {
-	apiSvc, err := opt.aggrClient.ApiregistrationV1beta1().APIServices().Get(context.TODO(), "v1alpha1.admission.stash.appscode.com", metav1.GetOptions{})
+	apiSvc, err := opt.aggrClient.ApiregistrationV1().APIServices().Get(context.TODO(), "v1alpha1.admission.stash.appscode.com", metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
