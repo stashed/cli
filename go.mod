@@ -21,12 +21,12 @@ require (
 	k8s.io/klog/v2 v2.80.1
 	k8s.io/kube-aggregator v0.25.1
 	k8s.io/kubectl v0.25.1
-	kmodules.xyz/client-go v0.25.1-0.20220918053236-dd8d8bd7fc37
+	kmodules.xyz/client-go v0.25.6
 	kmodules.xyz/objectstore-api v0.25.0
 	kmodules.xyz/offshoot-api v0.25.0
 	kmodules.xyz/openshift v0.25.0
-	stash.appscode.dev/apimachinery v0.22.1-0.20220917042332-522f4e18711d
-	stash.appscode.dev/stash v0.22.4-0.20220918055805-b0519c8535a1
+	stash.appscode.dev/apimachinery v0.23.0
+	stash.appscode.dev/stash v0.23.0
 )
 
 require (
@@ -73,7 +73,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
-	github.com/mailru/easyjson v0.7.6 // indirect
+	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
