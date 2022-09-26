@@ -83,16 +83,24 @@ func NewCmdDeleteSnapshot(clientGetter genericclioptions.RESTClientGetter) *cobr
 			if err != nil {
 				return err
 			}
-			// delete from local backend
-			if repository.Spec.Backend.Local != nil {
-				r := snapshot.NewREST(cfg)
-				return r.ForgetSnapshotsFromBackend(repository, []string{snapshotId}, false)
-			}
 
 			// get source repository secret
 			secret, err := kc.CoreV1().Secrets(namespace).Get(context.TODO(), repository.Spec.Backend.StorageSecretName, metav1.GetOptions{})
 			if err != nil {
 				return err
+			}
+
+			opt := snapshot.Options{
+				Repository:  repository,
+				Secret:      secret,
+				SnapshotIDs: []string{snapshotId},
+				InCluster:   false,
+			}
+
+			// delete from local backend
+			if repository.Spec.Backend.Local != nil {
+				r := snapshot.NewREST(cfg)
+				return r.ForgetSnapshotsFromBackend(opt)
 			}
 
 			if err = os.MkdirAll(ScratchDir, 0o755); err != nil {
