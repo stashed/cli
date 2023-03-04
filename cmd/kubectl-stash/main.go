@@ -17,10 +17,8 @@ limitations under the License.
 package main
 
 import (
-	"math/rand"
 	"os"
 	"runtime"
-	"time"
 
 	_ "stash.appscode.dev/apimachinery/client/clientset/versioned/fake"
 	"stash.appscode.dev/cli/pkg"
@@ -32,8 +30,6 @@ import (
 )
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
-
 	rootCmd := pkg.NewRootCmd()
 	logs.Init(rootCmd, false)
 	defer logs.FlushLogs()
