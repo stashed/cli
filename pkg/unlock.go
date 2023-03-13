@@ -34,6 +34,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
+	v1 "kmodules.xyz/objectstore-api/api/v1"
 )
 
 func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
@@ -119,7 +120,7 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 			}
 
 			// run unlock inside docker
-			if err = runCmdViaDocker(*localDirs, "unlock", extraAgrs); err != nil {
+			if err = runCmdViaDocker(*localDirs, "unlock", extraAgrs, setupOpt); err != nil {
 				return err
 			}
 			klog.Infof("Repository %s/%s has been unlocked successfully", namespace, repositoryName)
@@ -130,7 +131,7 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 	return cmd
 }
 
-func runCmdViaDocker(localDirs cliLocalDirectories, command string, extraArgs []string) error {
+func runCmdViaDocker(localDirs cliLocalDirectories, command string, extraArgs []string, setupOpt restic.SetupOptions) error {
 	// get current user
 	currentUser, err := user.Current()
 	if err != nil {
@@ -140,15 +141,19 @@ func runCmdViaDocker(localDirs cliLocalDirectories, command string, extraArgs []
 		"run",
 		"--rm",
 		"-u", currentUser.Uid,
-		"-v", ScratchDir + ":" + ScratchDir,
 		"--env", "HTTP_PROXY=" + os.Getenv("HTTP_PROXY"),
 		"--env", "HTTPS_PROXY=" + os.Getenv("HTTPS_PROXY"),
 		"--env-file", filepath.Join(localDirs.configDir, ResticEnvs),
-		imgRestic.ToContainerImage(),
-		command,
+		"-v", ScratchDir + ":" + ScratchDir,
 	}
 
+	if setupOpt.Provider == v1.ProviderLocal {
+		args = append(args, "-v", setupOpt.Bucket+":"+setupOpt.Bucket)
+	}
+
+	args = append(args, imgRestic.ToContainerImage(), command)
 	args = append(args, extraArgs...)
+
 	out, err := exec.Command("docker", args...).CombinedOutput()
 	klog.Infoln("Output:", string(out))
 	return err
