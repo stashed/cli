@@ -95,6 +95,12 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 			if err != nil {
 				return fmt.Errorf("setup option for repository failed")
 			}
+
+			if setupOpt.Provider == v1.ProviderLocal && hostPath == "" {
+				return fmt.Errorf("host path must be specified")
+			}
+
+			setupOpt.Bucket = hostPath
 			// init restic wrapper
 			resticWrapper, err := restic.NewResticWrapper(setupOpt)
 			if err != nil {
@@ -127,7 +133,7 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 			return nil
 		},
 	}
-
+	cmd.Flags().StringVar(&hostPath, "hostpath", hostPath, "Local mount point directory of the backup data")
 	return cmd
 }
 
