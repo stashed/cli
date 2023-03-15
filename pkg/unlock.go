@@ -96,8 +96,10 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 				return fmt.Errorf("setup option for repository failed")
 			}
 
-			if setupOpt.Provider == v1.ProviderLocal && hostPath == "" {
-				return fmt.Errorf("host path must be specified")
+			if setupOpt.Provider == v1.ProviderLocal {
+				if err := validateHostPath(); err != nil {
+					return err
+				}
 			}
 
 			setupOpt.Bucket = hostPath
@@ -133,20 +135,44 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&hostPath, "hostpath", hostPath, "Local mount point directory of the backup data")
+	cmd.Flags().StringVar(&hostPath, "cli-hostpath", hostPath, "Path on the host machine where the CLI is executed. The local volume must be mounted at this location.")
+	cmd.Flags().StringVar(&hostUser, "user", hostUser, "Username or UID (format: <name|uid>[:<group|gid>])")
 	return cmd
 }
 
-func runCmdViaDocker(localDirs cliLocalDirectories, command string, extraArgs []string, setupOpt restic.SetupOptions) error {
-	// get current user
-	currentUser, err := user.Current()
-	if err != nil {
+func validateHostPath() error {
+	if hostPath == "" {
+		return fmt.Errorf("cli host path must be specified")
+	}
+
+	if _, err := os.Stat(hostPath); os.IsNotExist(err) {
+		return fmt.Errorf("%s doesn't exists", hostPath)
+	} else if err != nil {
 		return err
 	}
+
+	if _, err := os.Stat(filepath.Join(hostPath, "config")); os.IsNotExist(err) {
+		return fmt.Errorf("%s is not a valid restic repository path", hostPath)
+	} else if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func runCmdViaDocker(localDirs cliLocalDirectories, command string, extraArgs []string, setupOpt restic.SetupOptions) error {
+	if hostUser == "" {
+		currentUser, err := user.Current()
+		if err != nil {
+			return err
+		}
+		hostUser = currentUser.Uid
+	}
+
 	args := []string{
 		"run",
 		"--rm",
-		"-u", currentUser.Uid,
+		"-u", hostUser,
 		"--env", "HTTP_PROXY=" + os.Getenv("HTTP_PROXY"),
 		"--env", "HTTPS_PROXY=" + os.Getenv("HTTPS_PROXY"),
 		"--env-file", filepath.Join(localDirs.configDir, ResticEnvs),
