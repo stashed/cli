@@ -34,7 +34,6 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
-	v1 "kmodules.xyz/objectstore-api/api/v1"
 )
 
 func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
@@ -95,14 +94,6 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 			if err != nil {
 				return fmt.Errorf("setup option for repository failed")
 			}
-
-			if setupOpt.Provider == v1.ProviderLocal {
-				if err := validateHostPath(); err != nil {
-					return err
-				}
-			}
-
-			setupOpt.Bucket = hostPath
 			// init restic wrapper
 			resticWrapper, err := restic.NewResticWrapper(setupOpt)
 			if err != nil {
@@ -128,64 +119,36 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 			}
 
 			// run unlock inside docker
-			if err = runCmdViaDocker(*localDirs, "unlock", extraAgrs, setupOpt); err != nil {
+			if err = runCmdViaDocker(*localDirs, "unlock", extraAgrs); err != nil {
 				return err
 			}
 			klog.Infof("Repository %s/%s has been unlocked successfully", namespace, repositoryName)
 			return nil
 		},
 	}
-	cmd.Flags().StringVar(&hostPath, "cli-hostpath", hostPath, "Path on the host machine where the CLI is executed. The local volume must be mounted at this location.")
-	cmd.Flags().StringVar(&hostUser, "user", hostUser, "Username or UID (format: <name|uid>[:<group|gid>])")
+
 	return cmd
 }
 
-func validateHostPath() error {
-	if hostPath == "" {
-		return fmt.Errorf("cli host path must be specified")
-	}
-
-	if _, err := os.Stat(hostPath); os.IsNotExist(err) {
-		return fmt.Errorf("%s doesn't exists", hostPath)
-	} else if err != nil {
+func runCmdViaDocker(localDirs cliLocalDirectories, command string, extraArgs []string) error {
+	// get current user
+	currentUser, err := user.Current()
+	if err != nil {
 		return err
 	}
-
-	if _, err := os.Stat(filepath.Join(hostPath, "config")); os.IsNotExist(err) {
-		return fmt.Errorf("%s is not a valid restic repository path", hostPath)
-	} else if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func runCmdViaDocker(localDirs cliLocalDirectories, command string, extraArgs []string, setupOpt restic.SetupOptions) error {
-	if hostUser == "" {
-		currentUser, err := user.Current()
-		if err != nil {
-			return err
-		}
-		hostUser = currentUser.Uid
-	}
-
 	args := []string{
 		"run",
 		"--rm",
-		"-u", hostUser,
+		"-u", currentUser.Uid,
+		"-v", ScratchDir + ":" + ScratchDir,
 		"--env", "HTTP_PROXY=" + os.Getenv("HTTP_PROXY"),
 		"--env", "HTTPS_PROXY=" + os.Getenv("HTTPS_PROXY"),
 		"--env-file", filepath.Join(localDirs.configDir, ResticEnvs),
-		"-v", ScratchDir + ":" + ScratchDir,
+		imgRestic.ToContainerImage(),
+		command,
 	}
 
-	if setupOpt.Provider == v1.ProviderLocal {
-		args = append(args, "-v", setupOpt.Bucket+":"+setupOpt.Bucket)
-	}
-
-	args = append(args, imgRestic.ToContainerImage(), command)
 	args = append(args, extraArgs...)
-
 	out, err := exec.Command("docker", args...).CombinedOutput()
 	klog.Infoln("Output:", string(out))
 	return err

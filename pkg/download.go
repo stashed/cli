@@ -148,23 +148,19 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 	cmd.Flags().StringVar(&imgRestic.Registry, "docker-registry", imgRestic.Registry, "Docker image registry for restic cli")
 	cmd.Flags().StringVar(&imgRestic.Tag, "image-tag", imgRestic.Tag, "Restic docker image tag")
 
-	cmd.Flags().StringVar(&hostUser, "user", hostUser, "Username or UID (format: <name|uid>[:<group|gid>])")
 	return cmd
 }
 
 func runRestoreViaDocker(localDirs cliLocalDirectories, extraArgs []string, snapshots []string) error {
-	if hostUser == "" {
-		currentUser, err := user.Current()
-		if err != nil {
-			return err
-		}
-		hostUser = currentUser.Uid
+	// get current user
+	currentUser, err := user.Current()
+	if err != nil {
+		return err
 	}
-
 	restoreArgs := []string{
 		"run",
 		"--rm",
-		"-u", hostUser,
+		"-u", currentUser.Uid,
 		"-v", ScratchDir + ":" + ScratchDir,
 		"-v", localDirs.downloadDir + ":" + DestinationDir,
 		"--env", "HTTP_PROXY=" + os.Getenv("HTTP_PROXY"),

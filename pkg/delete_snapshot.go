@@ -152,24 +152,20 @@ func NewCmdDeleteSnapshot(clientGetter genericclioptions.RESTClientGetter) *cobr
 
 	cmd.Flags().StringVar(&imgRestic.Registry, "docker-registry", imgRestic.Registry, "Docker image registry")
 	cmd.Flags().StringVar(&imgRestic.Tag, "image-tag", imgRestic.Tag, "Stash image tag")
-	cmd.Flags().StringVar(&hostUser, "user", hostUser, "Username or UID (format: <name|uid>[:<group|gid>])")
 
 	return cmd
 }
 
 func runDeleteSnapshotViaDocker(localDirs cliLocalDirectories, extraArgs []string, snapshotId string) error {
-	if hostUser == "" {
-		currentUser, err := user.Current()
-		if err != nil {
-			return err
-		}
-		hostUser = currentUser.Uid
+	// get current user
+	currentUser, err := user.Current()
+	if err != nil {
+		return err
 	}
-
 	args := []string{
 		"run",
 		"--rm",
-		"-u", hostUser,
+		"-u", currentUser.Uid,
 		"-v", ScratchDir + ":" + ScratchDir,
 		"--env", "HTTP_PROXY=" + os.Getenv("HTTP_PROXY"),
 		"--env", "HTTPS_PROXY=" + os.Getenv("HTTPS_PROXY"),

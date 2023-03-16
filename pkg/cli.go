@@ -49,9 +49,6 @@ var (
 	srcNamespace string
 	namespace    string
 
-	hostPath string
-	hostUser string
-
 	kubeClient  *kubernetes.Clientset
 	stashClient *cs.Clientset
 	aggrClient  *clientset.Clientset
