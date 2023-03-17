@@ -101,8 +101,11 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 }
 
 func (r *REST) unlockLocalRepository(repo *v1alpha1.Repository) error {
-	_, err := r.execOnBackendMountingPod("unlock", repo)
-	return err
+	if _, err := r.execOnBackendMountingPod("unlock", repo); err != nil {
+		return err
+	}
+	klog.Infof("Repository %s/%s has been unlocked successfully", repo.Namespace, repo.Name)
+	return nil
 }
 
 const ExecStash = "/stash-enterprise"
