@@ -44,15 +44,17 @@ import (
 	"k8s.io/klog/v2"
 )
 
-type REST struct {
+type unlockOptions struct {
 	kubeClient kubernetes.Interface
 	config     *rest.Config
+	repo       *v1alpha1.Repository
 }
 
-func newREST(cfg *rest.Config) *REST {
-	return &REST{
+func newUnlockOptions(cfg *rest.Config, repo *v1alpha1.Repository) *unlockOptions {
+	return &unlockOptions{
 		kubeClient: kubernetes.NewForConfigOrDie(cfg),
 		config:     cfg,
+		repo:       repo,
 	}
 }
 
@@ -87,41 +89,41 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 				return err
 			}
 
-			r := newREST(cfg)
+			r := newUnlockOptions(cfg, repo)
 
 			if repo.Spec.Backend.Local != nil {
-				return r.unlockLocalRepository(repo)
+				return r.unlockLocalRepository()
 			}
 
-			return r.unlockRepository(repo)
+			return r.unlockRepository()
 		},
 	}
 
 	return cmd
 }
 
-func (r *REST) unlockLocalRepository(repo *v1alpha1.Repository) error {
-	if _, err := r.execOnBackendMountingPod("unlock", repo); err != nil {
+func (opt *unlockOptions) unlockLocalRepository() error {
+	if _, err := opt.execOnBackendMountingPod("unlock"); err != nil {
 		return err
 	}
-	klog.Infof("Repository %s/%s has been unlocked successfully", repo.Namespace, repo.Name)
+	klog.Infof("Repository %s/%s has been unlocked successfully", opt.repo.Namespace, opt.repo.Name)
 	return nil
 }
 
 const ExecStash = "/stash-enterprise"
 
-func (r *REST) execOnBackendMountingPod(cmd string, repo *v1alpha1.Repository) ([]byte, error) {
+func (opt *unlockOptions) execOnBackendMountingPod(cmd string) ([]byte, error) {
 	// get the pod that mount this repository as volume
-	pod, err := r.getBackendMountingPod(repo)
+	pod, err := opt.getBackendMountingPod()
 	if err != nil {
 		return nil, err
 	}
 
 	command := []string{ExecStash, cmd}
-	command = append(command, "--repo-name="+repo.Name)
-	command = append(command, "--repo-namespace="+repo.Namespace)
+	command = append(command, "--repo-name="+opt.repo.Name)
+	command = append(command, "--repo-namespace="+opt.repo.Namespace)
 
-	response, err := r.execCommandOnPod(pod, command)
+	response, err := opt.execCommandOnPod(pod, command)
 	if err != nil {
 		return nil, err
 	}
@@ -129,13 +131,13 @@ func (r *REST) execOnBackendMountingPod(cmd string, repo *v1alpha1.Repository) (
 	return response, nil
 }
 
-func (r *REST) getBackendMountingPod(repo *v1alpha1.Repository) (*core.Pod, error) {
-	vol, mnt := repo.Spec.Backend.Local.ToVolumeAndMount(repo.Name)
-	if repo.LocalNetworkVolume() {
-		mnt.MountPath = filepath.Join(mnt.MountPath, repo.LocalNetworkVolumePath())
+func (opt *unlockOptions) getBackendMountingPod() (*core.Pod, error) {
+	vol, mnt := opt.repo.Spec.Backend.Local.ToVolumeAndMount(opt.repo.Name)
+	if opt.repo.LocalNetworkVolume() {
+		mnt.MountPath = filepath.Join(mnt.MountPath, opt.repo.LocalNetworkVolumePath())
 	}
 	// list all the pods
-	podList, err := r.kubeClient.CoreV1().Pods(repo.Namespace).List(context.TODO(), metav1.ListOptions{})
+	podList, err := opt.kubeClient.CoreV1().Pods(opt.repo.Namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -150,10 +152,10 @@ func (r *REST) getBackendMountingPod(repo *v1alpha1.Repository) (*core.Pod, erro
 		}
 	}
 
-	return nil, fmt.Errorf("no backend mounting pod found for Repository %v", repo.Name)
+	return nil, fmt.Errorf("no backend mounting pod found for Repository %v", opt.repo.Name)
 }
 
-func (r *REST) execCommandOnPod(pod *core.Pod, command []string) ([]byte, error) {
+func (opt *unlockOptions) execCommandOnPod(pod *core.Pod, command []string) ([]byte, error) {
 	var (
 		execOut bytes.Buffer
 		execErr bytes.Buffer
@@ -161,7 +163,7 @@ func (r *REST) execCommandOnPod(pod *core.Pod, command []string) ([]byte, error)
 
 	klog.Infof("Executing command %v on pod %v", command, pod.Name)
 
-	req := r.kubeClient.CoreV1().RESTClient().Post().
+	req := opt.kubeClient.CoreV1().RESTClient().Post().
 		Resource("pods").
 		Name(pod.Name).
 		Namespace(pod.Namespace).
@@ -174,7 +176,7 @@ func (r *REST) execCommandOnPod(pod *core.Pod, command []string) ([]byte, error)
 		Stderr:    true,
 	}, scheme.ParameterCodec)
 
-	executor, err := remotecommand.NewSPDYExecutor(r.config, "POST", req.URL())
+	executor, err := remotecommand.NewSPDYExecutor(opt.config, "POST", req.URL())
 	if err != nil {
 		return nil, fmt.Errorf("failed to init executor: %v", err)
 	}
@@ -210,9 +212,9 @@ func hasVolumeMount(mounts []core.VolumeMount, mnt core.VolumeMount) bool {
 	return false
 }
 
-func (r *REST) unlockRepository(repo *v1alpha1.Repository) error {
+func (opt *unlockOptions) unlockRepository() error {
 	// get source repository secret
-	secret, err := r.kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), repo.Spec.Backend.StorageSecretName, metav1.GetOptions{})
+	secret, err := opt.kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), opt.repo.Spec.Backend.StorageSecretName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -228,7 +230,7 @@ func (r *REST) unlockRepository(repo *v1alpha1.Repository) error {
 		ScratchDir:    ScratchDir,
 	}
 	// configure setupOption
-	setupOpt, err := util.SetupOptionsForRepository(*repo, extraOpt)
+	setupOpt, err := util.SetupOptionsForRepository(*opt.repo, extraOpt)
 	if err != nil {
 		return fmt.Errorf("setup option for repository failed")
 	}
@@ -263,7 +265,7 @@ func (r *REST) unlockRepository(repo *v1alpha1.Repository) error {
 	if err = runCmdViaDocker(*localDirs, "unlock", extraAgrs); err != nil {
 		return err
 	}
-	klog.Infof("Repository %s/%s has been unlocked successfully", repo.Namespace, repo.Name)
+	klog.Infof("Repository %s/%s has been unlocked successfully", opt.repo.Namespace, opt.repo.Name)
 	return nil
 }
 
