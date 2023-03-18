@@ -15,17 +15,17 @@ require (
 	gomodules.xyz/runtime v0.3.0
 	gomodules.xyz/x v0.0.14
 	k8s.io/api v0.25.1
-	k8s.io/apimachinery v0.25.1
+	k8s.io/apimachinery v0.25.3
 	k8s.io/cli-runtime v0.25.1
 	k8s.io/client-go v0.25.1
 	k8s.io/klog/v2 v2.80.1
 	k8s.io/kube-aggregator v0.25.1
 	k8s.io/kubectl v0.25.1
-	kmodules.xyz/client-go v0.25.14
+	kmodules.xyz/client-go v0.25.19
 	kmodules.xyz/objectstore-api v0.25.1-0.20221104003322-f0289b5b6ca2
 	kmodules.xyz/offshoot-api v0.25.0
 	kmodules.xyz/openshift v0.25.0
-	stash.appscode.dev/apimachinery v0.27.0
+	stash.appscode.dev/apimachinery v0.27.1-0.20230318125832-292f37f44ac4
 	stash.appscode.dev/stash v0.27.0
 )
 
@@ -98,10 +98,10 @@ require (
 	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5 // indirect
 	golang.org/x/crypto v0.6.0 // indirect
 	golang.org/x/net v0.7.0 // indirect
-	golang.org/x/oauth2 v0.1.0 // indirect
+	golang.org/x/oauth2 v0.5.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/term v0.5.0 // indirect
-	golang.org/x/time v0.0.0-20220722155302-e5dcc9cfc0b9 // indirect
+	golang.org/x/time v0.1.0 // indirect
 	gomodules.xyz/clock v0.0.0-20200817085942-06523dba733f // indirect
 	gomodules.xyz/flags v0.1.3 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
