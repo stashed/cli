@@ -103,32 +103,23 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 }
 
 func (opt *unlockOptions) unlockLocalRepository() error {
-	if _, err := opt.execOnBackendMountingPod("unlock"); err != nil {
-		return err
-	}
-	klog.Infof("Repository %s/%s has been unlocked successfully", opt.repo.Namespace, opt.repo.Name)
-	return nil
-}
-
-const ExecStash = "/stash-enterprise"
-
-func (opt *unlockOptions) execOnBackendMountingPod(cmd string) ([]byte, error) {
 	// get the pod that mount this repository as volume
 	pod, err := opt.getBackendMountingPod()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	command := []string{ExecStash, cmd}
+	command := []string{"/stash-enterprise", "unlock"}
 	command = append(command, "--repo-name="+opt.repo.Name)
 	command = append(command, "--repo-namespace="+opt.repo.Namespace)
 
-	response, err := opt.execCommandOnPod(pod, command)
+	_, err = opt.execCommandOnPod(pod, command)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return response, nil
+	klog.Infof("Repository %s/%s has been unlocked successfully", opt.repo.Namespace, opt.repo.Name)
+	return nil
 }
 
 func (opt *unlockOptions) getBackendMountingPod() (*core.Pod, error) {
