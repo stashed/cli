@@ -125,7 +125,7 @@ func (opt *unlockOptions) unlockLocalRepository() error {
 func (opt *unlockOptions) getBackendMountingPod() (*core.Pod, error) {
 	vol, mnt := opt.repo.Spec.Backend.Local.ToVolumeAndMount(opt.repo.Name)
 	if opt.repo.LocalNetworkVolume() {
-		mnt.MountPath = filepath.Join(mnt.MountPath, opt.repo.LocalNetworkVolumePath())
+		mnt.MountPath = filepath.Join("/", opt.repo.Name, mnt.MountPath, opt.repo.LocalNetworkVolumePath())
 	}
 	// list all the pods
 	podList, err := opt.kubeClient.CoreV1().Pods(opt.repo.Namespace).List(context.TODO(), metav1.ListOptions{})
