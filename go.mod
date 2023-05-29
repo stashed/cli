@@ -22,11 +22,11 @@ require (
 	k8s.io/kube-aggregator v0.25.1
 	k8s.io/kubectl v0.25.1
 	kmodules.xyz/client-go v0.25.23
-	kmodules.xyz/objectstore-api v0.25.1-0.20221104003322-f0289b5b6ca2
-	kmodules.xyz/offshoot-api v0.25.0
+	kmodules.xyz/objectstore-api v0.25.1
+	kmodules.xyz/offshoot-api v0.25.4
 	kmodules.xyz/openshift v0.25.0
-	stash.appscode.dev/apimachinery v0.29.1-0.20230529131221-1e979c48da10
-	stash.appscode.dev/stash v0.29.0
+	stash.appscode.dev/apimachinery v0.30.0
+	stash.appscode.dev/stash v0.30.0
 )
 
 require (
@@ -40,8 +40,7 @@ require (
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
-	github.com/PuerkitoBio/purell v1.1.1 // indirect
-	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
+	github.com/PuerkitoBio/purell v1.2.0 // indirect
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
@@ -119,7 +118,7 @@ require (
 	k8s.io/component-base v0.25.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803162953-67bda5d908f1 // indirect
 	k8s.io/utils v0.0.0-20220823124924-e9cbc92d1a73 // indirect
-	kmodules.xyz/custom-resources v0.25.1 // indirect
+	kmodules.xyz/custom-resources v0.25.2 // indirect
 	kmodules.xyz/prober v0.25.0 // indirect
 	kmodules.xyz/webhook-runtime v0.25.0 // indirect
 	sigs.k8s.io/controller-runtime v0.13.1 // indirect
