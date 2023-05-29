@@ -212,7 +212,7 @@ func ensurePVC(pvc *core.PersistentVolumeClaim) error {
 			},
 		},
 	}
-	claim := pvcTemplates[0].DeepCopy().ToCorePVC()
+	claim := pvcTemplates[0].DeepCopy().ToAPIObject()
 	_, err := kubeClient.CoreV1().PersistentVolumeClaims(dstNamespace).Create(context.TODO(), claim, metav1.CreateOptions{})
 	if err != nil {
 		return err
