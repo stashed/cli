@@ -34,6 +34,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	filepathx "gomodules.xyz/x/filepath"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -124,8 +125,12 @@ func (opt *unlockOptions) unlockLocalRepository() error {
 
 func (opt *unlockOptions) getBackendMountingPod() (*core.Pod, error) {
 	vol, mnt := opt.repo.Spec.Backend.Local.ToVolumeAndMount(opt.repo.Name)
+	var err error
 	if opt.repo.LocalNetworkVolume() {
-		mnt.MountPath = filepath.Join("/", opt.repo.Name, mnt.MountPath, opt.repo.LocalNetworkVolumePath())
+		mnt.MountPath, err = filepathx.SecureJoin("/", opt.repo.Name, mnt.MountPath, opt.repo.LocalNetworkVolumePath())
+		if err != nil {
+			return nil, fmt.Errorf("failed to calculate filepath, reason: %s", err)
+		}
 	}
 	// list all the pods
 	podList, err := opt.kubeClient.CoreV1().Pods(opt.repo.Namespace).List(context.TODO(), metav1.ListOptions{})
