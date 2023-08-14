@@ -10,7 +10,7 @@ require (
 	github.com/spf13/cobra v1.7.0
 	golang.org/x/text v0.9.0
 	gomodules.xyz/go-sh v0.1.0
-	gomodules.xyz/logs v0.0.6
+	gomodules.xyz/logs v0.0.7
 	gomodules.xyz/pointer v0.1.0
 	gomodules.xyz/runtime v0.3.0
 	gomodules.xyz/x v0.0.15
@@ -21,13 +21,15 @@ require (
 	k8s.io/klog/v2 v2.80.1
 	k8s.io/kube-aggregator v0.25.1
 	k8s.io/kubectl v0.25.1
-	kmodules.xyz/client-go v0.25.23
+	kmodules.xyz/client-go v0.25.29
 	kmodules.xyz/objectstore-api v0.25.1
 	kmodules.xyz/offshoot-api v0.25.4
 	kmodules.xyz/openshift v0.25.0
-	stash.appscode.dev/apimachinery v0.30.0
+	stash.appscode.dev/apimachinery v0.30.1-0.20230814025143-fcb8a9106d3c
 	stash.appscode.dev/stash v0.30.0
 )
+
+require github.com/onsi/gomega v1.20.1 // indirect
 
 require (
 	cloud.google.com/go v0.99.0 // indirect
@@ -104,7 +106,7 @@ require (
 	golang.org/x/time v0.1.0 // indirect
 	gomodules.xyz/clock v0.0.0-20200817085942-06523dba733f // indirect
 	gomodules.xyz/flags v0.1.3 // indirect
-	gomodules.xyz/jsonpatch/v2 v2.3.0 // indirect
+	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	gomodules.xyz/mergo v0.3.13 // indirect
 	gomodules.xyz/sets v0.2.1 // indirect
 	gomodules.xyz/wait v0.2.0 // indirect
