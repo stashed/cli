@@ -216,13 +216,14 @@ func (opt *downloadOptions) downloadSnapshotsFromLocalRepo() error {
 		return err
 	}
 
-	command := []string{"/stash-enterprise", "download"}
-	command = append(command, "--repo-name="+opt.repo.Name)
-	command = append(command, "--repo-namespace=", opt.repo.Namespace)
-	command = append(command, "--snapshots", strings.Join(opt.snapshots, ","))
+	if err := opt.downloadSnapshotsInMountingPod(pod); err != nil {
+		return err
+	}
+	if err := opt.copyDownloadedDataToDestination(pod); err != nil {
+		return err
+	}
 
-	_, err = opt.execCommandOnPod(pod, command)
-	if err != nil {
+	if err := opt.clearDataFromMountingPod(pod); err != nil {
 		return err
 	}
 
@@ -267,4 +268,28 @@ func (opt *downloadOptions) execCommandOnPod(pod *core.Pod, command []string) ([
 	}
 
 	return execOut.Bytes(), nil
+}
+
+func (opt *downloadOptions) downloadSnapshotsInMountingPod(pod *core.Pod) error {
+	command := []string{"/stash-enterprise", "download"}
+	command = append(command, "--repo-name", opt.repo.Name)
+	command = append(command, "--repo-namespace", opt.repo.Namespace)
+	command = append(command, "--snapshots", strings.Join(opt.snapshots, ","))
+
+	_, err := opt.execCommandOnPod(pod, command)
+	return err
+}
+
+func (opt *downloadOptions) copyDownloadedDataToDestination(pod *core.Pod) error {
+	_, err := exec.Command("kubectl", "cp", "--namespace", pod.Namespace, fmt.Sprintf("%s:%s", pod.Name, apis.DestinationDir), localDirs.downloadDir).CombinedOutput()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (opt *downloadOptions) clearDataFromMountingPod(pod *core.Pod) error {
+	cmd := []string{"rm", "-rf", apis.DestinationDir}
+	_, err := opt.execCommandOnPod(pod, cmd)
+	return err
 }
