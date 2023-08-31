@@ -49,15 +49,13 @@ type downloadOptions struct {
 	kubeClient kubernetes.Interface
 	config     *rest.Config
 	repo       *v1alpha1.Repository
-	snapshots  []string
 }
 
-func newDownloadOptions(cfg *rest.Config, repo *v1alpha1.Repository, snaps []string) *downloadOptions {
+func newDownloadOptions(cfg *rest.Config, repo *v1alpha1.Repository) *downloadOptions {
 	return &downloadOptions{
 		kubeClient: kubernetes.NewForConfigOrDie(cfg),
 		config:     cfg,
 		repo:       repo,
-		snapshots:  snaps,
 	}
 }
 
@@ -102,10 +100,10 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 				return err
 			}
 
-			opt := newDownloadOptions(cfg, repository, restoreOpt.Snapshots)
+			opt := newDownloadOptions(cfg, repository)
 
 			if repository.Spec.Backend.Local != nil {
-				return opt.downloadSnapshotsFromLocalRepo()
+				return opt.downloadSnapshotsFromLocalRepo(restoreOpt.Snapshots)
 			}
 
 			return opt.downloadSnapshots(&restoreOpt)
@@ -209,14 +207,14 @@ func runRestoreViaDocker(localDirs cliLocalDirectories, extraArgs []string, snap
 	return nil
 }
 
-func (opt *downloadOptions) downloadSnapshotsFromLocalRepo() error {
+func (opt *downloadOptions) downloadSnapshotsFromLocalRepo(snapshots []string) error {
 	// get the pod that mount this repository as volume
 	pod, err := getBackendMountingPod(opt.kubeClient, opt.repo)
 	if err != nil {
 		return err
 	}
 
-	if err := opt.downloadSnapshotsInMountingPod(pod); err != nil {
+	if err := opt.downloadSnapshotsInMountingPod(pod, snapshots); err != nil {
 		return err
 	}
 	if err := opt.copyDownloadedDataToDestination(pod); err != nil {
@@ -270,11 +268,11 @@ func (opt *downloadOptions) execCommandOnPod(pod *core.Pod, command []string) ([
 	return execOut.Bytes(), nil
 }
 
-func (opt *downloadOptions) downloadSnapshotsInMountingPod(pod *core.Pod) error {
+func (opt *downloadOptions) downloadSnapshotsInMountingPod(pod *core.Pod, snapshots []string) error {
 	command := []string{"/stash-enterprise", "download"}
 	command = append(command, "--repo-name", opt.repo.Name)
 	command = append(command, "--repo-namespace", opt.repo.Namespace)
-	command = append(command, "--snapshots", strings.Join(opt.snapshots, ","))
+	command = append(command, "--snapshots", strings.Join(snapshots, ","))
 
 	_, err := opt.execCommandOnPod(pod, command)
 	return err
