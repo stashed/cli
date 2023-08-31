@@ -20,29 +20,29 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	core "k8s.io/api/core/v1"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/remotecommand"
-	"k8s.io/kubectl/pkg/scheme"
 	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
-	"stash.appscode.dev/apimachinery/apis"
-	"stash.appscode.dev/apimachinery/apis/stash/v1alpha1"
 	"strings"
 	"time"
 
+	"stash.appscode.dev/apimachinery/apis"
+	"stash.appscode.dev/apimachinery/apis/stash/v1alpha1"
 	cs "stash.appscode.dev/apimachinery/client/clientset/versioned"
 	"stash.appscode.dev/apimachinery/pkg/restic"
 	"stash.appscode.dev/stash/pkg/util"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/klog/v2"
+	"k8s.io/kubectl/pkg/scheme"
 )
 
 type downloadOptions struct {
@@ -64,12 +64,10 @@ func newDownloadOptions(cfg *rest.Config, repo *v1alpha1.Repository, snaps []str
 var localDirs = &cliLocalDirectories{}
 
 func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
-	var (
-		restoreOpt = restic.RestoreOptions{
-			SourceHost:  restic.DefaultHost,
-			Destination: apis.DestinationDir,
-		}
-	)
+	restoreOpt := restic.RestoreOptions{
+		SourceHost:  restic.DefaultHost,
+		Destination: apis.DestinationDir,
+	}
 	cmd := &cobra.Command{
 		Use:               "download",
 		Short:             `Download snapshots`,
@@ -111,7 +109,6 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 			}
 
 			return opt.downloadSnapshots(&restoreOpt)
-
 		},
 	}
 
