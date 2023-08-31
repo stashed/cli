@@ -29,9 +29,8 @@ import (
 
 // These variables will be set during build time
 const (
-	ScratchDir     = "/tmp/scratch"
-	DestinationDir = "/tmp/destination"
-	configDirName  = "config"
+	ScratchDir    = "/tmp/scratch"
+	configDirName = "config"
 
 	ResticEnvs     = "restic-envs"
 	ResticRegistry = "stashed"
