@@ -225,7 +225,7 @@ func (opt *downloadOptions) downloadSnapshotsFromLocalRepo(snapshots []string) e
 		return err
 	}
 
-	klog.Infof("Snapshots have been downloaded successfully", opt.repo.Namespace, opt.repo.Name)
+	klog.Infof("Snapshots: %v of Repository %s/%s restored in path %s", snapshots, namespace, opt.repo.Name, localDirs.downloadDir)
 	return nil
 }
 
