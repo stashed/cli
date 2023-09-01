@@ -81,7 +81,7 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 			if err != nil {
 				return errors.Wrap(err, "failed to read kubeconfig")
 			}
-			namespace, _, err := clientGetter.ToRawKubeConfigLoader().Namespace()
+			namespace, _, err = clientGetter.ToRawKubeConfigLoader().Namespace()
 			if err != nil {
 				return err
 			}
