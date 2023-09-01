@@ -275,19 +275,16 @@ func (opt *downloadOptions) downloadSnapshotsInMountingPod(pod *core.Pod, snapsh
 	command = append(command, "--snapshots", strings.Join(snapshots, ","))
 
 	out, err := opt.execCommandOnPod(pod, command)
-	if out != nil {
+	if string(out) != "" {
 		klog.Infoln("Output:", string(out))
 	}
 	return err
 }
 
 func (opt *downloadOptions) copyDownloadedDataToDestination(pod *core.Pod) error {
-	out, err := exec.Command("kubectl", "cp", "--namespace", pod.Namespace, fmt.Sprintf("%s:%s", pod.Name, apis.SnapshotDownloadDir), localDirs.downloadDir).CombinedOutput()
+	_, err := exec.Command("kubectl", "cp", "--namespace", pod.Namespace, fmt.Sprintf("%s:%s", pod.Name, apis.SnapshotDownloadDir), localDirs.downloadDir).CombinedOutput()
 	if err != nil {
 		return err
-	}
-	if out != nil {
-		klog.Infoln("Output:", string(out))
 	}
 	return nil
 }
@@ -295,7 +292,7 @@ func (opt *downloadOptions) copyDownloadedDataToDestination(pod *core.Pod) error
 func (opt *downloadOptions) clearDataFromMountingPod(pod *core.Pod) error {
 	cmd := []string{"rm", "-rf", apis.SnapshotDownloadDir}
 	out, err := opt.execCommandOnPod(pod, cmd)
-	if out != nil {
+	if string(out) != "" {
 		klog.Infoln("Output:", string(out))
 	}
 	return err
