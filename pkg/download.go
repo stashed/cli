@@ -64,7 +64,7 @@ var localDirs = &cliLocalDirectories{}
 func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	restoreOpt := restic.RestoreOptions{
 		SourceHost:  restic.DefaultHost,
-		Destination: apis.DestinationDir,
+		Destination: DestinationDir,
 	}
 	cmd := &cobra.Command{
 		Use:               "download",
@@ -186,7 +186,7 @@ func runRestoreViaDocker(localDirs cliLocalDirectories, extraArgs []string, snap
 		"--rm",
 		"-u", currentUser.Uid,
 		"-v", ScratchDir + ":" + ScratchDir,
-		"-v", localDirs.downloadDir + ":" + apis.DestinationDir,
+		"-v", localDirs.downloadDir + ":" + DestinationDir,
 		"--env", "HTTP_PROXY=" + os.Getenv("HTTP_PROXY"),
 		"--env", "HTTPS_PROXY=" + os.Getenv("HTTPS_PROXY"),
 		"--env-file", filepath.Join(localDirs.configDir, ResticEnvs),
@@ -196,7 +196,7 @@ func runRestoreViaDocker(localDirs cliLocalDirectories, extraArgs []string, snap
 	restoreArgs = append(restoreArgs, extraArgs...)
 	restoreArgs = append(restoreArgs, "restore")
 	for _, snapshot := range snapshots {
-		args := append(restoreArgs, snapshot, "--target", filepath.Join(apis.DestinationDir, snapshot))
+		args := append(restoreArgs, snapshot, "--target", filepath.Join(DestinationDir, snapshot))
 		klog.Infoln("Running docker with args:", args)
 		out, err := exec.Command("docker", args...).CombinedOutput()
 		if err != nil {
@@ -282,7 +282,7 @@ func (opt *downloadOptions) downloadSnapshotsInMountingPod(pod *core.Pod, snapsh
 }
 
 func (opt *downloadOptions) copyDownloadedDataToDestination(pod *core.Pod) error {
-	out, err := exec.Command("kubectl", "cp", "--namespace", pod.Namespace, fmt.Sprintf("%s:%s", pod.Name, apis.DestinationDir), localDirs.downloadDir).CombinedOutput()
+	out, err := exec.Command("kubectl", "cp", "--namespace", pod.Namespace, fmt.Sprintf("%s:%s", pod.Name, apis.SnapshotDownloadDir), localDirs.downloadDir).CombinedOutput()
 	if err != nil {
 		return err
 	}
@@ -293,7 +293,7 @@ func (opt *downloadOptions) copyDownloadedDataToDestination(pod *core.Pod) error
 }
 
 func (opt *downloadOptions) clearDataFromMountingPod(pod *core.Pod) error {
-	cmd := []string{"rm", "-rf", apis.DestinationDir}
+	cmd := []string{"rm", "-rf", apis.SnapshotDownloadDir}
 	out, err := opt.execCommandOnPod(pod, cmd)
 	if out != nil {
 		klog.Infoln("Output:", string(out))

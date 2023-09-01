@@ -25,7 +25,7 @@ require (
 	kmodules.xyz/objectstore-api v0.25.1
 	kmodules.xyz/offshoot-api v0.25.4
 	kmodules.xyz/openshift v0.25.0
-	stash.appscode.dev/apimachinery v0.31.1-0.20230831042357-85e0508906e8
+	stash.appscode.dev/apimachinery v0.31.1-0.20230901092023-ce543fa9f598
 	stash.appscode.dev/stash v0.31.0
 )
 
