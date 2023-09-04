@@ -17,33 +17,55 @@ limitations under the License.
 package pkg
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
+	"strings"
+	"time"
 
+	"stash.appscode.dev/apimachinery/apis"
+	"stash.appscode.dev/apimachinery/apis/stash/v1alpha1"
 	cs "stash.appscode.dev/apimachinery/client/clientset/versioned"
 	"stash.appscode.dev/apimachinery/pkg/restic"
 	"stash.appscode.dev/stash/pkg/util"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/klog/v2"
+	"k8s.io/kubectl/pkg/scheme"
 )
 
+type downloadOptions struct {
+	kubeClient kubernetes.Interface
+	config     *rest.Config
+	repo       *v1alpha1.Repository
+}
+
+func newDownloadOptions(cfg *rest.Config, repo *v1alpha1.Repository) *downloadOptions {
+	return &downloadOptions{
+		kubeClient: kubernetes.NewForConfigOrDie(cfg),
+		config:     cfg,
+		repo:       repo,
+	}
+}
+
+var localDirs = &cliLocalDirectories{}
+
 func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
-	var (
-		localDirs  = &cliLocalDirectories{}
-		restoreOpt = restic.RestoreOptions{
-			SourceHost:  restic.DefaultHost,
-			Destination: DestinationDir,
-		}
-	)
+	restoreOpt := restic.RestoreOptions{
+		SourceHost:  restic.DefaultHost,
+		Destination: DestinationDir,
+	}
 	cmd := &cobra.Command{
 		Use:               "download",
 		Short:             `Download snapshots`,
@@ -51,7 +73,7 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 || args[0] == "" {
-				return fmt.Errorf("Repository name not found")
+				return fmt.Errorf("repository name not found")
 			}
 			repositoryName := args[0]
 
@@ -59,15 +81,11 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 			if err != nil {
 				return errors.Wrap(err, "failed to read kubeconfig")
 			}
-			namespace, _, err := clientGetter.ToRawKubeConfigLoader().Namespace()
+			namespace, _, err = clientGetter.ToRawKubeConfigLoader().Namespace()
 			if err != nil {
 				return err
 			}
 
-			kc, err := kubernetes.NewForConfig(cfg)
-			if err != nil {
-				return err
-			}
 			client, err := cs.NewForConfig(cfg)
 			if err != nil {
 				return err
@@ -78,64 +96,17 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 				return err
 			}
 
-			if repository.Spec.Backend.Local != nil {
-				return fmt.Errorf("can't restore from repository with local backend")
-			}
-
-			// get source repository secret
-			secret, err := kc.CoreV1().Secrets(namespace).Get(context.TODO(), repository.Spec.Backend.StorageSecretName, metav1.GetOptions{})
-			if err != nil {
-				return err
-			}
-
 			if err = localDirs.prepareDownloadDir(); err != nil {
 				return err
 			}
 
-			if err = os.MkdirAll(ScratchDir, 0o755); err != nil {
-				return err
-			}
-			defer os.RemoveAll(ScratchDir)
+			opt := newDownloadOptions(cfg, repository)
 
-			// configure restic wrapper
-			extraOpt := util.ExtraOptions{
-				StorageSecret: secret,
-				ScratchDir:    ScratchDir,
-			}
-			// configure setupOption
-			setupOpt, err := util.SetupOptionsForRepository(*repository, extraOpt)
-			if err != nil {
-				return fmt.Errorf("setup option for repository failed")
+			if repository.Spec.Backend.Local != nil {
+				return opt.downloadSnapshotsFromLocalRepo(restoreOpt.Snapshots)
 			}
 
-			resticWrapper, err := restic.NewResticWrapper(setupOpt)
-			if err != nil {
-				return err
-			}
-
-			localDirs.configDir = filepath.Join(ScratchDir, configDirName)
-			// dump restic's environments into `restic-env` file.
-			// we will pass this env file to restic docker container.
-			err = resticWrapper.DumpEnv(localDirs.configDir, ResticEnvs)
-			if err != nil {
-				return err
-			}
-
-			extraAgrs := []string{
-				"--no-cache",
-			}
-
-			// For TLS secured Minio/REST server, specify cert path
-			if resticWrapper.GetCaPath() != "" {
-				extraAgrs = append(extraAgrs, "--cacert", resticWrapper.GetCaPath())
-			}
-
-			// run restore inside docker
-			if err = runRestoreViaDocker(*localDirs, extraAgrs, restoreOpt.Snapshots); err != nil {
-				return err
-			}
-			klog.Infof("Snapshots: %v of Repository %s/%s restored in path %s", restoreOpt.Snapshots, namespace, repositoryName, localDirs.downloadDir)
-			return nil
+			return opt.downloadSnapshots(&restoreOpt)
 		},
 	}
 
@@ -149,6 +120,59 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 	cmd.Flags().StringVar(&imgRestic.Tag, "image-tag", imgRestic.Tag, "Restic docker image tag")
 
 	return cmd
+}
+
+func (opt *downloadOptions) downloadSnapshots(restoreOpt *restic.RestoreOptions) error {
+	// get source repository secret
+	secret, err := opt.kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), opt.repo.Spec.Backend.StorageSecretName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	if err = os.MkdirAll(ScratchDir, 0o755); err != nil {
+		return err
+	}
+	defer os.RemoveAll(ScratchDir)
+
+	// configure restic wrapper
+	extraOpt := util.ExtraOptions{
+		StorageSecret: secret,
+		ScratchDir:    ScratchDir,
+	}
+	// configure setupOption
+	setupOpt, err := util.SetupOptionsForRepository(*opt.repo, extraOpt)
+	if err != nil {
+		return fmt.Errorf("setup option for repository failed")
+	}
+
+	resticWrapper, err := restic.NewResticWrapper(setupOpt)
+	if err != nil {
+		return err
+	}
+
+	localDirs.configDir = filepath.Join(ScratchDir, configDirName)
+	// dump restic's environments into `restic-env` file.
+	// we will pass this env file to restic docker container.
+	err = resticWrapper.DumpEnv(localDirs.configDir, ResticEnvs)
+	if err != nil {
+		return err
+	}
+
+	extraAgrs := []string{
+		"--no-cache",
+	}
+
+	// For TLS secured Minio/REST server, specify cert path
+	if resticWrapper.GetCaPath() != "" {
+		extraAgrs = append(extraAgrs, "--cacert", resticWrapper.GetCaPath())
+	}
+
+	// run restore inside docker
+	if err = runRestoreViaDocker(*localDirs, extraAgrs, restoreOpt.Snapshots); err != nil {
+		return err
+	}
+	klog.Infof("Snapshots: %v of Repository %s/%s restored in path %s", restoreOpt.Snapshots, namespace, opt.repo.Name, localDirs.downloadDir)
+	return nil
 }
 
 func runRestoreViaDocker(localDirs cliLocalDirectories, extraArgs []string, snapshots []string) error {
@@ -181,4 +205,95 @@ func runRestoreViaDocker(localDirs cliLocalDirectories, extraArgs []string, snap
 		klog.Infoln("Output:", string(out))
 	}
 	return nil
+}
+
+func (opt *downloadOptions) downloadSnapshotsFromLocalRepo(snapshots []string) error {
+	// get the pod that mount this repository as volume
+	pod, err := getBackendMountingPod(opt.kubeClient, opt.repo)
+	if err != nil {
+		return err
+	}
+
+	if err := opt.downloadSnapshotsInMountingPod(pod, snapshots); err != nil {
+		return err
+	}
+	if err := opt.copyDownloadedDataToDestination(pod); err != nil {
+		return err
+	}
+
+	if err := opt.clearDataFromMountingPod(pod); err != nil {
+		return err
+	}
+
+	klog.Infof("Snapshots: %v of Repository %s/%s restored in path %s", snapshots, namespace, opt.repo.Name, localDirs.downloadDir)
+	return nil
+}
+
+func (opt *downloadOptions) execCommandOnPod(pod *core.Pod, command []string) ([]byte, error) {
+	var (
+		execOut bytes.Buffer
+		execErr bytes.Buffer
+	)
+
+	klog.Infof("Executing command %v on pod %v", command, pod.Name)
+
+	req := opt.kubeClient.CoreV1().RESTClient().Post().
+		Resource("pods").
+		Name(pod.Name).
+		Namespace(pod.Namespace).
+		SubResource("exec").
+		Timeout(5 * time.Minute)
+	req.VersionedParams(&core.PodExecOptions{
+		Container: apis.StashContainer,
+		Command:   command,
+		Stdout:    true,
+		Stderr:    true,
+	}, scheme.ParameterCodec)
+
+	executor, err := remotecommand.NewSPDYExecutor(opt.config, "POST", req.URL())
+	if err != nil {
+		return nil, fmt.Errorf("failed to init executor: %v", err)
+	}
+
+	err = executor.Stream(remotecommand.StreamOptions{
+		Stdout: &execOut,
+		Stderr: &execErr,
+		Tty:    true,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("could not execute: %v, reason: %s", err, execErr.String())
+	}
+
+	return execOut.Bytes(), nil
+}
+
+func (opt *downloadOptions) downloadSnapshotsInMountingPod(pod *core.Pod, snapshots []string) error {
+	command := []string{"/stash-enterprise", "download"}
+	command = append(command, "--repo-name", opt.repo.Name)
+	command = append(command, "--repo-namespace", opt.repo.Namespace)
+	command = append(command, "--snapshots", strings.Join(snapshots, ","))
+
+	out, err := opt.execCommandOnPod(pod, command)
+	if string(out) != "" {
+		klog.Infoln("Output:", string(out))
+	}
+	return err
+}
+
+func (opt *downloadOptions) copyDownloadedDataToDestination(pod *core.Pod) error {
+	_, err := exec.Command("kubectl", "cp", "--namespace", pod.Namespace, fmt.Sprintf("%s:%s", pod.Name, apis.SnapshotDownloadDir), localDirs.downloadDir).CombinedOutput()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (opt *downloadOptions) clearDataFromMountingPod(pod *core.Pod) error {
+	cmd := []string{"rm", "-rf", apis.SnapshotDownloadDir}
+	out, err := opt.execCommandOnPod(pod, cmd)
+	if string(out) != "" {
+		klog.Infoln("Output:", string(out))
+	}
+	return err
 }

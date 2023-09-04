@@ -34,7 +34,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	filepathx "gomodules.xyz/x/filepath"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -105,7 +104,7 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 
 func (opt *unlockOptions) unlockLocalRepository() error {
 	// get the pod that mount this repository as volume
-	pod, err := opt.getBackendMountingPod()
+	pod, err := getBackendMountingPod(opt.kubeClient, opt.repo)
 	if err != nil {
 		return err
 	}
@@ -121,34 +120,6 @@ func (opt *unlockOptions) unlockLocalRepository() error {
 
 	klog.Infof("Repository %s/%s has been unlocked successfully", opt.repo.Namespace, opt.repo.Name)
 	return nil
-}
-
-func (opt *unlockOptions) getBackendMountingPod() (*core.Pod, error) {
-	vol, mnt := opt.repo.Spec.Backend.Local.ToVolumeAndMount(opt.repo.Name)
-	var err error
-	if opt.repo.LocalNetworkVolume() {
-		mnt.MountPath, err = filepathx.SecureJoin("/", opt.repo.Name, mnt.MountPath, opt.repo.LocalNetworkVolumePath())
-		if err != nil {
-			return nil, fmt.Errorf("failed to calculate filepath, reason: %s", err)
-		}
-	}
-	// list all the pods
-	podList, err := opt.kubeClient.CoreV1().Pods(opt.repo.Namespace).List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	// return the pod that has the vol and mnt
-	for i := range podList.Items {
-		if hasVolume(podList.Items[i].Spec.Volumes, vol) {
-			for _, c := range podList.Items[i].Spec.Containers {
-				if hasVolumeMount(c.VolumeMounts, mnt) {
-					return &podList.Items[i], nil
-				}
-			}
-		}
-	}
-
-	return nil, fmt.Errorf("no backend mounting pod found for Repository %v", opt.repo.Name)
 }
 
 func (opt *unlockOptions) execCommandOnPod(pod *core.Pod, command []string) ([]byte, error) {
@@ -188,24 +159,6 @@ func (opt *unlockOptions) execCommandOnPod(pod *core.Pod, command []string) ([]b
 	}
 
 	return execOut.Bytes(), nil
-}
-
-func hasVolume(volumes []core.Volume, vol core.Volume) bool {
-	for i := range volumes {
-		if volumes[i].Name == vol.Name {
-			return true
-		}
-	}
-	return false
-}
-
-func hasVolumeMount(mounts []core.VolumeMount, mnt core.VolumeMount) bool {
-	for i := range mounts {
-		if mounts[i].Name == mnt.Name && mounts[i].MountPath == mnt.MountPath {
-			return true
-		}
-	}
-	return false
 }
 
 func (opt *unlockOptions) unlockRepository() error {

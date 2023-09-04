@@ -25,11 +25,9 @@ require (
 	kmodules.xyz/objectstore-api v0.25.1
 	kmodules.xyz/offshoot-api v0.25.4
 	kmodules.xyz/openshift v0.25.0
-	stash.appscode.dev/apimachinery v0.31.0
+	stash.appscode.dev/apimachinery v0.31.1
 	stash.appscode.dev/stash v0.31.0
 )
-
-require github.com/onsi/gomega v1.20.1 // indirect
 
 require (
 	cloud.google.com/go v0.99.0 // indirect
@@ -85,6 +83,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/onsi/gomega v1.20.1 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/prometheus/client_golang v1.13.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
