@@ -48,8 +48,8 @@ func NewCmdGenRules() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:               "rules",
-		Short:             `Generate restore rules for specific time`,
-		Long:              `Generate restore rules for specific time`,
+		Short:             `Generate restore rules from nearest snapshots at a specific time.`,
+		Long:              `Generate restore rules for a repository based on the closest snapshots to a specific time`,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 || args[0] == "" {
@@ -76,12 +76,11 @@ func NewCmdGenRules() *cobra.Command {
 			}
 
 			lines := strings.Split(string(output), "\n")
-
-			// Parse each line into a Snapshot struct and find the nearest snapshots
 			var snapshots []Snapshot
 			var nearestSnapshot Snapshot
 			nearestTimeDiff := time.Duration(0)
 
+			// Parse each line into a Snapshot struct and find the nearest snapshots
 			for _, line := range lines[1:] { // Start from the second line to skip the header
 				fields := strings.Fields(line)
 				if len(fields) == 5 {
@@ -93,7 +92,7 @@ func NewCmdGenRules() *cobra.Command {
 
 					createdAt, err := time.Parse(time.RFC3339, createdAtStr)
 					if err != nil {
-						return fmt.Errorf("failed to parse creation timestamp: %w", createdAt)
+						return fmt.Errorf("failed to parse creation timestamp: %w", err)
 					}
 					snapshot := Snapshot{
 						Name:       name,
