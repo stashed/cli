@@ -27,15 +27,15 @@ import (
 	"time"
 )
 
-type Snapshot struct {
-	Name       string
-	ID         string
-	Repository string
-	Hostname   string
-	CreatedAt  time.Time
+type snapshotStat struct {
+	name       string
+	id         string
+	repository string
+	hostname   string
+	createdAt  time.Time
 }
 
-type Rule struct {
+type restoreRule struct {
 	TargetHosts []string `json:"targetHosts,omitempty"`
 	Snapshots   []string `json:"snapshots,omitempty"`
 }
@@ -76,8 +76,8 @@ func NewCmdGenRules() *cobra.Command {
 			}
 
 			lines := strings.Split(string(output), "\n")
-			var snapshots []Snapshot
-			var nearestSnapshot Snapshot
+			var snapshots []snapshotStat
+			var nearestSnapshot snapshotStat
 			nearestTimeDiff := time.Duration(0)
 
 			// Parse each line into a Snapshot struct and find the nearest snapshots
@@ -94,12 +94,12 @@ func NewCmdGenRules() *cobra.Command {
 					if err != nil {
 						return fmt.Errorf("failed to parse creation timestamp: %w", err)
 					}
-					snapshot := Snapshot{
-						Name:       name,
-						ID:         id,
-						Repository: repository,
-						Hostname:   hostname,
-						CreatedAt:  createdAt,
+					snapshot := snapshotStat{
+						name:       name,
+						id:         id,
+						repository: repository,
+						hostname:   hostname,
+						createdAt:  createdAt,
 					}
 					snapshots = append(snapshots, snapshot)
 
@@ -113,7 +113,7 @@ func NewCmdGenRules() *cobra.Command {
 						timeDiff = -timeDiff // Make sure it's positive
 					}
 
-					if timeDiff < nearestTimeDiff || nearestSnapshot.Name == "" {
+					if timeDiff < nearestTimeDiff || nearestSnapshot.name == "" {
 						nearestTimeDiff = timeDiff
 						nearestSnapshot = snapshot
 					}
@@ -145,20 +145,20 @@ func NewCmdGenRules() *cobra.Command {
 	return cmd
 }
 
-func getRules(snapshots []Snapshot) []Rule {
+func getRules(snapshots []snapshotStat) []restoreRule {
 	if len(snapshots) == 1 {
-		return []Rule{
+		return []restoreRule{
 			{
-				Snapshots: []string{snapshots[0].ID},
+				Snapshots: []string{snapshots[0].id},
 			},
 		}
 	}
 
-	var rules []Rule
+	var rules []restoreRule
 	for _, snap := range snapshots {
-		rule := Rule{
-			TargetHosts: []string{snap.Hostname},
-			Snapshots:   []string{snap.ID},
+		rule := restoreRule{
+			TargetHosts: []string{snap.hostname},
+			Snapshots:   []string{snap.id},
 		}
 		rules = append(rules, rule)
 	}
@@ -166,7 +166,7 @@ func getRules(snapshots []Snapshot) []Rule {
 
 }
 
-func getTargetGroupOfSnapshots(snapshots []Snapshot, nearestSnapshot Snapshot) []Snapshot {
+func getTargetGroupOfSnapshots(snapshots []snapshotStat, nearestSnapshot snapshotStat) []snapshotStat {
 	numberOfHosts := getNumberOfHosts(snapshots)
 	nearestSnapshotIndex := findNearestSnapshotIndex(snapshots, nearestSnapshot)
 
@@ -175,27 +175,27 @@ func getTargetGroupOfSnapshots(snapshots []Snapshot, nearestSnapshot Snapshot) [
 	return getSnapshotsInRange(snapshots, groupStartIndex, numberOfHosts)
 }
 
-func getNumberOfHosts(snapshots []Snapshot) int {
+func getNumberOfHosts(snapshots []snapshotStat) int {
 	uniqueHosts := make(map[string]struct{})
 	for _, snap := range snapshots {
-		if _, ok := uniqueHosts[snap.Hostname]; ok {
+		if _, ok := uniqueHosts[snap.hostname]; ok {
 			break
 		}
-		uniqueHosts[snap.Hostname] = struct{}{}
+		uniqueHosts[snap.hostname] = struct{}{}
 	}
 	return len(uniqueHosts)
 }
 
-func findNearestSnapshotIndex(snapshots []Snapshot, nearestSnapshot Snapshot) int {
+func findNearestSnapshotIndex(snapshots []snapshotStat, nearestSnapshot snapshotStat) int {
 	for i, snap := range snapshots {
-		if snap.ID == nearestSnapshot.ID {
+		if snap.id == nearestSnapshot.id {
 			return i
 		}
 	}
 	return -1
 }
 
-func getSnapshotsInRange(snapshots []Snapshot, startIndex, count int) []Snapshot {
+func getSnapshotsInRange(snapshots []snapshotStat, startIndex, count int) []snapshotStat {
 	if startIndex < 0 || startIndex >= len(snapshots) || count <= 0 {
 		return nil
 	}

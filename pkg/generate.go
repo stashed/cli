@@ -24,7 +24,7 @@ import (
 func NewCmdGen(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "gen",
-		Short:             `gen stash resources`,
+		Short:             `generate stash resources`,
 		DisableAutoGenTag: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			var err error
