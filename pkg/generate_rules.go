@@ -124,7 +124,11 @@ func NewCmdGenRules() *cobra.Command {
 				return fmt.Errorf("no snapshots found")
 			}
 
-			targetSnapshots := getTargetGroupOfSnapshots(snapshots, nearestSnapshot)
+			numberOfHosts := getNumberOfHosts(snapshots)
+			if err := validateSnapshots(snapshots, numberOfHosts); err != nil {
+				return err
+			}
+			targetSnapshots := getTargetGroupOfSnapshots(snapshots, nearestSnapshot, numberOfHosts)
 			if len(targetSnapshots) == 0 {
 				return fmt.Errorf("failed to find snapshots for hosts")
 			}
@@ -143,6 +147,30 @@ func NewCmdGenRules() *cobra.Command {
 	cmd.Flags().StringVar(&timestamp, "timestamp", timestamp, "Timestamp to find the closest snapshots")
 
 	return cmd
+}
+func getNumberOfHosts(snapshots []snapshotStat) int {
+	uniqueHosts := make(map[string]struct{})
+	for _, snap := range snapshots {
+		uniqueHosts[snap.hostname] = struct{}{}
+	}
+	return len(uniqueHosts)
+}
+
+func validateSnapshots(snapshots []snapshotStat, numberOfHosts int) error {
+	if len(snapshots)%numberOfHosts != 0 {
+		return fmt.Errorf("one or more snapshots missing for one or more hosts")
+	}
+
+	for i := 0; i < len(snapshots); i += numberOfHosts {
+		uniqueHosts := make(map[string]struct{})
+		for j := i; j < i+numberOfHosts; j++ {
+			uniqueHosts[snapshots[j].hostname] = struct{}{}
+		}
+		if len(uniqueHosts) != numberOfHosts {
+			return fmt.Errorf("one or more snapshots missing for one or more hosts")
+		}
+	}
+	return nil
 }
 
 func getRules(snapshots []snapshotStat) []restoreRule {
@@ -166,24 +194,12 @@ func getRules(snapshots []snapshotStat) []restoreRule {
 
 }
 
-func getTargetGroupOfSnapshots(snapshots []snapshotStat, nearestSnapshot snapshotStat) []snapshotStat {
-	numberOfHosts := getNumberOfHosts(snapshots)
+func getTargetGroupOfSnapshots(snapshots []snapshotStat, nearestSnapshot snapshotStat, numberOfHosts int) []snapshotStat {
 	nearestSnapshotIndex := findNearestSnapshotIndex(snapshots, nearestSnapshot)
 
 	groupStartIndex := (nearestSnapshotIndex / numberOfHosts) * numberOfHosts
 
 	return getSnapshotsInRange(snapshots, groupStartIndex, numberOfHosts)
-}
-
-func getNumberOfHosts(snapshots []snapshotStat) int {
-	uniqueHosts := make(map[string]struct{})
-	for _, snap := range snapshots {
-		if _, ok := uniqueHosts[snap.hostname]; ok {
-			break
-		}
-		uniqueHosts[snap.hostname] = struct{}{}
-	}
-	return len(uniqueHosts)
 }
 
 func findNearestSnapshotIndex(snapshots []snapshotStat, nearestSnapshot snapshotStat) int {
