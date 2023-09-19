@@ -18,13 +18,15 @@ package pkg
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
-	"k8s.io/klog/v2"
 	"os/exec"
-	"sigs.k8s.io/yaml"
-	"stash.appscode.dev/apimachinery/pkg/restic"
 	"strings"
 	"time"
+
+	"stash.appscode.dev/apimachinery/pkg/restic"
+
+	"github.com/spf13/cobra"
+	"k8s.io/klog/v2"
+	"sigs.k8s.io/yaml"
 )
 
 type snapshotStat struct {
@@ -148,6 +150,7 @@ func NewCmdGenRules() *cobra.Command {
 
 	return cmd
 }
+
 func getNumberOfHosts(snapshots []snapshotStat) int {
 	uniqueHosts := make(map[string]struct{})
 	for _, snap := range snapshots {
@@ -191,7 +194,6 @@ func getRules(snapshots []snapshotStat) []restoreRule {
 		rules = append(rules, rule)
 	}
 	return rules
-
 }
 
 func getTargetGroupOfSnapshots(snapshots []snapshotStat, nearestSnapshot snapshotStat, numberOfHosts int) []snapshotStat {
