@@ -25,6 +25,7 @@ require (
 	kmodules.xyz/objectstore-api v0.25.1
 	kmodules.xyz/offshoot-api v0.25.4
 	kmodules.xyz/openshift v0.25.0
+	sigs.k8s.io/yaml v1.3.0
 	stash.appscode.dev/apimachinery v0.31.1
 	stash.appscode.dev/stash v0.31.0
 )
@@ -127,5 +128,4 @@ require (
 	sigs.k8s.io/kustomize/api v0.12.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.13.9 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
-	sigs.k8s.io/yaml v1.3.0 // indirect
 )
