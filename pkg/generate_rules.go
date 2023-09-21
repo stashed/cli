@@ -72,6 +72,8 @@ func NewCmdGenRules() *cobra.Command {
 				arguments = append(arguments, "--request-timeout", requestTimeout)
 			}
 
+			klog.Infof("Finding the nearest snapshot(s) with respect to %q", restic.DefaultHost)
+
 			output, err := exec.Command("kubectl", arguments...).CombinedOutput()
 			if err != nil {
 				return fmt.Errorf("failed to execute kubectl command: %w", err)
@@ -119,6 +121,7 @@ func NewCmdGenRules() *cobra.Command {
 						nearestTimeDiff = timeDiff
 						nearestSnapshot = snapshot
 					}
+
 				}
 			}
 
@@ -140,7 +143,10 @@ func NewCmdGenRules() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			klog.V(0).Infoln("Rules for RestoreSession:", "\n", string(yamlData))
+
+			out := fmt.Sprintf("Rules for RestoreSession:\n,%s", string(yamlData))
+			klog.Infoln(out)
+
 			return nil
 		},
 	}
