@@ -37,6 +37,7 @@ const (
 	ResticRegistry = "stashed"
 	ResticImage    = "restic"
 	ResticTag      = "latest"
+	cmdKubectl     = "kubectl"
 )
 
 type cliLocalDirectories struct {

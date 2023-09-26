@@ -282,7 +282,7 @@ func (opt *downloadOptions) downloadSnapshotsInMountingPod(pod *core.Pod, snapsh
 }
 
 func (opt *downloadOptions) copyDownloadedDataToDestination(pod *core.Pod) error {
-	_, err := exec.Command("kubectl", "cp", "--namespace", pod.Namespace, fmt.Sprintf("%s:%s", pod.Name, apis.SnapshotDownloadDir), localDirs.downloadDir).CombinedOutput()
+	_, err := exec.Command(cmdKubectl, "cp", "--namespace", pod.Namespace, fmt.Sprintf("%s:%s", pod.Name, apis.SnapshotDownloadDir), localDirs.downloadDir).CombinedOutput()
 	if err != nil {
 		return err
 	}
