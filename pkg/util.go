@@ -19,6 +19,8 @@ package pkg
 import (
 	"context"
 	"fmt"
+	"stash.appscode.dev/apimachinery/apis"
+	"strings"
 	"time"
 
 	"stash.appscode.dev/apimachinery/apis/stash/v1beta1"
@@ -26,12 +28,15 @@ import (
 	jsonpatch "github.com/evanphx/json-patch"
 	vs_api "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1beta1"
 	vs "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned/typed/volumesnapshot/v1beta1"
+	core "k8s.io/api/core/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
+	"k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	kutil "kmodules.xyz/client-go"
 )
 
@@ -116,4 +121,34 @@ func WaitUntilRestoreSessionCompleted(name string, namespace string) error {
 		}
 		return false, nil
 	})
+}
+
+func GetOperatorPod(aggrClient *clientset.Clientset, kubeClient *kubernetes.Clientset) (*core.Pod, error) {
+	apiSvc, err := aggrClient.ApiregistrationV1().APIServices().Get(context.TODO(), "v1alpha1.admission.stash.appscode.com", metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	podList, err := kubeClient.CoreV1().Pods(apiSvc.Spec.Service.Namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range podList.Items {
+		if hasStashContainer(&podList.Items[i]) {
+			return &podList.Items[i], nil
+		}
+	}
+
+	return nil, fmt.Errorf("operator pod not found")
+}
+
+func hasStashContainer(pod *core.Pod) bool {
+	if strings.Contains(pod.Name, "stash") {
+		for _, c := range pod.Spec.Containers {
+			if c.Name == apis.OperatorContainer {
+				return true
+			}
+		}
+	}
+	return false
 }

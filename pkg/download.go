@@ -42,30 +42,29 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/klog/v2"
+	aggcs "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	"k8s.io/kubectl/pkg/scheme"
 )
 
 type downloadOptions struct {
-	kubeClient kubernetes.Interface
+	kubeClient *kubernetes.Clientset
 	config     *rest.Config
 	repo       *v1alpha1.Repository
-}
+	localDirs  *cliLocalDirectories
 
-func newDownloadOptions(cfg *rest.Config, repo *v1alpha1.Repository) *downloadOptions {
-	return &downloadOptions{
-		kubeClient: kubernetes.NewForConfigOrDie(cfg),
-		config:     cfg,
-		repo:       repo,
-	}
+	SourceHost   string
+	RestorePaths []string
+	Snapshots    []string
+	Destination  string
 }
-
-var localDirs = &cliLocalDirectories{}
 
 func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
-	restoreOpt := restic.RestoreOptions{
+	opt := downloadOptions{
 		SourceHost:  restic.DefaultHost,
 		Destination: DestinationDir,
+		localDirs:   &cliLocalDirectories{},
 	}
+
 	cmd := &cobra.Command{
 		Use:               "download",
 		Short:             `Download snapshots`,
@@ -77,7 +76,8 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 			}
 			repositoryName := args[0]
 
-			cfg, err := clientGetter.ToRESTConfig()
+			var err error
+			opt.config, err = clientGetter.ToRESTConfig()
 			if err != nil {
 				return errors.Wrap(err, "failed to read kubeconfig")
 			}
@@ -86,35 +86,60 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 				return err
 			}
 
-			client, err := cs.NewForConfig(cfg)
+			stshclient, err := cs.NewForConfig(opt.config)
 			if err != nil {
 				return err
 			}
 
-			repository, err := client.StashV1alpha1().Repositories(namespace).Get(context.TODO(), repositoryName, metav1.GetOptions{})
+			opt.repo, err = stshclient.StashV1alpha1().Repositories(namespace).Get(context.TODO(), repositoryName, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
 
-			if err = localDirs.prepareDownloadDir(); err != nil {
+			opt.kubeClient, err = kubernetes.NewForConfig(opt.config)
+			if err != nil {
 				return err
 			}
 
-			opt := newDownloadOptions(cfg, repository)
-
-			if repository.Spec.Backend.Local != nil {
-				return opt.downloadSnapshotsFromLocalRepo(restoreOpt.Snapshots)
+			if err = opt.localDirs.prepareDownloadDir(); err != nil {
+				return err
 			}
 
-			return opt.downloadSnapshots(&restoreOpt)
+			if opt.repo.Spec.Backend.Local != nil {
+				// get the pod that mount this repository as volume
+				pod, err := getBackendMountingPod(opt.kubeClient, opt.repo)
+				if err != nil {
+					return err
+				}
+				return opt.downloadSnapshotsFromPod(pod, opt.Snapshots)
+			}
+
+			aggrClient, err = aggcs.NewForConfig(opt.config)
+			if err != nil {
+				return err
+			}
+
+			operatorPod, err := GetOperatorPod(aggrClient, opt.kubeClient)
+			if err != nil {
+				return err
+			}
+			yes, err := opt.isPodServiceAccountAnnotatedForIdentity(operatorPod)
+			if err != nil {
+				return err
+			}
+			if yes {
+				return opt.downloadSnapshotsFromPod(operatorPod, opt.Snapshots)
+			}
+
+			return opt.downloadSnapshots()
 		},
 	}
 
-	cmd.Flags().StringVar(&localDirs.downloadDir, "destination", localDirs.downloadDir, "Destination path where snapshot will be restored.")
+	cmd.Flags().StringVar(&opt.localDirs.downloadDir, "destination", opt.localDirs.downloadDir, "Destination path where snapshot will be restored.")
 
-	cmd.Flags().StringVar(&restoreOpt.SourceHost, "host", restoreOpt.SourceHost, "Name of the source host machine")
-	cmd.Flags().StringSliceVar(&restoreOpt.RestorePaths, "paths", restoreOpt.RestorePaths, "List of directories to be restored")
-	cmd.Flags().StringSliceVar(&restoreOpt.Snapshots, "snapshots", restoreOpt.Snapshots, "List of snapshots to be restored")
+	cmd.Flags().StringVar(&opt.SourceHost, "host", opt.SourceHost, "Name of the source host machine")
+	cmd.Flags().StringSliceVar(&opt.RestorePaths, "paths", opt.RestorePaths, "List of directories to be restored")
+	cmd.Flags().StringSliceVar(&opt.Snapshots, "snapshots", opt.Snapshots, "List of snapshots to be restored")
 
 	cmd.Flags().StringVar(&imgRestic.Registry, "docker-registry", imgRestic.Registry, "Docker image registry for restic cli")
 	cmd.Flags().StringVar(&imgRestic.Tag, "image-tag", imgRestic.Tag, "Restic docker image tag")
@@ -122,7 +147,26 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 	return cmd
 }
 
-func (opt *downloadOptions) downloadSnapshots(restoreOpt *restic.RestoreOptions) error {
+func (opt *downloadOptions) isPodServiceAccountAnnotatedForIdentity(pod *core.Pod) (bool, error) {
+	klog.Infoln("Using Identity")
+	serviceAccount, err := opt.kubeClient.CoreV1().ServiceAccounts(pod.Namespace).Get(context.TODO(), pod.Spec.ServiceAccountName, metav1.GetOptions{})
+	if err != nil {
+		return false, err
+	}
+
+	googleAnnotation := "iam.gke.io/gcp-service-account"
+	awsAnnotation := "eks.amazonaws.com/role-arn"
+
+	if _, exists := serviceAccount.Annotations[googleAnnotation]; exists {
+		return true, nil
+	} else if _, exists := serviceAccount.Annotations[awsAnnotation]; exists {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func (opt *downloadOptions) downloadSnapshots() error {
 	// get source repository secret
 	secret, err := opt.kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), opt.repo.Spec.Backend.StorageSecretName, metav1.GetOptions{})
 	if err != nil {
@@ -150,10 +194,10 @@ func (opt *downloadOptions) downloadSnapshots(restoreOpt *restic.RestoreOptions)
 		return err
 	}
 
-	localDirs.configDir = filepath.Join(ScratchDir, configDirName)
+	opt.localDirs.configDir = filepath.Join(ScratchDir, configDirName)
 	// dump restic's environments into `restic-env` file.
 	// we will pass this env file to restic docker container.
-	err = resticWrapper.DumpEnv(localDirs.configDir, ResticEnvs)
+	err = resticWrapper.DumpEnv(opt.localDirs.configDir, ResticEnvs)
 	if err != nil {
 		return err
 	}
@@ -168,10 +212,10 @@ func (opt *downloadOptions) downloadSnapshots(restoreOpt *restic.RestoreOptions)
 	}
 
 	// run restore inside docker
-	if err = runRestoreViaDocker(*localDirs, extraAgrs, restoreOpt.Snapshots); err != nil {
+	if err = runRestoreViaDocker(*opt.localDirs, extraAgrs, opt.Snapshots); err != nil {
 		return err
 	}
-	klog.Infof("Snapshots: %v of Repository %s/%s restored in path %s", restoreOpt.Snapshots, namespace, opt.repo.Name, localDirs.downloadDir)
+	klog.Infof("Snapshots: %v of Repository %s/%s restored in path %s", opt.Snapshots, namespace, opt.repo.Name, opt.localDirs.downloadDir)
 	return nil
 }
 
@@ -207,25 +251,19 @@ func runRestoreViaDocker(localDirs cliLocalDirectories, extraArgs []string, snap
 	return nil
 }
 
-func (opt *downloadOptions) downloadSnapshotsFromLocalRepo(snapshots []string) error {
-	// get the pod that mount this repository as volume
-	pod, err := getBackendMountingPod(opt.kubeClient, opt.repo)
-	if err != nil {
-		return err
-	}
-
-	if err := opt.downloadSnapshotsInMountingPod(pod, snapshots); err != nil {
+func (opt *downloadOptions) downloadSnapshotsFromPod(pod *core.Pod, snapshots []string) error {
+	if err := opt.executeDownloadCmdInPod(pod, snapshots); err != nil {
 		return err
 	}
 	if err := opt.copyDownloadedDataToDestination(pod); err != nil {
 		return err
 	}
 
-	if err := opt.clearDataFromMountingPod(pod); err != nil {
+	if err := opt.clearDataFromPod(pod); err != nil {
 		return err
 	}
 
-	klog.Infof("Snapshots: %v of Repository %s/%s restored in path %s", snapshots, namespace, opt.repo.Name, localDirs.downloadDir)
+	klog.Infof("Snapshots: %v of Repository %s/%s restored in path %s", snapshots, namespace, opt.repo.Name, opt.localDirs.downloadDir)
 	return nil
 }
 
@@ -244,7 +282,7 @@ func (opt *downloadOptions) execCommandOnPod(pod *core.Pod, command []string) ([
 		SubResource("exec").
 		Timeout(5 * time.Minute)
 	req.VersionedParams(&core.PodExecOptions{
-		Container: apis.StashContainer,
+		Container: opt.getContainerName(),
 		Command:   command,
 		Stdout:    true,
 		Stderr:    true,
@@ -268,11 +306,19 @@ func (opt *downloadOptions) execCommandOnPod(pod *core.Pod, command []string) ([
 	return execOut.Bytes(), nil
 }
 
-func (opt *downloadOptions) downloadSnapshotsInMountingPod(pod *core.Pod, snapshots []string) error {
+func (opt *downloadOptions) getContainerName() string {
+	if opt.repo.LocalNetworkVolume() {
+		return apis.StashContainer
+	}
+	return apis.OperatorContainer
+}
+
+func (opt *downloadOptions) executeDownloadCmdInPod(pod *core.Pod, snapshots []string) error {
 	command := []string{"/stash-enterprise", "download"}
 	command = append(command, "--repo-name", opt.repo.Name)
 	command = append(command, "--repo-namespace", opt.repo.Namespace)
 	command = append(command, "--snapshots", strings.Join(snapshots, ","))
+	command = append(command, "--destination", opt.getPodDestinationDir())
 
 	out, err := opt.execCommandOnPod(pod, command)
 	if string(out) != "" {
@@ -282,18 +328,25 @@ func (opt *downloadOptions) downloadSnapshotsInMountingPod(pod *core.Pod, snapsh
 }
 
 func (opt *downloadOptions) copyDownloadedDataToDestination(pod *core.Pod) error {
-	_, err := exec.Command(cmdKubectl, "cp", "--namespace", pod.Namespace, fmt.Sprintf("%s:%s", pod.Name, apis.SnapshotDownloadDir), localDirs.downloadDir).CombinedOutput()
+	_, err := exec.Command(cmdKubectl, "cp", "--namespace", pod.Namespace, fmt.Sprintf("%s:%s", pod.Name, opt.getPodDestinationDir()), opt.localDirs.downloadDir).CombinedOutput()
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (opt *downloadOptions) clearDataFromMountingPod(pod *core.Pod) error {
-	cmd := []string{"rm", "-rf", apis.SnapshotDownloadDir}
+func (opt *downloadOptions) clearDataFromPod(pod *core.Pod) error {
+	cmd := []string{"rm", "-rf", opt.getPodDestinationDir()}
 	out, err := opt.execCommandOnPod(pod, cmd)
 	if string(out) != "" {
 		klog.Infoln("Output:", string(out))
 	}
 	return err
+}
+
+func (opt *downloadOptions) getPodDestinationDir() string {
+	if opt.repo.LocalNetworkVolume() {
+		return filepath.Join(apis.TmpDirMountPath, apis.SnapshotDownloadDir)
+	}
+	return filepath.Join(apis.ScratchDirMountPath, apis.SnapshotDownloadDir)
 }
