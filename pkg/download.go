@@ -148,7 +148,6 @@ func NewCmdDownloadRepository(clientGetter genericclioptions.RESTClientGetter) *
 }
 
 func (opt *downloadOptions) isPodServiceAccountAnnotatedForIdentity(pod *core.Pod) (bool, error) {
-	klog.Infoln("Using Identity")
 	serviceAccount, err := opt.kubeClient.CoreV1().ServiceAccounts(pod.Namespace).Get(context.TODO(), pod.Spec.ServiceAccountName, metav1.GetOptions{})
 	if err != nil {
 		return false, err
@@ -345,8 +344,5 @@ func (opt *downloadOptions) clearDataFromPod(pod *core.Pod) error {
 }
 
 func (opt *downloadOptions) getPodDestinationDir() string {
-	if opt.repo.LocalNetworkVolume() {
-		return filepath.Join(apis.TmpDirMountPath, apis.SnapshotDownloadDir)
-	}
 	return filepath.Join(apis.ScratchDirMountPath, apis.SnapshotDownloadDir)
 }

@@ -79,6 +79,10 @@ func NewCmdGenRules() *cobra.Command {
 				return err
 			}
 
+			if err := validateGroups(groups); err != nil {
+				return err
+			}
+
 			closestBefore, closestAfter := findClosestGroups(groups, targetTime)
 
 			if closestBefore != nil {
@@ -149,6 +153,19 @@ func groupSnapshotsByTime(out []byte) ([][]snapshotStat, error) {
 	groups = append(groups, currentGroup)
 
 	return groups, nil
+}
+
+func validateGroups(groups [][]snapshotStat) error {
+	for _, snapshots := range groups {
+		hostNames := make(map[string]struct{})
+		for _, snapshot := range snapshots {
+			if _, exists := hostNames[snapshot.hostname]; exists {
+				return fmt.Errorf("invalid snapshots group: two snapshots of the same host found in the same group")
+			}
+			hostNames[snapshot.hostname] = struct{}{}
+		}
+	}
+	return nil
 }
 
 func parseSnapshot(line string) (snapshotStat, error) {

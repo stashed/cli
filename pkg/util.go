@@ -19,10 +19,10 @@ package pkg
 import (
 	"context"
 	"fmt"
-	"stash.appscode.dev/apimachinery/apis"
 	"strings"
 	"time"
 
+	"stash.appscode.dev/apimachinery/apis"
 	"stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 
 	jsonpatch "github.com/evanphx/json-patch"
