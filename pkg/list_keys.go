@@ -39,7 +39,6 @@ func NewCmdListKeys(clientGetter genericclioptions.RESTClientGetter) *cobra.Comm
 		Short:             `List the keys (passwords) of a restic repository`,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			if len(args) == 0 || args[0] == "" {
 				return fmt.Errorf("repository name not found")
 			}
