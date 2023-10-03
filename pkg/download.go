@@ -17,7 +17,6 @@ limitations under the License.
 package pkg
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -25,7 +24,6 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"stash.appscode.dev/apimachinery/apis"
 	"stash.appscode.dev/apimachinery/apis/stash/v1alpha1"
@@ -40,10 +38,8 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/klog/v2"
 	aggcs "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
-	"k8s.io/kubectl/pkg/scheme"
 )
 
 type downloadOptions struct {
@@ -266,60 +262,14 @@ func (opt *downloadOptions) downloadSnapshotsFromPod(pod *core.Pod, snapshots []
 	return nil
 }
 
-func (opt *downloadOptions) execCommandOnPod(pod *core.Pod, command []string) ([]byte, error) {
-	var (
-		execOut bytes.Buffer
-		execErr bytes.Buffer
-	)
-
-	klog.Infof("Executing command %v on pod %v", command, pod.Name)
-
-	req := opt.kubeClient.CoreV1().RESTClient().Post().
-		Resource("pods").
-		Name(pod.Name).
-		Namespace(pod.Namespace).
-		SubResource("exec").
-		Timeout(5 * time.Minute)
-	req.VersionedParams(&core.PodExecOptions{
-		Container: opt.getContainerName(),
-		Command:   command,
-		Stdout:    true,
-		Stderr:    true,
-	}, scheme.ParameterCodec)
-
-	executor, err := remotecommand.NewSPDYExecutor(opt.config, "POST", req.URL())
-	if err != nil {
-		return nil, fmt.Errorf("failed to init executor: %v", err)
-	}
-
-	err = executor.Stream(remotecommand.StreamOptions{
-		Stdout: &execOut,
-		Stderr: &execErr,
-		Tty:    true,
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("could not execute: %v, reason: %s", err, execErr.String())
-	}
-
-	return execOut.Bytes(), nil
-}
-
-func (opt *downloadOptions) getContainerName() string {
-	if opt.repo.LocalNetworkVolume() {
-		return apis.StashContainer
-	}
-	return apis.OperatorContainer
-}
-
 func (opt *downloadOptions) executeDownloadCmdInPod(pod *core.Pod, snapshots []string) error {
 	command := []string{"/stash-enterprise", "download"}
 	command = append(command, "--repo-name", opt.repo.Name)
 	command = append(command, "--repo-namespace", opt.repo.Namespace)
 	command = append(command, "--snapshots", strings.Join(snapshots, ","))
-	command = append(command, "--destination", opt.getPodDestinationDir())
+	command = append(command, "--destination", opt.getPodDirForSnapshots())
 
-	out, err := opt.execCommandOnPod(pod, command)
+	out, err := execCommandOnPod(opt.kubeClient, opt.config, pod, command)
 	if string(out) != "" {
 		klog.Infoln("Output:", string(out))
 	}
@@ -327,7 +277,7 @@ func (opt *downloadOptions) executeDownloadCmdInPod(pod *core.Pod, snapshots []s
 }
 
 func (opt *downloadOptions) copyDownloadedDataToDestination(pod *core.Pod) error {
-	_, err := exec.Command(cmdKubectl, "cp", "--namespace", pod.Namespace, fmt.Sprintf("%s:%s", pod.Name, opt.getPodDestinationDir()), opt.localDirs.downloadDir).CombinedOutput()
+	_, err := exec.Command(cmdKubectl, "cp", "--namespace", pod.Namespace, fmt.Sprintf("%s/%s:%s", pod.Namespace, pod.Name, opt.getPodDirForSnapshots()), opt.localDirs.downloadDir).CombinedOutput()
 	if err != nil {
 		return err
 	}
@@ -335,14 +285,14 @@ func (opt *downloadOptions) copyDownloadedDataToDestination(pod *core.Pod) error
 }
 
 func (opt *downloadOptions) clearDataFromPod(pod *core.Pod) error {
-	cmd := []string{"rm", "-rf", opt.getPodDestinationDir()}
-	out, err := opt.execCommandOnPod(pod, cmd)
+	cmd := []string{"rm", "-rf", opt.getPodDirForSnapshots()}
+	out, err := execCommandOnPod(opt.kubeClient, opt.config, pod, cmd)
 	if string(out) != "" {
 		klog.Infoln("Output:", string(out))
 	}
 	return err
 }
 
-func (opt *downloadOptions) getPodDestinationDir() string {
+func (opt *downloadOptions) getPodDirForSnapshots() string {
 	return filepath.Join(apis.ScratchDirMountPath, apis.SnapshotDownloadDir)
 }

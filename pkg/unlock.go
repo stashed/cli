@@ -61,8 +61,7 @@ func newUnlockOptions(cfg *rest.Config, repo *v1alpha1.Repository) *unlockOption
 func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "unlock",
-		Short:             `Unlock Restic Repository`,
-		Long:              `Unlock Restic Repository`,
+		Short:             `Unlock restic repository`,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 || args[0] == "" {

@@ -9,6 +9,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.7.0
 	golang.org/x/text v0.9.0
+	gomodules.xyz/flags v0.1.3
 	gomodules.xyz/go-sh v0.1.0
 	gomodules.xyz/logs v0.0.7
 	gomodules.xyz/pointer v0.1.0
@@ -26,7 +27,7 @@ require (
 	kmodules.xyz/offshoot-api v0.25.4
 	kmodules.xyz/openshift v0.25.0
 	sigs.k8s.io/yaml v1.3.0
-	stash.appscode.dev/apimachinery v0.31.2-0.20230929124526-f0cdfdf0acb5
+	stash.appscode.dev/apimachinery v0.31.2-0.20231003105436-9cdb3293d166
 	stash.appscode.dev/stash v0.31.0
 )
 
@@ -105,7 +106,6 @@ require (
 	golang.org/x/term v0.8.0 // indirect
 	golang.org/x/time v0.1.0 // indirect
 	gomodules.xyz/clock v0.0.0-20200817085942-06523dba733f // indirect
-	gomodules.xyz/flags v0.1.3 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	gomodules.xyz/mergo v0.3.13 // indirect
 	gomodules.xyz/sets v0.2.1 // indirect

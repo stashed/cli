@@ -17,6 +17,7 @@ limitations under the License.
 package pkg
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"strings"
@@ -34,9 +35,12 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd/api"
+	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/klog/v2"
 	"k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
+	"k8s.io/kubectl/pkg/scheme"
 	kutil "kmodules.xyz/client-go"
 )
 
@@ -151,4 +155,51 @@ func hasStashContainer(pod *core.Pod) bool {
 		}
 	}
 	return false
+}
+
+func execCommandOnPod(kubeClient *kubernetes.Clientset, config *rest.Config, pod *core.Pod, command []string) ([]byte, error) {
+	var (
+		execOut bytes.Buffer
+		execErr bytes.Buffer
+	)
+
+	klog.Infof("Executing command %v on pod %v", command, pod.Name)
+
+	req := kubeClient.CoreV1().RESTClient().Post().
+		Resource("pods").
+		Name(pod.Name).
+		Namespace(pod.Namespace).
+		SubResource("exec").
+		Timeout(5 * time.Minute)
+	req.VersionedParams(&core.PodExecOptions{
+		Container: getContainerName(pod),
+		Command:   command,
+		Stdout:    true,
+		Stderr:    true,
+	}, scheme.ParameterCodec)
+
+	executor, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
+	if err != nil {
+		return nil, fmt.Errorf("failed to init executor: %v", err)
+	}
+
+	err = executor.Stream(remotecommand.StreamOptions{
+		Stdout: &execOut,
+		Stderr: &execErr,
+		Tty:    true,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("could not execute: %v, reason: %s", err, execErr.String())
+	}
+
+	return execOut.Bytes(), nil
+}
+
+func getContainerName(pod *core.Pod) string {
+	if hasStashContainer(pod) {
+		return apis.OperatorContainer
+	}
+
+	return apis.StashContainer
 }
