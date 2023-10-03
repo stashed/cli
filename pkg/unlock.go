@@ -17,16 +17,13 @@ limitations under the License.
 package pkg
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
-	"time"
 
-	"stash.appscode.dev/apimachinery/apis"
 	"stash.appscode.dev/apimachinery/apis/stash/v1alpha1"
 	cs "stash.appscode.dev/apimachinery/client/clientset/versioned"
 	"stash.appscode.dev/apimachinery/pkg/restic"
@@ -34,31 +31,21 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/klog/v2"
 )
 
 type unlockOptions struct {
-	kubeClient kubernetes.Interface
+	kubeClient *kubernetes.Clientset
 	config     *rest.Config
 	repo       *v1alpha1.Repository
 }
 
-func newUnlockOptions(cfg *rest.Config, repo *v1alpha1.Repository) *unlockOptions {
-	return &unlockOptions{
-		kubeClient: kubernetes.NewForConfigOrDie(cfg),
-		config:     cfg,
-		repo:       repo,
-	}
-}
-
 func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
+	opt := unlockOptions{}
 	cmd := &cobra.Command{
 		Use:               "unlock",
 		Short:             `Unlock restic repository`,
@@ -69,7 +56,8 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 			}
 			repositoryName := args[0]
 
-			cfg, err := clientGetter.ToRESTConfig()
+			var err error
+			opt.config, err = clientGetter.ToRESTConfig()
 			if err != nil {
 				return errors.Wrap(err, "failed to read kubeconfig")
 			}
@@ -78,23 +66,26 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 				return err
 			}
 
-			client, err := cs.NewForConfig(cfg)
+			opt.kubeClient, err = kubernetes.NewForConfig(opt.config)
+			if err != nil {
+				return err
+			}
+
+			stashClient, err = cs.NewForConfig(opt.config)
 			if err != nil {
 				return err
 			}
 			// get source repository
-			repo, err := client.StashV1alpha1().Repositories(namespace).Get(context.TODO(), repositoryName, metav1.GetOptions{})
+			opt.repo, err = stashClient.StashV1alpha1().Repositories(namespace).Get(context.TODO(), repositoryName, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
 
-			r := newUnlockOptions(cfg, repo)
-
-			if repo.Spec.Backend.Local != nil {
-				return r.unlockLocalRepository()
+			if opt.repo.Spec.Backend.Local != nil {
+				return opt.unlockLocalRepository()
 			}
 
-			return r.unlockRepository()
+			return opt.unlockRepository()
 		},
 	}
 
@@ -112,52 +103,13 @@ func (opt *unlockOptions) unlockLocalRepository() error {
 	command = append(command, "--repo-name="+opt.repo.Name)
 	command = append(command, "--repo-namespace="+opt.repo.Namespace)
 
-	_, err = opt.execCommandOnPod(pod, command)
+	_, err = execCommandOnPod(opt.kubeClient, opt.config, pod, command)
 	if err != nil {
 		return err
 	}
 
 	klog.Infof("Repository %s/%s has been unlocked successfully", opt.repo.Namespace, opt.repo.Name)
 	return nil
-}
-
-func (opt *unlockOptions) execCommandOnPod(pod *core.Pod, command []string) ([]byte, error) {
-	var (
-		execOut bytes.Buffer
-		execErr bytes.Buffer
-	)
-
-	klog.Infof("Executing command %v on pod %v", command, pod.Name)
-
-	req := opt.kubeClient.CoreV1().RESTClient().Post().
-		Resource("pods").
-		Name(pod.Name).
-		Namespace(pod.Namespace).
-		SubResource("exec").
-		Timeout(5 * time.Minute)
-	req.VersionedParams(&core.PodExecOptions{
-		Container: apis.StashContainer,
-		Command:   command,
-		Stdout:    true,
-		Stderr:    true,
-	}, scheme.ParameterCodec)
-
-	executor, err := remotecommand.NewSPDYExecutor(opt.config, "POST", req.URL())
-	if err != nil {
-		return nil, fmt.Errorf("failed to init executor: %v", err)
-	}
-
-	err = executor.Stream(remotecommand.StreamOptions{
-		Stdout: &execOut,
-		Stderr: &execErr,
-		Tty:    true,
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("could not execute: %v, reason: %s", err, execErr.String())
-	}
-
-	return execOut.Bytes(), nil
 }
 
 func (opt *unlockOptions) unlockRepository() error {

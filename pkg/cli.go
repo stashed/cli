@@ -32,7 +32,6 @@ const (
 	ScratchDir     = "/tmp/scratch"
 	DestinationDir = "/tmp/destination"
 	configDirName  = "config"
-	passwordDir    = "/tmp/password"
 	passwordFile   = "password.txt"
 
 	ResticEnvs     = "restic-envs"

@@ -37,7 +37,7 @@ func NewCmdUpdateKey(clientGetter genericclioptions.RESTClientGetter) *cobra.Com
 	opt := keyOptions{}
 	cmd := &cobra.Command{
 		Use:               "update",
-		Short:             `update current restic key`,
+		Short:             `Update current key (password) of a restic repository`,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			flags.EnsureRequiredFlags(cmd, "new-password-file")
@@ -102,7 +102,7 @@ func (opt *keyOptions) updateResticKeyForLocalRepo() error {
 	}
 
 	if err := opt.removePasswordFileFromPod(pod); err != nil {
-		return err
+		return fmt.Errorf("failed to remove password file from pod: %w", err)
 	}
 
 	klog.Infof("Restic key has been updated successfully for repository %s/%s", opt.repo.Namespace, opt.repo.Name)
@@ -160,7 +160,6 @@ func (opt *keyOptions) updateResticKey() error {
 		args = append(args, "--cacert", resticWrapper.GetCaPath())
 	}
 
-	// run unlock inside docker
 	if err = manageKeyViaDocker(opt, args); err != nil {
 		return err
 	}

@@ -55,7 +55,7 @@ func NewCmdKey(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 		},
 	}
 	cmd.AddCommand(NewCmdAddKey(clientGetter))
-	cmd.AddCommand(NewCmdListKey(clientGetter))
+	cmd.AddCommand(NewCmdListKeys(clientGetter))
 	cmd.AddCommand(NewCmdUpdateKey(clientGetter))
 	cmd.AddCommand(NewCmdRemoveKey(clientGetter))
 	return cmd

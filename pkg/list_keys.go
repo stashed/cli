@@ -27,20 +27,18 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-	"gomodules.xyz/flags"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/klog/v2"
 )
 
-func NewCmdListKey(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
+func NewCmdListKeys(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	opt := keyOptions{}
 	cmd := &cobra.Command{
 		Use:               "list",
-		Short:             `list restic keys`,
+		Short:             `List the keys (passwords) of a restic repository`,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			flags.EnsureRequiredFlags(cmd, "new-password-file")
 
 			if len(args) == 0 || args[0] == "" {
 				return fmt.Errorf("repository name not found")
@@ -60,17 +58,17 @@ func NewCmdListKey(clientGetter genericclioptions.RESTClientGetter) *cobra.Comma
 			}
 
 			if opt.repo.Spec.Backend.Local != nil {
-				return opt.listResticKeyForLocalRepo()
+				return opt.listResticKeysForLocalRepo()
 			}
 
-			return opt.listResticKey()
+			return opt.listResticKeys()
 		},
 	}
 
 	return cmd
 }
 
-func (opt *keyOptions) listResticKeyForLocalRepo() error {
+func (opt *keyOptions) listResticKeysForLocalRepo() error {
 	// get the pod that mount this repository as volume
 	pod, err := getBackendMountingPod(kubeClient, opt.repo)
 	if err != nil {
@@ -90,7 +88,7 @@ func (opt *keyOptions) listResticKeyForLocalRepo() error {
 	return nil
 }
 
-func (opt *keyOptions) listResticKey() error {
+func (opt *keyOptions) listResticKeys() error {
 	// get source repository secret
 	secret, err := kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), opt.repo.Spec.Backend.StorageSecretName, metav1.GetOptions{})
 	if err != nil {
@@ -141,7 +139,6 @@ func (opt *keyOptions) listResticKey() error {
 		args = append(args, "--cacert", resticWrapper.GetCaPath())
 	}
 
-	// run unlock inside docker
 	if err = manageKeyViaDocker(opt, args); err != nil {
 		return err
 	}

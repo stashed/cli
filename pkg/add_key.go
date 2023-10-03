@@ -50,7 +50,7 @@ func NewCmdAddKey(clientGetter genericclioptions.RESTClientGetter) *cobra.Comman
 	opt := keyOptions{}
 	cmd := &cobra.Command{
 		Use:               "add",
-		Short:             `Add restic key`,
+		Short:             `Add a new key (password) to a restic repository`,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			flags.EnsureRequiredFlags(cmd, "new-password-file")
@@ -124,11 +124,32 @@ func (opt *keyOptions) addResticKeyForLocalRepo() error {
 	}
 
 	if err := opt.removePasswordFileFromPod(pod); err != nil {
-		return err
+		return fmt.Errorf("failed to remove password file from pod: %w", err)
 	}
 
 	klog.Infof("Restic key has been added successfully for repository %s/%s", opt.repo.Namespace, opt.repo.Name)
 	return nil
+}
+
+func (opt *keyOptions) removePasswordFileFromPod(pod *core.Pod) error {
+	cmd := []string{"rm", "-rf", getPodDirForPasswordFile()}
+	out, err := execCommandOnPod(kubeClient, opt.config, pod, cmd)
+	if string(out) != "" {
+		klog.Infoln("Output:", string(out))
+	}
+	return err
+}
+
+func (opt *keyOptions) copyPasswordFileToPod(pod *core.Pod) error {
+	_, err := exec.Command(cmdKubectl, "cp", opt.File, fmt.Sprintf("%s/%s:%s", pod.Namespace, pod.Name, getPodDirForPasswordFile())).CombinedOutput()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func getPodDirForPasswordFile() string {
+	return filepath.Join(apis.ScratchDirMountPath, passwordFile)
 }
 
 func (opt *keyOptions) addResticKey() error {
@@ -182,33 +203,11 @@ func (opt *keyOptions) addResticKey() error {
 		args = append(args, "--cacert", resticWrapper.GetCaPath())
 	}
 
-	// run unlock inside docker
 	if err = manageKeyViaDocker(opt, args); err != nil {
 		return err
 	}
 	klog.Infof("Restic key has been added successfully for repository %s/%s", opt.repo.Namespace, opt.repo.Name)
 	return nil
-}
-
-func (opt *keyOptions) removePasswordFileFromPod(pod *core.Pod) error {
-	cmd := []string{"rm", "-rf", getPodDirForPasswordFile()}
-	out, err := execCommandOnPod(kubeClient, opt.config, pod, cmd)
-	if string(out) != "" {
-		klog.Infoln("Output:", string(out))
-	}
-	return err
-}
-
-func (opt *keyOptions) copyPasswordFileToPod(pod *core.Pod) error {
-	_, err := exec.Command(cmdKubectl, "cp", opt.File, fmt.Sprintf("%s/%s:%s", pod.Namespace, pod.Name, getPodDirForPasswordFile())).CombinedOutput()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func getPodDirForPasswordFile() string {
-	return filepath.Join(apis.ScratchDirMountPath, passwordFile)
 }
 
 func manageKeyViaDocker(opt *keyOptions, args []string) error {
@@ -218,7 +217,6 @@ func manageKeyViaDocker(opt *keyOptions, args []string) error {
 		return err
 	}
 
-	dir, file := filepath.Split(opt.File)
 	keyArgs := []string{
 		"run",
 		"--rm",
@@ -230,14 +228,14 @@ func manageKeyViaDocker(opt *keyOptions, args []string) error {
 	}
 
 	if opt.File != "" {
-		keyArgs = append(keyArgs, "-v", dir+":"+passwordDir)
+		keyArgs = append(keyArgs, "-v", opt.File+":"+opt.File)
 	}
 
 	keyArgs = append(keyArgs, imgRestic.ToContainerImage())
 	keyArgs = append(keyArgs, args...)
 
 	if opt.File != "" {
-		keyArgs = append(keyArgs, "--new-password-file", filepath.Join(passwordDir, file))
+		keyArgs = append(keyArgs, "--new-password-file", opt.File)
 	}
 
 	if opt.User != "" {
@@ -254,7 +252,6 @@ func manageKeyViaDocker(opt *keyOptions, args []string) error {
 	if err != nil {
 		return err
 	}
-	klog.Infoln("Output:", string(out))
-
+	klog.Infoln(fmt.Sprintf("\n%s", string(out)))
 	return nil
 }

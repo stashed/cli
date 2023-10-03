@@ -29,13 +29,14 @@ import (
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	"k8s.io/klog/v2"
 )
 
 func NewCmdRemoveKey(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
 	opt := keyOptions{}
 	cmd := &cobra.Command{
 		Use:               "remove",
-		Short:             `remove restic key`,
+		Short:             `Remove a key (password) of a restic repository`,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 || args[0] == "" {
@@ -78,6 +79,7 @@ func (opt *keyOptions) removeResticKeyForLocalRepo() error {
 
 	_, err = execCommandOnPod(kubeClient, opt.config, pod, command)
 
+	klog.Infof("Restic key with ID %s has been deleted successfuly", opt.ID)
 	return err
 }
 
@@ -133,9 +135,5 @@ func (opt *keyOptions) removeResticKey() error {
 		args = append(args, "--cacert", resticWrapper.GetCaPath())
 	}
 
-	// run unlock inside docker
-	if err = manageKeyViaDocker(opt, args); err != nil {
-		return err
-	}
-	return nil
+	return manageKeyViaDocker(opt, args)
 }
