@@ -22142,7 +22142,7 @@ func schema_apimachinery_apis_stash_v1beta1_PostBackupHook(ref common.ReferenceC
 					},
 					"executionPolicy": {
 						SchemaProps: spec.SchemaProps{
-							Description: "ExecutionPolicy specifies when to execute a hook. Supported values are \"Always\", \"OnFailure\", \"OnSuccess\". Default value: \"Always\".",
+							Description: "ExecutionPolicy specifies when to execute a hook. Supported values are \"Always\", \"OnFailure\", \"OnSuccess\", \"OnFinalRetryFailure\". Default value: \"Always\".",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -23125,6 +23125,13 @@ func schema_apimachinery_apis_stash_v1beta1_Summary(ref common.ReferenceCallback
 							Description: "Status specifies the backup/restore status for the respective target",
 							Default:     map[string]interface{}{},
 							Ref:         ref("stash.appscode.dev/apimachinery/apis/stash/v1beta1.TargetStatus"),
+						},
+					},
+					"retryLeft": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RetryLeft specifies number of retry attempts left for the backup session.",
+							Type:        []string{"integer"},
+							Format:      "int32",
 						},
 					},
 				},
