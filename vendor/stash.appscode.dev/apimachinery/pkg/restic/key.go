@@ -16,6 +16,8 @@ limitations under the License.
 
 package restic
 
+import "os"
+
 func (w *ResticWrapper) AddKey(opt KeyOptions) error {
 	params := keyParams{
 		user: opt.User,
@@ -27,7 +29,13 @@ func (w *ResticWrapper) AddKey(opt KeyOptions) error {
 }
 
 func (w *ResticWrapper) ListKey() error {
-	_, err := w.listKey()
+	out, err := w.listKey()
+	if err != nil {
+		return err
+	}
+	// Write the output to stdout
+	_, err = os.Stdout.Write(out)
+
 	return err
 }
 
