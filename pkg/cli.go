@@ -32,11 +32,13 @@ const (
 	ScratchDir     = "/tmp/scratch"
 	DestinationDir = "/tmp/destination"
 	configDirName  = "config"
+	passwordFile   = "password.txt"
 
 	ResticEnvs     = "restic-envs"
 	ResticRegistry = "stashed"
 	ResticImage    = "restic"
 	ResticTag      = "latest"
+	cmdKubectl     = "kubectl"
 )
 
 type cliLocalDirectories struct {

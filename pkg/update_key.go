@@ -20,61 +20,48 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
-	"os/user"
 	"path/filepath"
 
-	"stash.appscode.dev/apimachinery/apis/stash/v1alpha1"
-	cs "stash.appscode.dev/apimachinery/client/clientset/versioned"
 	"stash.appscode.dev/apimachinery/pkg/restic"
 	"stash.appscode.dev/stash/pkg/util"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"gomodules.xyz/flags"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 )
 
-type unlockOptions struct {
-	kubeClient *kubernetes.Clientset
-	config     *rest.Config
-	repo       *v1alpha1.Repository
-}
-
-func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
-	opt := unlockOptions{}
+func NewCmdUpdateKey(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
+	opt := keyOptions{}
 	cmd := &cobra.Command{
-		Use:               "unlock",
-		Short:             `Unlock restic repository`,
+		Use:               "update",
+		Short:             `Update current key (password) of a restic repository`,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			flags.EnsureRequiredFlags(cmd, "new-password-file")
+			var err error
+			opt.File, err = filepath.Abs(opt.File)
+			if err != nil {
+				return fmt.Errorf("failed to find the absolute path for password file: %w", err)
+			}
+
+			_, err = os.Stat(opt.File)
+			if os.IsNotExist(err) {
+				return fmt.Errorf("%s does not exist", opt.File)
+			}
+
 			if len(args) == 0 || args[0] == "" {
 				return fmt.Errorf("repository name not found")
 			}
 			repositoryName := args[0]
 
-			var err error
 			opt.config, err = clientGetter.ToRESTConfig()
 			if err != nil {
 				return errors.Wrap(err, "failed to read kubeconfig")
 			}
-			namespace, _, err = clientGetter.ToRawKubeConfigLoader().Namespace()
-			if err != nil {
-				return err
-			}
 
-			opt.kubeClient, err = kubernetes.NewForConfig(opt.config)
-			if err != nil {
-				return err
-			}
-
-			stashClient, err = cs.NewForConfig(opt.config)
-			if err != nil {
-				return err
-			}
 			// get source repository
 			opt.repo, err = stashClient.StashV1alpha1().Repositories(namespace).Get(context.TODO(), repositoryName, metav1.GetOptions{})
 			if err != nil {
@@ -82,39 +69,49 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 			}
 
 			if opt.repo.Spec.Backend.Local != nil {
-				return opt.unlockLocalRepository()
+				return opt.updateResticKeyForLocalRepo()
 			}
 
-			return opt.unlockRepository()
+			return opt.updateResticKey()
 		},
 	}
+
+	cmd.Flags().StringVar(&opt.File, "new-password-file", opt.File, "File from which to read the new password")
 
 	return cmd
 }
 
-func (opt *unlockOptions) unlockLocalRepository() error {
+func (opt *keyOptions) updateResticKeyForLocalRepo() error {
 	// get the pod that mount this repository as volume
-	pod, err := getBackendMountingPod(opt.kubeClient, opt.repo)
+	pod, err := getBackendMountingPod(kubeClient, opt.repo)
 	if err != nil {
 		return err
 	}
 
-	command := []string{"/stash-enterprise", "unlock"}
-	command = append(command, "--repo-name="+opt.repo.Name)
-	command = append(command, "--repo-namespace="+opt.repo.Namespace)
+	if err := opt.copyPasswordFileToPod(pod); err != nil {
+		return fmt.Errorf("failed to copy password file from local directory to pod: %w", err)
+	}
 
-	_, err = execCommandOnPod(opt.kubeClient, opt.config, pod, command)
+	command := []string{"/stash-enterprise", "update-key"}
+	command = append(command, "--repo-name="+opt.repo.Name, "--repo-namespace="+opt.repo.Namespace)
+	command = append(command, "--new-password-file="+getPodDirForPasswordFile())
+
+	_, err = execCommandOnPod(kubeClient, opt.config, pod, command)
 	if err != nil {
 		return err
 	}
 
-	klog.Infof("Repository %s/%s has been unlocked successfully", opt.repo.Namespace, opt.repo.Name)
+	if err := opt.removePasswordFileFromPod(pod); err != nil {
+		return fmt.Errorf("failed to remove password file from pod: %w", err)
+	}
+
+	klog.Infof("Restic key has been updated successfully for repository %s/%s", opt.repo.Namespace, opt.repo.Name)
 	return nil
 }
 
-func (opt *unlockOptions) unlockRepository() error {
+func (opt *keyOptions) updateResticKey() error {
 	// get source repository secret
-	secret, err := opt.kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), opt.repo.Spec.Backend.StorageSecretName, metav1.GetOptions{})
+	secret, err := kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), opt.repo.Spec.Backend.StorageSecretName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -140,55 +137,32 @@ func (opt *unlockOptions) unlockRepository() error {
 		return err
 	}
 
-	localDirs := &cliLocalDirectories{
+	opt.localDirs = cliLocalDirectories{
 		configDir: filepath.Join(ScratchDir, configDirName),
 	}
 
 	// dump restic's environments into `restic-env` file.
 	// we will pass this env file to restic docker container.
 
-	err = resticWrapper.DumpEnv(localDirs.configDir, ResticEnvs)
+	err = resticWrapper.DumpEnv(opt.localDirs.configDir, ResticEnvs)
 	if err != nil {
 		return err
 	}
 
-	extraAgrs := []string{
+	args := []string{
+		"key",
+		"passwd",
 		"--no-cache",
 	}
 
 	// For TLS secured Minio/REST server, specify cert path
 	if resticWrapper.GetCaPath() != "" {
-		extraAgrs = append(extraAgrs, "--cacert", resticWrapper.GetCaPath())
+		args = append(args, "--cacert", resticWrapper.GetCaPath())
 	}
 
-	// run unlock inside docker
-	if err = runCmdViaDocker(*localDirs, "unlock", extraAgrs); err != nil {
+	if err = manageKeyViaDocker(opt, args); err != nil {
 		return err
 	}
-	klog.Infof("Repository %s/%s has been unlocked successfully", opt.repo.Namespace, opt.repo.Name)
+	klog.Infof("Restic key has been updated successfully for repository %s/%s", opt.repo.Namespace, opt.repo.Name)
 	return nil
-}
-
-func runCmdViaDocker(localDirs cliLocalDirectories, command string, extraArgs []string) error {
-	// get current user
-	currentUser, err := user.Current()
-	if err != nil {
-		return err
-	}
-	args := []string{
-		"run",
-		"--rm",
-		"-u", currentUser.Uid,
-		"-v", ScratchDir + ":" + ScratchDir,
-		"--env", "HTTP_PROXY=" + os.Getenv("HTTP_PROXY"),
-		"--env", "HTTPS_PROXY=" + os.Getenv("HTTPS_PROXY"),
-		"--env-file", filepath.Join(localDirs.configDir, ResticEnvs),
-		imgRestic.ToContainerImage(),
-		command,
-	}
-
-	args = append(args, extraArgs...)
-	out, err := exec.Command("docker", args...).CombinedOutput()
-	klog.Infoln("Output:", string(out))
-	return err
 }
