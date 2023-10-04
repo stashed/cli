@@ -264,8 +264,7 @@ func (opt *downloadOptions) downloadSnapshotsFromPod(pod *core.Pod, snapshots []
 
 func (opt *downloadOptions) executeDownloadCmdInPod(pod *core.Pod, snapshots []string) error {
 	command := []string{"/stash-enterprise", "download"}
-	command = append(command, "--repo-name", opt.repo.Name)
-	command = append(command, "--repo-namespace", opt.repo.Namespace)
+	command = append(command, "--repo-name", opt.repo.Name, "--repo-namespace", opt.repo.Namespace)
 	command = append(command, "--snapshots", strings.Join(snapshots, ","))
 	command = append(command, "--destination", opt.getPodDirForSnapshots())
 
