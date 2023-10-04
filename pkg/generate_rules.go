@@ -117,7 +117,7 @@ func NewCmdGenRules() *cobra.Command {
 	return cmd
 }
 
-const snapshotGroupingInterval = time.Minute * 5
+const snapshotGroupingInterval = time.Minute * 4
 
 func groupSnapshotsByTime(out []byte) ([][]snapshotStat, error) {
 	lines := strings.Split(string(out), "\n")
