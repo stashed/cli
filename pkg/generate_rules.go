@@ -42,8 +42,9 @@ type restoreRule struct {
 
 func NewCmdGenRules() *cobra.Command {
 	var (
-		requestTimeout string
-		timestamp      string
+		requestTimeout           string
+		timestamp                string
+		snapshotGroupingInterval string
 	)
 
 	cmd := &cobra.Command{
@@ -74,7 +75,7 @@ func NewCmdGenRules() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("failed to execute kubectl command: %w", err)
 			}
-			groups, err := groupSnapshotsByTime(output)
+			groups, err := groupSnapshotsByTime(output, snapshotGroupingInterval)
 			if err != nil {
 				return err
 			}
@@ -113,16 +114,19 @@ func NewCmdGenRules() *cobra.Command {
 
 	cmd.Flags().StringVar(&requestTimeout, "request-timeout", requestTimeout, "Request timeout duration for the kubectl command")
 	cmd.Flags().StringVar(&timestamp, "timestamp", timestamp, "Timestamp to find the closest snapshots")
-
+	cmd.Flags().StringVar(&snapshotGroupingInterval, "group-interval", "4m", "Snaspshot grouping interval")
 	return cmd
 }
 
-const snapshotGroupingInterval = time.Minute * 4
-
-func groupSnapshotsByTime(out []byte) ([][]snapshotStat, error) {
+func groupSnapshotsByTime(out []byte, interval string) ([][]snapshotStat, error) {
 	lines := strings.Split(string(out), "\n")
 	if len(lines) < 2 {
 		return nil, fmt.Errorf("no snapshot data found")
+	}
+
+	intervalDuration, err := time.ParseDuration(interval)
+	if err != nil {
+		return nil, err
 	}
 
 	var groups [][]snapshotStat
@@ -143,7 +147,7 @@ func groupSnapshotsByTime(out []byte) ([][]snapshotStat, error) {
 		}
 
 		// Check if the current group is empty or if the time difference exceeds the interval.
-		if snapshot.createdAt.Sub(currentGroup[0].createdAt) > snapshotGroupingInterval {
+		if snapshot.createdAt.Sub(currentGroup[0].createdAt) > intervalDuration {
 			groups = append(groups, currentGroup)
 			currentGroup = []snapshotStat{snapshot}
 		} else {
