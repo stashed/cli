@@ -76,7 +76,7 @@ func NewCmdUpdateKey(clientGetter genericclioptions.RESTClientGetter) *cobra.Com
 		},
 	}
 
-	cmd.Flags().StringVar(&opt.File, "new-password-file", opt.File, "file from which to read the new password")
+	cmd.Flags().StringVar(&opt.File, "new-password-file", opt.File, "File from which to read the new password")
 
 	return cmd
 }

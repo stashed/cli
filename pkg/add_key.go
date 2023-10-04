@@ -89,9 +89,9 @@ func NewCmdAddKey(clientGetter genericclioptions.RESTClientGetter) *cobra.Comman
 		},
 	}
 
-	cmd.Flags().StringVar(&opt.Host, "host", opt.Host, "host for the new key")
-	cmd.Flags().StringVar(&opt.User, "user", opt.User, "username for the new key")
-	cmd.Flags().StringVar(&opt.File, "new-password-file", opt.File, "file from which to read the new password")
+	cmd.Flags().StringVar(&opt.Host, "host", opt.Host, "Host for the new key")
+	cmd.Flags().StringVar(&opt.User, "user", opt.User, "Username for the new key")
+	cmd.Flags().StringVar(&opt.File, "new-password-file", opt.File, "File from which to read the new password")
 
 	return cmd
 }

@@ -63,7 +63,7 @@ func NewCmdRemoveKey(clientGetter genericclioptions.RESTClientGetter) *cobra.Com
 			return opt.removeResticKey()
 		},
 	}
-	cmd.Flags().StringVar(&opt.ID, "id", opt.File, "id of the restic key")
+	cmd.Flags().StringVar(&opt.ID, "id", opt.File, "ID of the restic key")
 	return cmd
 }
 
