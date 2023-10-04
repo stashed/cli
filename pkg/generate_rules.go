@@ -150,7 +150,10 @@ func groupSnapshotsByTime(out []byte) ([][]snapshotStat, error) {
 			currentGroup = append(currentGroup, snapshot)
 		}
 	}
-	groups = append(groups, currentGroup)
+
+	if len(currentGroup) != 0 {
+		groups = append(groups, currentGroup)
+	}
 
 	return groups, nil
 }
