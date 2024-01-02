@@ -98,8 +98,8 @@ func PatchVolumesnapshotObject(ctx context.Context, c vs.SnapshotV1beta1Interfac
 }
 
 func WaitUntilBackupSessionCompleted(name string, namespace string) error {
-	return wait.PollImmediate(PullInterval, WaitTimeOut, func() (done bool, err error) {
-		backupSession, err := stashClient.StashV1beta1().BackupSessions(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	return wait.PollUntilContextTimeout(context.Background(), PullInterval, WaitTimeOut, true, func(ctx context.Context) (done bool, err error) {
+		backupSession, err := stashClient.StashV1beta1().BackupSessions(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err == nil {
 			if backupSession.Status.Phase == v1beta1.BackupSessionSucceeded {
 				return true, nil
@@ -113,8 +113,8 @@ func WaitUntilBackupSessionCompleted(name string, namespace string) error {
 }
 
 func WaitUntilRestoreSessionCompleted(name string, namespace string) error {
-	return wait.PollImmediate(PullInterval, WaitTimeOut, func() (done bool, err error) {
-		restoreSession, err := stashClient.StashV1beta1().RestoreSessions(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	return wait.PollUntilContextTimeout(context.Background(), PullInterval, WaitTimeOut, true, func(ctx context.Context) (done bool, err error) {
+		restoreSession, err := stashClient.StashV1beta1().RestoreSessions(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err == nil {
 			if restoreSession.Status.Phase == v1beta1.RestoreSucceeded {
 				return true, nil
@@ -183,7 +183,7 @@ func execCommandOnPod(kubeClient *kubernetes.Clientset, config *rest.Config, pod
 		return nil, fmt.Errorf("failed to init executor: %v", err)
 	}
 
-	err = executor.Stream(remotecommand.StreamOptions{
+	err = executor.StreamWithContext(context.Background(), remotecommand.StreamOptions{
 		Stdout: &execOut,
 		Stderr: &execErr,
 		Tty:    true,
