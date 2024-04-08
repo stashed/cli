@@ -22,7 +22,7 @@ import (
 	cs "stash.appscode.dev/apimachinery/client/clientset/versioned"
 	"stash.appscode.dev/apimachinery/pkg/docker"
 
-	vs_cs "github.com/kubernetes-csi/external-snapshotter/client/v4/clientset/versioned"
+	vs_cs "github.com/kubernetes-csi/external-snapshotter/client/v7/clientset/versioned"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 )

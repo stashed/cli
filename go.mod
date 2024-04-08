@@ -3,9 +3,7 @@ module stash.appscode.dev/cli
 go 1.21.7
 
 require (
-	github.com/evanphx/json-patch v5.7.0+incompatible
-	github.com/json-iterator/go v1.1.12
-	github.com/kubernetes-csi/external-snapshotter/client/v4 v4.2.0
+	github.com/kubernetes-csi/external-snapshotter/client/v7 v7.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.7.0
 	golang.org/x/text v0.14.0
@@ -23,6 +21,7 @@ require (
 	k8s.io/kube-aggregator v0.29.0
 	k8s.io/kubectl v0.29.0
 	kmodules.xyz/client-go v0.29.7
+	kmodules.xyz/csi-utils v0.29.1
 	kmodules.xyz/objectstore-api v0.29.1
 	kmodules.xyz/offshoot-api v0.29.0
 	kmodules.xyz/openshift v0.29.0
@@ -45,6 +44,7 @@ require (
 	github.com/cyphar/filepath-securejoin v0.2.4 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
+	github.com/evanphx/json-patch v5.7.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.8.0 // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
 	github.com/fatih/structs v1.1.0 // indirect
@@ -69,6 +69,7 @@ require (
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
+	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect
