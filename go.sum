@@ -451,8 +451,8 @@ golang.org/x/sync v0.0.0-20190423024810-112230192c58/go.mod h1:RxMgew5VJxzue5/jJ
 golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
-golang.org/x/sync v0.5.0 h1:60k92dhOjHxJkrqnwsfl8KuaHbn/5dl0lUPUklKo3qE=
-golang.org/x/sync v0.5.0/go.mod h1:Czt+wKu1gCyEFDUtn0jG5QVvpJ6rzVqr5aXyt9drQfk=
+golang.org/x/sync v0.6.0 h1:5BMeUDZ7vkXGfEr1x9B4bRcTH4lpkTkpdh0T/J+qjbQ=
+golang.org/x/sync v0.6.0/go.mod h1:Czt+wKu1gCyEFDUtn0jG5QVvpJ6rzVqr5aXyt9drQfk=
 golang.org/x/sys v0.0.0-20180823144017-11551d06cbcc/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20180830151530-49385e6e1522/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20180905080454-ebe1bf3edb33/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
@@ -660,7 +660,7 @@ sigs.k8s.io/structured-merge-diff/v4 v4.4.1 h1:150L+0vs/8DA78h1u02ooW1/fFq/Lwr+s
 sigs.k8s.io/structured-merge-diff/v4 v4.4.1/go.mod h1:N8hJocpFajUSSeSJ9bOZ77VzejKZaXsTtZo4/u7Io08=
 sigs.k8s.io/yaml v1.4.0 h1:Mk1wCc2gy/F0THH0TAp1QYyJNzRm2KCLy3o5ASXVI5E=
 sigs.k8s.io/yaml v1.4.0/go.mod h1:Ejl7/uTz7PSA4eKMyQCUTnhZYNmLIl+5c2lQPGR2BPY=
-stash.appscode.dev/apimachinery v0.33.0 h1:0HpdLsXTErZWTPl3xH1N2ev8SwLOwH20mTd8Y4Oy+yg=
-stash.appscode.dev/apimachinery v0.33.0/go.mod h1:3A7DVqgJfI7LbLAM5pBpJebd/mChJb86nmekm73TRGw=
-stash.appscode.dev/stash v0.33.0 h1:eynvvBh0RbpbH11XVa2G3bNRXekSgVSpM/OI7SvllVk=
-stash.appscode.dev/stash v0.33.0/go.mod h1:350rE2smGohLjRPT2wd9Sdx/SELsKxy3oS3z2jhKrKw=
+stash.appscode.dev/apimachinery v0.34.0 h1:8/Vi6w5Q+eAf7M7HArhvK+gay9cHPOvzAK6QCwdzRTg=
+stash.appscode.dev/apimachinery v0.34.0/go.mod h1:qAVdUDtYDYiytYqKIHon4BMs1OXBdu3wDpfEfhM18b0=
+stash.appscode.dev/stash v0.34.0 h1:c6zVnzP6ZuJMN1V7188JJbd6On+Duy4a8P9zSAZpr98=
+stash.appscode.dev/stash v0.34.0/go.mod h1:xj82EHRv+pHYUaQYp0vqE82zVaA09COVjZ1ZtJQh0zY=
