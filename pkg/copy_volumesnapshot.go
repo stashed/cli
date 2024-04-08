@@ -20,8 +20,7 @@ import (
 	"context"
 	"fmt"
 
-	vs_api "github.com/kubernetes-csi/external-snapshotter/client/v7/apis/volumesnapshot/v1"
-	vs_v1alpha1 "github.com/kubernetes-csi/external-snapshotter/client/v7/apis/volumesnapshot/v1"
+	vsapi "github.com/kubernetes-csi/external-snapshotter/client/v7/apis/volumesnapshot/v1"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
@@ -67,8 +66,8 @@ func NewCmdCopyVolumeSnapshot() *cobra.Command {
 	return cmd
 }
 
-func createVolumeSnapshot(vs *vs_v1alpha1.VolumeSnapshot, meta metav1.ObjectMeta) (*vs_v1alpha1.VolumeSnapshot, error) {
-	vs, _, err := vsu.CreateOrPatchVolumeSnapshot(context.TODO(), vsClient, meta, func(in *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot {
+func createVolumeSnapshot(vs *vsapi.VolumeSnapshot, meta metav1.ObjectMeta) (*vsapi.VolumeSnapshot, error) {
+	vs, _, err := vsu.CreateOrPatchVolumeSnapshot(context.TODO(), vsClient, meta, func(in *vsapi.VolumeSnapshot) *vsapi.VolumeSnapshot {
 		in.Spec = vs.Spec
 		return in
 	}, metav1.PatchOptions{})
