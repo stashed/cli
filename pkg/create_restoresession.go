@@ -23,7 +23,7 @@ import (
 	"stash.appscode.dev/apimachinery/apis/stash/v1beta1"
 	v1beta1_util "stash.appscode.dev/apimachinery/client/clientset/versioned/typed/stash/v1beta1/util"
 
-	vs "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1beta1"
+	vs "github.com/kubernetes-csi/external-snapshotter/client/v7/apis/volumesnapshot/v1"
 	"github.com/spf13/cobra"
 	"gomodules.xyz/pointer"
 	core "k8s.io/api/core/v1"

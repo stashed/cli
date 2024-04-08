@@ -20,15 +20,13 @@ import (
 	"context"
 	"fmt"
 
-	jsoniter "github.com/json-iterator/go"
-	vs_api "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1beta1"
-	vs_v1alpha1 "github.com/kubernetes-csi/external-snapshotter/client/v4/apis/volumesnapshot/v1beta1"
+	vs_api "github.com/kubernetes-csi/external-snapshotter/client/v7/apis/volumesnapshot/v1"
+	vs_v1alpha1 "github.com/kubernetes-csi/external-snapshotter/client/v7/apis/volumesnapshot/v1"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
+	vsu "kmodules.xyz/csi-utils/volumesnapshot/v1"
 )
-
-var json = jsoniter.ConfigFastest
 
 func NewCmdCopyVolumeSnapshot() *cobra.Command {
 	cmd := &cobra.Command{
@@ -44,7 +42,7 @@ func NewCmdCopyVolumeSnapshot() *cobra.Command {
 			volumeSnapshotName := args[0]
 
 			// get source VolumeSnapshot object
-			vs, err := vsClient.SnapshotV1beta1().VolumeSnapshots(srcNamespace).Get(context.TODO(), volumeSnapshotName, metav1.GetOptions{})
+			vs, err := vsClient.SnapshotV1().VolumeSnapshots(srcNamespace).Get(context.TODO(), volumeSnapshotName, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
@@ -70,7 +68,7 @@ func NewCmdCopyVolumeSnapshot() *cobra.Command {
 }
 
 func createVolumeSnapshot(vs *vs_v1alpha1.VolumeSnapshot, meta metav1.ObjectMeta) (*vs_v1alpha1.VolumeSnapshot, error) {
-	vs, _, err := CreateOrPatchVolumeSnapshot(context.TODO(), vsClient.SnapshotV1beta1(), meta, func(in *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot {
+	vs, _, err := vsu.CreateOrPatchVolumeSnapshot(context.TODO(), vsClient, meta, func(in *vs_api.VolumeSnapshot) *vs_api.VolumeSnapshot {
 		in.Spec = vs.Spec
 		return in
 	}, metav1.PatchOptions{})
