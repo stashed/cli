@@ -250,6 +250,7 @@ func manageKeyViaDocker(opt *keyOptions, args []string) error {
 
 	out, err := exec.Command("docker", keyArgs...).CombinedOutput()
 	if err != nil {
+		klog.Infoln("Output:", string(out))
 		return err
 	}
 	klog.Infoln(fmt.Sprintf("\n%s", string(out)))
