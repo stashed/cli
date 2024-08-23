@@ -109,14 +109,15 @@ func (opt *checkOptions) checkLocalRepository(extraArgs []string) error {
 
 	command := []string{"/stash-enterprise", "check"}
 	command = append(command, extraArgs...)
-	command = append(command, "--repo-name="+opt.repo.Name)
-	command = append(command, "--repo-namespace="+opt.repo.Namespace)
+	command = append(command, "--repo-name="+opt.repo.Name, "--repo-namespace="+opt.repo.Namespace)
 
-	_, err = execCommandOnPod(opt.kubeClient, opt.config, pod, command)
+	out, err := execCommandOnPod(opt.kubeClient, opt.config, pod, command)
+	if string(out) != "" {
+		klog.Infoln("Output:", string(out))
+	}
 	if err != nil {
 		return err
 	}
-
 	klog.Infof("Repository %s/%s has been checked successfully", opt.repo.Namespace, opt.repo.Name)
 	return nil
 }

@@ -158,10 +158,12 @@ func (opt *rebuildIndexOptions) rebuildIndexToLocalRepository(extraArgs []string
 
 	command := []string{"/stash-enterprise", "rebuild-index"}
 	command = append(command, extraArgs...)
-	command = append(command, "--repo-name="+opt.repo.Name)
-	command = append(command, "--repo-namespace="+opt.repo.Namespace)
+	command = append(command, "--repo-name="+opt.repo.Name, "--repo-namespace="+opt.repo.Namespace)
 
-	_, err = execCommandOnPod(opt.kubeClient, opt.config, pod, command)
+	out, err := execCommandOnPod(opt.kubeClient, opt.config, pod, command)
+	if string(out) != "" {
+		klog.Infoln("Output:", string(out))
+	}
 	if err != nil {
 		return err
 	}
