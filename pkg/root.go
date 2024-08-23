@@ -64,5 +64,7 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.AddCommand(NewCmdDebug(f))
 	rootCmd.AddCommand(NewCmdGen(f))
 	rootCmd.AddCommand(NewCmdKey(f))
+	rootCmd.AddCommand(NewCmdCheckRepository(f))
+	rootCmd.AddCommand(NewCmdRebuildIndex(f))
 	return rootCmd
 }
