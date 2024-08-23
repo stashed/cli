@@ -238,10 +238,10 @@ func runRestoreViaDocker(localDirs cliLocalDirectories, extraArgs []string, snap
 		args := append(restoreArgs, snapshot, "--target", filepath.Join(DestinationDir, snapshot))
 		klog.Infoln("Running docker with args:", args)
 		out, err := exec.Command("docker", args...).CombinedOutput()
+		klog.Infoln("Output:", string(out))
 		if err != nil {
 			return err
 		}
-		klog.Infoln("Output:", string(out))
 	}
 	return nil
 }
