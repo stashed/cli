@@ -6,7 +6,7 @@
 [![Twitter](https://img.shields.io/twitter/follow/kubestash.svg?style=social&logo=twitter&label=Follow)](https://twitter.com/intent/follow?screen_name=KubeStash)
 
 # CLI
-`kubectl` plugin for [Stash by AppsCode](https://appscode.com/products/stash).
+`kubectl` plugin for [Stash by AppsCode](https://stash.run).
 
 ## Installation
 

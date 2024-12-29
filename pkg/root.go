@@ -32,7 +32,7 @@ func NewRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:               "kubectl-stash",
 		Short:             `kubectl plugin for Stash by AppsCode`,
-		Long:              `kubectl plugin for Stash by AppsCode. For more information, visit here: https://appscode.com/products/stash`,
+		Long:              `kubectl plugin for Stash by AppsCode. For more information, visit here: https://stash.run`,
 		DisableAutoGenTag: true,
 		PersistentPreRun: func(c *cobra.Command, args []string) {
 			utilruntime.Must(scheme.AddToScheme(clientsetscheme.Scheme))
