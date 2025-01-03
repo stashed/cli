@@ -35,7 +35,7 @@ const (
 	passwordFile   = "password.txt"
 
 	ResticEnvs     = "restic-envs"
-	ResticRegistry = "stashed"
+	ResticRegistry = "restic"
 	ResticImage    = "restic"
 	ResticTag      = "latest"
 	cmdKubectl     = "kubectl"
