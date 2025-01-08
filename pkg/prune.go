@@ -42,9 +42,12 @@ type pruneOptions struct {
 	config     *rest.Config
 	repo       *v1alpha1.Repository
 
-	maxUnusedLimit string
-	maxRepackSize  string
-	dryRun         bool
+	maxUnusedLimit      string
+	maxRepackSize       string
+	dryRun              bool
+	repackUncompressed  bool
+	repackCacheableOnly bool
+	repackSmall         bool
 }
 
 func NewCmdPruneRepository(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
@@ -99,9 +102,12 @@ func NewCmdPruneRepository(clientGetter genericclioptions.RESTClientGetter) *cob
 		},
 	}
 
-	cmd.Flags().StringVar(&opt.maxUnusedLimit, "max-unused-limit", "", "allow unused data up to the specified limit within the repository")
-	cmd.Flags().StringVar(&opt.maxRepackSize, "max-repack-size", "", "limit the total size of files to repack")
-	cmd.Flags().BoolVar(&opt.dryRun, "dry-run", false, "only show what prune would do")
+	cmd.Flags().StringVar(&opt.maxUnusedLimit, "max-unused-limit", "", "tolerate given limit of unused data (absolute value in bytes with suffixes k/K, m/M, g/G, t/T, a value in % or the word 'unlimited') (default \"5%\")")
+	cmd.Flags().StringVar(&opt.maxRepackSize, "max-repack-size", "", "maximum size to repack (allowed suffixes: k/K, m/M, g/G, t/T)")
+	cmd.Flags().BoolVar(&opt.dryRun, "dry-run", false, "do not modify the repository, just print what would be done")
+	cmd.Flags().BoolVar(&opt.repackUncompressed, "repack-uncompressed", false, "repack all uncompressed data")
+	cmd.Flags().BoolVar(&opt.repackCacheableOnly, "repack-cacheable-only", false, "only repack packs which are cacheable")
+	cmd.Flags().BoolVar(&opt.repackSmall, "repack-small", false, "repack pack files below 80% of target pack size")
 
 	cmd.Flags().StringVar(&imgRestic.Registry, "docker-registry", imgRestic.Registry, "Docker image registry for restic cli")
 	cmd.Flags().StringVar(&imgRestic.Tag, "image-tag", imgRestic.Tag, "Restic docker image tag")
@@ -182,7 +188,9 @@ func (opt *pruneOptions) pruneRepo(extraArgs []string) error {
 }
 
 func (opt *pruneOptions) getUserExtraArguments() []string {
-	var extraArgs []string
+	extraArgs := []string{
+		"--no-cache",
+	}
 	if opt.maxUnusedLimit != "" {
 		extraArgs = append(extraArgs,
 			fmt.Sprintf("--max-unused=%s", opt.maxUnusedLimit))
@@ -193,6 +201,15 @@ func (opt *pruneOptions) getUserExtraArguments() []string {
 	}
 	if opt.dryRun {
 		extraArgs = append(extraArgs, "--dry-run")
+	}
+	if opt.repackUncompressed {
+		extraArgs = append(extraArgs, "--repack-uncompressed")
+	}
+	if opt.repackSmall {
+		extraArgs = append(extraArgs, "--repack-small")
+	}
+	if opt.repackCacheableOnly {
+		extraArgs = append(extraArgs, "--repack-cacheable-only")
 	}
 	return extraArgs
 }

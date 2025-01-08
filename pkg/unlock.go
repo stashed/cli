@@ -20,8 +20,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
-	"os/user"
 	"path/filepath"
 
 	"stash.appscode.dev/apimachinery/apis/stash/v1alpha1"
@@ -152,44 +150,19 @@ func (opt *unlockOptions) unlockRepository() error {
 		return err
 	}
 
-	extraAgrs := []string{
+	extraArgs := []string{
 		"--no-cache",
 	}
 
 	// For TLS secured Minio/REST server, specify cert path
 	if resticWrapper.GetCaPath() != "" {
-		extraAgrs = append(extraAgrs, "--cacert", resticWrapper.GetCaPath())
+		extraArgs = append(extraArgs, "--cacert", resticWrapper.GetCaPath())
 	}
 
 	// run unlock inside docker
-	if err = runCmdViaDocker(*localDirs, "unlock", extraAgrs); err != nil {
+	if err = runCmdViaDocker(*localDirs, "unlock", extraArgs); err != nil {
 		return err
 	}
 	klog.Infof("Repository %s/%s has been unlocked successfully", opt.repo.Namespace, opt.repo.Name)
 	return nil
-}
-
-func runCmdViaDocker(localDirs cliLocalDirectories, command string, extraArgs []string) error {
-	// get current user
-	currentUser, err := user.Current()
-	if err != nil {
-		return err
-	}
-	args := []string{
-		"run",
-		"--rm",
-		"-u", currentUser.Uid,
-		"-v", ScratchDir + ":" + ScratchDir,
-		"--env", "HTTP_PROXY=" + os.Getenv("HTTP_PROXY"),
-		"--env", "HTTPS_PROXY=" + os.Getenv("HTTPS_PROXY"),
-		"--env-file", filepath.Join(localDirs.configDir, ResticEnvs),
-		imgRestic.ToContainerImage(),
-		command,
-	}
-
-	args = append(args, extraArgs...)
-	klog.Infoln("Running docker with args:", args)
-	out, err := exec.Command("docker", args...).CombinedOutput()
-	klog.Infoln("Output:", string(out))
-	return err
 }
