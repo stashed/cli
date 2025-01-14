@@ -56,7 +56,7 @@ ARCH := $(if $(GOARCH),$(GOARCH),$(shell go env GOARCH))
 GO_VERSION       ?= 1.23
 BUILD_IMAGE      ?= ghcr.io/appscode/golang-dev:$(GO_VERSION)
 
-RESTIC_VER  := 0.13.1
+RESTIC_VER  := 0.17.3
 
 OUTBIN = bin/$(BIN)-$(OS)-$(ARCH)
 ifeq ($(OS),windows)
@@ -220,7 +220,7 @@ lint: $(BUILD_DIRS)
 	    --env GO111MODULE=on                                    \
 	    --env GOFLAGS="-mod=vendor"                             \
 	    $(BUILD_IMAGE)                                          \
-	    golangci-lint run --enable $(ADDTL_LINTERS) --timeout=10m --skip-files="generated.*\.go$\" --skip-dirs-use-default
+	    golangci-lint run --enable $(ADDTL_LINTERS) --timeout=10m --exclude-files="generated.*\.go$\" --exclude-dirs-use-default
 
 $(BUILD_DIRS):
 	@mkdir -p $@

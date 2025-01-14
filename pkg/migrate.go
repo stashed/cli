@@ -29,6 +29,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
@@ -36,17 +37,18 @@ import (
 	"k8s.io/klog/v2"
 )
 
-type unlockOptions struct {
+type migrateOptions struct {
 	kubeClient *kubernetes.Clientset
 	config     *rest.Config
 	repo       *v1alpha1.Repository
 }
 
-func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
-	opt := unlockOptions{}
+func NewCmdMigrateRepositoryToV2(clientGetter genericclioptions.RESTClientGetter) *cobra.Command {
+	opt := migrateOptions{}
+
 	cmd := &cobra.Command{
-		Use:               "unlock",
-		Short:             `Unlock restic repository`,
+		Use:               "migrate",
+		Short:             `Migrate restic repository to v2`,
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 || args[0] == "" {
@@ -64,53 +66,61 @@ func NewCmdUnlockRepository(clientGetter genericclioptions.RESTClientGetter) *co
 				return err
 			}
 
+			stshclient, err := cs.NewForConfig(opt.config)
+			if err != nil {
+				return err
+			}
+
+			opt.repo, err = stshclient.StashV1alpha1().Repositories(namespace).Get(context.TODO(), repositoryName, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+
 			opt.kubeClient, err = kubernetes.NewForConfig(opt.config)
 			if err != nil {
 				return err
 			}
 
-			stashClient, err = cs.NewForConfig(opt.config)
-			if err != nil {
-				return err
-			}
-			// get source repository
-			opt.repo, err = stashClient.StashV1alpha1().Repositories(namespace).Get(context.TODO(), repositoryName, metav1.GetOptions{})
-			if err != nil {
-				return err
-			}
-
 			if opt.repo.Spec.Backend.Local != nil {
-				return opt.unlockLocalRepository()
+				// get the pod that mount this repository as volume
+				pod, err := getBackendMountingPod(opt.kubeClient, opt.repo)
+				if err != nil {
+					return err
+				}
+				return opt.migrateRepoFromPod(pod)
 			}
 
-			return opt.unlockRepository()
+			return opt.migrateRepo()
 		},
 	}
+
+	cmd.Flags().StringVar(&imgRestic.Registry, "docker-registry", imgRestic.Registry, "Docker image registry for restic cli")
+	cmd.Flags().StringVar(&imgRestic.Tag, "image-tag", imgRestic.Tag, "Restic docker image tag")
 
 	return cmd
 }
 
-func (opt *unlockOptions) unlockLocalRepository() error {
-	// get the pod that mount this repository as volume
-	pod, err := getBackendMountingPod(opt.kubeClient, opt.repo)
-	if err != nil {
+func (opt *migrateOptions) migrateRepoFromPod(pod *core.Pod) error {
+	if err := opt.executeMigrateRepoCmdInPod(pod); err != nil {
 		return err
 	}
 
-	command := []string{"/stash-enterprise", "unlock"}
-	command = append(command, "--repo-name="+opt.repo.Name)
-	command = append(command, "--repo-namespace="+opt.repo.Namespace)
-
-	_, err = execCommandOnPod(opt.kubeClient, opt.config, pod, command)
-	if err != nil {
-		return err
-	}
-
-	klog.Infof("Repository %s/%s has been unlocked successfully", opt.repo.Namespace, opt.repo.Name)
+	klog.Infof("Repository %s/%s upgraded to version 2", namespace, opt.repo.Name)
 	return nil
 }
 
-func (opt *unlockOptions) unlockRepository() error {
+func (opt *migrateOptions) executeMigrateRepoCmdInPod(pod *core.Pod) error {
+	command := []string{"/stash-enterprise", "migrate"}
+	command = append(command, "--repo-name", opt.repo.Name, "--repo-namespace", opt.repo.Namespace)
+
+	out, err := execCommandOnPod(opt.kubeClient, opt.config, pod, command)
+	if string(out) != "" {
+		klog.Infoln("Output:", string(out))
+	}
+	return err
+}
+
+func (opt *migrateOptions) migrateRepo() error {
 	// get source repository secret
 	secret, err := opt.kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), opt.repo.Spec.Backend.StorageSecretName, metav1.GetOptions{})
 	if err != nil {
@@ -132,7 +142,7 @@ func (opt *unlockOptions) unlockRepository() error {
 	if err != nil {
 		return fmt.Errorf("setup option for repository failed")
 	}
-	// init restic wrapper
+
 	resticWrapper, err := restic.NewResticWrapper(setupOpt)
 	if err != nil {
 		return err
@@ -141,28 +151,25 @@ func (opt *unlockOptions) unlockRepository() error {
 	localDirs := &cliLocalDirectories{
 		configDir: filepath.Join(ScratchDir, configDirName),
 	}
-
 	// dump restic's environments into `restic-env` file.
 	// we will pass this env file to restic docker container.
-
 	err = resticWrapper.DumpEnv(localDirs.configDir, ResticEnvs)
 	if err != nil {
 		return err
 	}
 
-	extraArgs := []string{
-		"--no-cache",
+	extraAgrs := []string{
+		"upgrade_repo_v2", "--no-cache",
 	}
 
 	// For TLS secured Minio/REST server, specify cert path
 	if resticWrapper.GetCaPath() != "" {
-		extraArgs = append(extraArgs, "--cacert", resticWrapper.GetCaPath())
+		extraAgrs = append(extraAgrs, "--cacert", resticWrapper.GetCaPath())
 	}
 
-	// run unlock inside docker
-	if err = runCmdViaDocker(*localDirs, "unlock", extraArgs); err != nil {
+	if err = runCmdViaDocker(*localDirs, "migrate", extraAgrs); err != nil {
 		return err
 	}
-	klog.Infof("Repository %s/%s has been unlocked successfully", opt.repo.Namespace, opt.repo.Name)
+	klog.Infof("Repository %s/%s upgraded to version 2", namespace, opt.repo.Name)
 	return nil
 }

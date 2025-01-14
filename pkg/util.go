@@ -20,6 +20,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
+	"os/user"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -147,4 +151,29 @@ func getContainerName(pod *core.Pod) string {
 	}
 
 	return apis.StashContainer
+}
+
+func runCmdViaDocker(localDirs cliLocalDirectories, command string, extraArgs []string) error {
+	// get current user
+	currentUser, err := user.Current()
+	if err != nil {
+		return err
+	}
+	args := []string{
+		"run",
+		"--rm",
+		"-u", currentUser.Uid,
+		"-v", ScratchDir + ":" + ScratchDir,
+		"--env", "HTTP_PROXY=" + os.Getenv("HTTP_PROXY"),
+		"--env", "HTTPS_PROXY=" + os.Getenv("HTTPS_PROXY"),
+		"--env-file", filepath.Join(localDirs.configDir, ResticEnvs),
+		imgRestic.ToContainerImage(),
+		command,
+	}
+
+	args = append(args, extraArgs...)
+	klog.Infoln("Running docker with args:", args)
+	out, err := exec.Command("docker", args...).CombinedOutput()
+	klog.Infoln("Output:", string(out))
+	return err
 }
