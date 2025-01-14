@@ -167,7 +167,6 @@ func (opt *migrateOptions) migrateRepo() error {
 		extraAgrs = append(extraAgrs, "--cacert", resticWrapper.GetCaPath())
 	}
 
-	// run restore inside docker
 	if err = runCmdViaDocker(*localDirs, "migrate", extraAgrs); err != nil {
 		return err
 	}

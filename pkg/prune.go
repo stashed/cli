@@ -179,7 +179,6 @@ func (opt *pruneOptions) pruneRepo(extraArgs []string) error {
 		extraArgs = append(extraArgs, "--cacert", resticWrapper.GetCaPath())
 	}
 
-	// run restore inside docker
 	if err = runCmdViaDocker(*localDirs, "prune", extraArgs); err != nil {
 		return err
 	}
