@@ -38,7 +38,6 @@ func NewCmdCopy(clientGetter genericclioptions.RESTClientGetter) *cobra.Command 
 			}
 
 			srcNamespace, _, err = clientGetter.ToRawKubeConfigLoader().Namespace()
-
 			if err != nil {
 				return err
 			}
