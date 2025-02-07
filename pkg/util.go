@@ -137,7 +137,6 @@ func execCommandOnPod(kubeClient *kubernetes.Clientset, config *rest.Config, pod
 		Stderr: &execErr,
 		Tty:    true,
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("could not execute: %v, reason: %s", err, execErr.String())
 	}
