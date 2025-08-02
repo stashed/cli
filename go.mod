@@ -28,8 +28,8 @@ require (
 	kmodules.xyz/offshoot-api v0.30.1
 	kmodules.xyz/openshift v0.29.0
 	sigs.k8s.io/yaml v1.4.0
-	stash.appscode.dev/apimachinery v0.40.0
-	stash.appscode.dev/stash v0.40.0
+	stash.appscode.dev/apimachinery v0.41.0
+	stash.appscode.dev/stash v0.41.0
 )
 
 require (
