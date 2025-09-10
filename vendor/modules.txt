@@ -1611,7 +1611,7 @@ kmodules.xyz/prober/api/v1
 # kmodules.xyz/webhook-runtime v0.32.0
 ## explicit; go 1.23.0
 kmodules.xyz/webhook-runtime/apis/workload/v1
-# kubestash.dev/apimachinery v0.20.1-0.20250815070353-32a92de19eca
+# kubestash.dev/apimachinery v0.20.1-0.20250910102856-fb7f41c22675
 ## explicit; go 1.23.0
 kubestash.dev/apimachinery/apis
 kubestash.dev/apimachinery/apis/storage/v1alpha1

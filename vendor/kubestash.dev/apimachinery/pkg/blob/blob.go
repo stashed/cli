@@ -21,15 +21,16 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	aws2 "github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"io"
 	"net/http"
 	"os"
 	"path"
 	"strings"
+
+	aws2 "github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 
 	"gocloud.dev/blob"
 	_ "gocloud.dev/blob/azureblob"
@@ -300,11 +301,36 @@ func (b *Blob) Debug(ctx context.Context, filepath string, data []byte, contentT
 	return bucket.Delete(ctx, fileName)
 }
 
-// ListDirN lists directories **relative to the bucket's baked-in prefix**
-// (vaimo/) down to <depth> levels.
-// depth = 0 → immediate children only.
+func (b *Blob) List(ctx context.Context, dir string) ([][]byte, error) {
+	bucket, err := b.openBucket(ctx, dir)
+	if err != nil {
+		return nil, err
+	}
+	defer closeBucket(ctx, bucket)
+	var objects [][]byte
+	iter := bucket.List(nil)
+	for {
+		obj, err := iter.Next(ctx)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		if checkIfObjectFile(obj) {
+			fName := path.Join(dir, obj.Key)
+			file, err := b.Get(ctx, fName)
+			if err != nil {
+				return nil, err
+			}
+			objects = append(objects, file)
+		}
+	}
+	return objects, nil
+}
+
+// ListDirN depth = 0 → immediate children only.
 func (b *Blob) ListDirN(ctx context.Context, dir string, depth ...int) ([][]byte, error) {
-	// bucket handle is already scoped to s3://kubestash/vaimo/
 	bucket, err := b.openBucket(ctx, dir)
 	if err != nil {
 		return nil, err
@@ -315,7 +341,7 @@ func (b *Blob) ListDirN(ctx context.Context, dir string, depth ...int) ([][]byte
 	if len(depth) > 0 {
 		maxDepth = depth[0]
 	}
-	
+
 	relPrefix := strings.TrimSuffix(dir, "/")
 	if relPrefix != "" {
 		relPrefix += "/"
@@ -353,43 +379,6 @@ func (b *Blob) ListDirN(ctx context.Context, dir string, depth ...int) ([][]byte
 		return nil, err
 	}
 	return dirs, nil
-}
-
-func (b *Blob) List(ctx context.Context, dir string) ([][]byte, error) {
-	bucket, err := b.openBucket(ctx, dir)
-	if err != nil {
-		return nil, err
-	}
-	defer closeBucket(ctx, bucket)
-
-	var objects [][]byte
-	iter := bucket.List(&blob.ListOptions{
-		Delimiter: "/", // single-level listing
-	})
-
-	for {
-		obj, err := iter.Next(ctx)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		// 2. skip the folder placeholders themselves
-		if obj.IsDir {
-			fmt.Println("---List: ", obj.Key)
-			continue
-		}
-
-		// 3. fetch the object (key already includes prefix)
-		file, err := b.Get(ctx, obj.Key)
-		if err != nil {
-			return nil, err
-		}
-		objects = append(objects, file)
-	}
-	return objects, nil
 }
 
 func (b *Blob) Delete(ctx context.Context, filepath string, isDir bool) error {

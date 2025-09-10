@@ -27,7 +27,7 @@ require (
 	kmodules.xyz/objectstore-api v0.32.0
 	kmodules.xyz/offshoot-api v0.32.0
 	kmodules.xyz/openshift v0.29.0
-	kubestash.dev/apimachinery v0.20.1-0.20250815070353-32a92de19eca
+	kubestash.dev/apimachinery v0.20.1-0.20250910102856-fb7f41c22675
 	sigs.k8s.io/controller-runtime v0.20.4
 	sigs.k8s.io/yaml v1.4.0
 	stash.appscode.dev/apimachinery v0.41.0
