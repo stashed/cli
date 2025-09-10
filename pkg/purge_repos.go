@@ -256,7 +256,12 @@ func (opt *purgeOptions) setupResticWrapper(secret *core.Secret) (restic.SetupOp
 }
 
 func (opt *purgeOptions) executePurgeWorkflow(setupOpt restic.SetupOptions, cutoffTime time.Time) error {
-	repoList, err := opt.findRepositoriesToPurge(setupOpt, cutoffTime)
+	rw, err := restic.NewResticWrapper(setupOpt)
+	if err != nil {
+		return fmt.Errorf("failed to create restic wrapper: %v", err)
+	}
+
+	repoList, err := opt.findRepositoriesToPurge(rw, cutoffTime)
 	if err != nil {
 		return err
 	}
@@ -267,7 +272,7 @@ func (opt *purgeOptions) executePurgeWorkflow(setupOpt restic.SetupOptions, cuto
 	}
 
 	// Get repository base URL for display purposes
-	repoBase, err := opt.getResticRepoFromEnv(setupOpt)
+	repoBase, err := opt.getResticRepoFromEnv(rw)
 	if err != nil {
 		return fmt.Errorf("failed to get restic repository base: %w", err)
 	}
@@ -282,22 +287,22 @@ func (opt *purgeOptions) executePurgeWorkflow(setupOpt restic.SetupOptions, cuto
 		fmt.Println("Operation cancelled.")
 		return nil
 	}
-	return opt.deleteRepositories(setupOpt, repoList)
+	return opt.deleteRepositories(rw, repoList)
 }
 
-func (opt *purgeOptions) findRepositoriesToPurge(setupOpt restic.SetupOptions, cutoffTime time.Time) ([]repositoryInfo, error) {
+func (opt *purgeOptions) findRepositoriesToPurge(rw *restic.ResticWrapper, cutoffTime time.Time) ([]repositoryInfo, error) {
 	var repos []repositoryInfo
 	subDirs, err := opt.listSubdirectories("")
 	if err != nil {
 		return nil, fmt.Errorf("cannot list sub-dirs: %w", err)
 	}
 
-	repoBase, err := opt.getResticRepoFromEnv(setupOpt)
+	repoBase, err := opt.getResticRepoFromEnv(rw)
 	if err != nil {
 		return nil, err
 	}
 
-	script := opt.generateRepoListScript(repoBase, subDirs)
+	script := opt.generateRepoListScript(repoBase, rw, subDirs)
 	out, err := runResticScriptViaDocker(script)
 	if err != nil {
 		return nil, fmt.Errorf("Error running repo check script: %v\nOutput:\n%s", err, out)
@@ -310,13 +315,9 @@ func (opt *purgeOptions) findRepositoriesToPurge(setupOpt restic.SetupOptions, c
 	return repos, nil
 }
 
-func (opt *purgeOptions) getResticRepoFromEnv(setupOpt restic.SetupOptions) (string, error) {
+func (opt *purgeOptions) getResticRepoFromEnv(rw *restic.ResticWrapper) (string, error) {
 	localDirs := &cliLocalDirectories{
 		configDir: filepath.Join(ScratchDir, configDirName),
-	}
-	rw, err := restic.NewResticWrapper(setupOpt)
-	if err != nil {
-		return "", fmt.Errorf("failed to create restic wrapper: %v", err)
 	}
 	if err := rw.DumpEnv(localDirs.configDir, ResticEnvs); err != nil {
 		return "", fmt.Errorf("failed to dump env: %v", err)
@@ -340,13 +341,17 @@ func (opt *purgeOptions) getResticRepoFromEnv(setupOpt restic.SetupOptions) (str
 	return repoBase, nil
 }
 
-func (opt *purgeOptions) generateRepoListScript(repoBase string, subDirs []string) string {
+func (opt *purgeOptions) generateRepoListScript(repoBase string, rw *restic.ResticWrapper, subDirs []string) string {
 	var lines []string
 	lines = append(lines, "#!/bin/sh")
 	for _, dir := range subDirs {
 		repoURL := strings.TrimRight(repoBase+"/"+dir, "/")
-		lines = append(lines, fmt.Sprintf(
-			`RESTIC_REPOSITORY="%s" restic snapshots --no-cache --latest 1 --json || echo "Failed to access repository %s"`, repoURL, dir))
+		cmd := fmt.Sprintf(`RESTIC_REPOSITORY="%s" restic snapshots --no-cache --latest 1 --json`, repoURL)
+		if rw.GetCaPath() != "" {
+			cmd += fmt.Sprintf(` --cacert "%s"`, rw.GetCaPath())
+		}
+		cmd += fmt.Sprintf(` || echo "Failed to access repository %s"`, dir)
+		lines = append(lines, cmd)
 	}
 	return strings.Join(lines, "\n")
 }
@@ -364,7 +369,7 @@ func (opt *purgeOptions) listSubdirectories(path string) ([]string, error) {
 	return out, nil
 }
 
-func (opt *purgeOptions) deleteRepositories(setupOpt restic.SetupOptions, repos []repositoryInfo) error {
+func (opt *purgeOptions) deleteRepositories(rw *restic.ResticWrapper, repos []repositoryInfo) error {
 	stats := &PurgeStats{
 		TotalFound: len(repos),
 		StartTime:  time.Now(),
@@ -374,14 +379,14 @@ func (opt *purgeOptions) deleteRepositories(setupOpt restic.SetupOptions, repos 
 		opt.displayPurgeStats(stats)
 	}()
 
-	repoBase, err := opt.getResticRepoFromEnv(setupOpt)
+	repoBase, err := opt.getResticRepoFromEnv(rw)
 	if err != nil {
 		return fmt.Errorf("failed to get restic repo from env: %w", err)
 	}
 
 	// Execute restic purge operations
 	fmt.Println("Starting repository deletion process...")
-	script := opt.generateRepoPurgeScript(repoBase, repos)
+	script := opt.generateRepoPurgeScript(rw, repoBase, repos)
 	out, err := runResticScriptViaDocker(script)
 	if err != nil {
 		return fmt.Errorf("failed to execute restic purge script: %w\nOutput:\n%s", err, out)
@@ -583,40 +588,48 @@ func (opt *purgeOptions) confirmDeletion(count int) bool {
 	return confirmation == "y" || confirmation == "yes"
 }
 
-func (opt *purgeOptions) generateRepoPurgeScript(repoBase string, repos []repositoryInfo) string {
+func (opt *purgeOptions) generateRepoPurgeScript(rw *restic.ResticWrapper, repoBase string, repos []repositoryInfo) string {
 	var lines []string
 	lines = append(lines, "#!/bin/sh", "set -euo pipefail", "")
 	lines = append(lines, "results=\"\"", "")
-	lines = append(lines, `purge_repo() {
+
+	cacertFlag := ""
+	if rw.GetCaPath() != "" {
+		cacertFlag = fmt.Sprintf(` --cacert "%s"`, rw.GetCaPath())
+	}
+
+	purgeFunction := fmt.Sprintf(`purge_repo() {
 	  repo=$1
 	  export RESTIC_REPOSITORY="$repo"
 
-	  if ! restic forget --keep-last 1 --group-by '' --prune --no-cache --json >/dev/null 2>&1; then
+	  if ! restic forget --keep-last 1 --group-by '' --prune --no-cache --json%s >/dev/null 2>&1; then
 		echo "Failed forget (keep-last) for $repo"
 		results="$results\n❌ $repo: failed at keep-last"
 		return 1
 	  fi
 
-	  ID=$(restic snapshots --latest 1 --no-cache --json | jq -r '.[0].id // empty')
+	  ID=$(restic snapshots --latest 1 --no-cache --json%s | jq -r '.[0].id // empty')
 	  if [ -z "$ID" ]; then
 		echo "Repo $repo is already empty"
 		results="$results\n⚠️  $repo: already empty"
 		return 0
 	  fi
 
-	  if ! restic forget "$ID" --prune --no-cache >/dev/null 2>&1; then
+	  if ! restic forget "$ID" --prune --no-cache%s >/dev/null 2>&1; then
 		echo "Failed final forget for $repo"
 		results="$results\n❌ $repo: failed at final forget"
 		return 1
 	  fi
 
-	  if restic snapshots --json --no-cache | jq -e 'length==0' >/dev/null; then
+	  if restic snapshots --json --no-cache%s | jq -e 'length==0' >/dev/null; then
 		results="$results\n✅ $repo: all snapshots purged"
 	  else
 		echo "Repo $repo: some snapshots remain"
 		results="$results\n⚠️  $repo: not fully purged"
 	  fi
-	}`)
+	}`, cacertFlag, cacertFlag, cacertFlag, cacertFlag)
+
+	lines = append(lines, purgeFunction)
 
 	for _, repo := range repos {
 		repoURL := strings.TrimRight(repoBase+"/"+repo.Path, "/")
