@@ -75,8 +75,6 @@ github.com/Masterminds/semver/v3 v3.3.1/go.mod h1:4V+yj/TJE1HU9XfppCwVMZq3I84lpr
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
-github.com/anisurrahman75/objectstore-api v0.0.0-20250911092849-918d6307bf4a h1:0+rlQZtFTNRoX0X+TL9xCVMs2sc/BfDGy3StoqCefxg=
-github.com/anisurrahman75/objectstore-api v0.0.0-20250911092849-918d6307bf4a/go.mod h1:Po7zgWJnm+t8vyUnUKfhvUkUX+hoCJAe06e2ZYCjSuA=
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=
 github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2 h1:7Ip0wMmLHLRJdrloDxZfhMm0xrLXZS8+COSu2bXmEQs=
 github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=
@@ -816,6 +814,8 @@ kmodules.xyz/csi-utils v0.29.1 h1:O0WDb/rsqj+FwT3C/KshB9hhBTh84YCP3fVb1UGMuHw=
 kmodules.xyz/csi-utils v0.29.1/go.mod h1:tcUPTlt0NSlo0RdsHGvA5+LvXhC1WDloqVUkZrzN9MM=
 kmodules.xyz/custom-resources v0.32.0 h1:wzmJTtswO+OmvtqYc70pVoopZyt5UJHKTom4Jh6bfhM=
 kmodules.xyz/custom-resources v0.32.0/go.mod h1:aLFrfbUKS+AkKtxFYWpPGzuLNarRtGlkHwC07APHba8=
+kmodules.xyz/objectstore-api v0.32.1 h1:5Os8XBI3tzie0kj+lijWMDo9fU0Z4SiNrg/yDS3X6PQ=
+kmodules.xyz/objectstore-api v0.32.1/go.mod h1:LemalivFgrGxl13NsfileTiBje8HjaA1K/rMxmxdozk=
 kmodules.xyz/offshoot-api v0.32.0 h1:gogc5scSZe2JoXtZof72UGRl3Tit0kFaFRMkLLT1D8o=
 kmodules.xyz/offshoot-api v0.32.0/go.mod h1:tled7OxYZ3SkUJcrVFVVYyd+zXjsRSEm1R6Q3k4gcx0=
 kmodules.xyz/openshift v0.29.0 h1:8PXjeQ+usUGkLnYUMSbZrMg+i1OIYBe9UWOeBf2FRzU=

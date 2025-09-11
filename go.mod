@@ -24,7 +24,7 @@ require (
 	k8s.io/kubectl v0.30.2
 	kmodules.xyz/client-go v0.32.7
 	kmodules.xyz/csi-utils v0.29.1
-	kmodules.xyz/objectstore-api v0.32.0
+	kmodules.xyz/objectstore-api v0.32.1
 	kmodules.xyz/offshoot-api v0.32.0
 	kmodules.xyz/openshift v0.29.0
 	sigs.k8s.io/controller-runtime v0.22.1
@@ -218,5 +218,3 @@ replace github.com/Masterminds/sprig/v3 => github.com/gomodules/sprig/v3 v3.2.3-
 replace sigs.k8s.io/controller-runtime => github.com/kmodules/controller-runtime v0.20.3-0.20250221050548-8eabe54e7dda
 
 replace k8s.io/apiserver => github.com/kmodules/apiserver v0.32.3-0.20250221062720-35dc674c7dd6
-
-replace kmodules.xyz/objectstore-api => github.com/anisurrahman75/objectstore-api v0.0.0-20250911092849-918d6307bf4a

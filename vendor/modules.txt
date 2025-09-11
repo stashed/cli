@@ -1762,8 +1762,8 @@ kmodules.xyz/custom-resources/client/clientset/versioned/scheme
 kmodules.xyz/custom-resources/client/clientset/versioned/typed/appcatalog/v1alpha1
 kmodules.xyz/custom-resources/client/clientset/versioned/typed/metrics/v1alpha1
 kmodules.xyz/custom-resources/crds
-# kmodules.xyz/objectstore-api v0.32.0 => github.com/anisurrahman75/objectstore-api v0.0.0-20250911092849-918d6307bf4a
-## explicit; go 1.24.0
+# kmodules.xyz/objectstore-api v0.32.1
+## explicit; go 1.24
 kmodules.xyz/objectstore-api/api/v1
 kmodules.xyz/objectstore-api/pkg/blob
 # kmodules.xyz/offshoot-api v0.32.0
@@ -1973,4 +1973,3 @@ stash.appscode.dev/stash/pkg/util
 # github.com/Masterminds/sprig/v3 => github.com/gomodules/sprig/v3 v3.2.3-0.20220405051441-0a8a99bac1b8
 # sigs.k8s.io/controller-runtime => github.com/kmodules/controller-runtime v0.20.3-0.20250221050548-8eabe54e7dda
 # k8s.io/apiserver => github.com/kmodules/apiserver v0.32.3-0.20250221062720-35dc674c7dd6
-# kmodules.xyz/objectstore-api => github.com/anisurrahman75/objectstore-api v0.0.0-20250911092849-918d6307bf4a
