@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"os"
 	"strconv"
 	"time"
 )
@@ -26,30 +25,19 @@ import (
 // https://dev.mysql.com/doc/dev/mysql-server/latest/PAGE_PROTOCOL.html
 // https://mariadb.com/kb/en/clientserver-protocol/
 
-// read n bytes from mc.buf
-func (mc *mysqlConn) readNext(n int) ([]byte, error) {
-	if mc.buf.len() < n {
-		err := mc.buf.fill(n, mc.readWithTimeout)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return mc.buf.readNext(n), nil
-}
-
 // Read packet to buffer 'data'
 func (mc *mysqlConn) readPacket() ([]byte, error) {
 	var prevData []byte
 	invalidSequence := false
 
-	readNext := mc.readNext
+	readNext := mc.buf.readNext
 	if mc.compress {
 		readNext = mc.compIO.readNext
 	}
 
 	for {
 		// read packet header
-		data, err := readNext(4)
+		data, err := readNext(4, mc.readWithTimeout)
 		if err != nil {
 			mc.close()
 			if cerr := mc.canceled.Value(); cerr != nil {
@@ -63,11 +51,17 @@ func (mc *mysqlConn) readPacket() ([]byte, error) {
 		pktLen := getUint24(data[:3])
 		seq := data[3]
 
-		// check packet sync [8 bit]
-		if seq != mc.sequence {
-			mc.log(fmt.Sprintf("[warn] unexpected sequence nr: expected %v, got %v", mc.sequence, seq))
+		if mc.compress {
 			// MySQL and MariaDB doesn't check packet nr in compressed packet.
-			if !mc.compress {
+			if debug && seq != mc.compressSequence {
+				fmt.Printf("[debug] mismatched compression sequence nr: expected: %v, got %v",
+					mc.compressSequence, seq)
+			}
+			mc.compressSequence = seq + 1
+		} else {
+			// check packet sync [8 bit]
+			if seq != mc.sequence {
+				mc.log(fmt.Sprintf("[warn] unexpected seq nr: expected %v, got %v", mc.sequence, seq))
 				// For large packets, we stop reading as soon as sync error.
 				if len(prevData) > 0 {
 					mc.close()
@@ -75,8 +69,8 @@ func (mc *mysqlConn) readPacket() ([]byte, error) {
 				}
 				invalidSequence = true
 			}
+			mc.sequence++
 		}
-		mc.sequence = seq + 1
 
 		// packets with length 0 terminate a previous packet which is a
 		// multiple of (2^24)-1 bytes long
@@ -91,7 +85,7 @@ func (mc *mysqlConn) readPacket() ([]byte, error) {
 		}
 
 		// read packet body [pktLen bytes]
-		data, err = readNext(pktLen)
+		data, err = readNext(pktLen, mc.readWithTimeout)
 		if err != nil {
 			mc.close()
 			if cerr := mc.canceled.Value(); cerr != nil {
@@ -141,7 +135,7 @@ func (mc *mysqlConn) writePacket(data []byte) error {
 
 		// Write packet
 		if debug {
-			fmt.Fprintf(os.Stderr, "writePacket: size=%v seq=%v\n", size, mc.sequence)
+			fmt.Printf("writePacket: size=%v seq=%v", size, mc.sequence)
 		}
 
 		n, err := writeFunc(data[:4+size])
@@ -440,9 +434,7 @@ func (mc *mysqlConn) writeCommandPacket(command byte) error {
 	data[4] = command
 
 	// Send CMD packet
-	err = mc.writePacket(data)
-	mc.syncSequence()
-	return err
+	return mc.writePacket(data)
 }
 
 func (mc *mysqlConn) writeCommandPacketStr(command byte, arg string) error {
@@ -483,9 +475,7 @@ func (mc *mysqlConn) writeCommandPacketUint32(command byte, arg uint32) error {
 	binary.LittleEndian.PutUint32(data[5:], arg)
 
 	// Send CMD packet
-	err = mc.writePacket(data)
-	mc.syncSequence()
-	return err
+	return mc.writePacket(data)
 }
 
 /******************************************************************************
@@ -955,6 +945,7 @@ func (stmt *mysqlStmt) writeCommandLongData(paramID int, arg []byte) error {
 			pktLen = dataOffset + argLen
 		}
 
+		stmt.mc.resetSequence()
 		// Add command byte [1 byte]
 		data[4] = comStmtSendLongData
 
@@ -966,8 +957,6 @@ func (stmt *mysqlStmt) writeCommandLongData(paramID int, arg []byte) error {
 
 		// Send CMD packet
 		err := stmt.mc.writePacket(data[:4+pktLen])
-		// Every COM_LONG_DATA packet reset Packet Sequence
-		stmt.mc.resetSequence()
 		if err == nil {
 			data = data[pktLen-dataOffset:]
 			continue
@@ -975,6 +964,8 @@ func (stmt *mysqlStmt) writeCommandLongData(paramID int, arg []byte) error {
 		return err
 	}
 
+	// Reset Packet Sequence
+	stmt.mc.resetSequence()
 	return nil
 }
 
