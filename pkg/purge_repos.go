@@ -47,8 +47,7 @@ import (
 	"k8s.io/kubectl/pkg/util/templates"
 	cu "kmodules.xyz/client-go/client"
 	v1 "kmodules.xyz/objectstore-api/api/v1"
-	kubestashapi "kubestash.dev/apimachinery/apis/storage/v1alpha1"
-	"kubestash.dev/apimachinery/pkg/blob"
+	"kmodules.xyz/objectstore-api/pkg/blob"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
@@ -455,48 +454,7 @@ func (opt *purgeOptions) displayPurgeStats(stats *PurgeStats) {
 }
 
 func (opt *purgeOptions) getBlobStorageFromConfig() (*blob.Blob, error) {
-	bs := &kubestashapi.BackupStorage{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespace,
-		},
-		Spec: kubestashapi.BackupStorageSpec{},
-	}
-
-	// Configure storage based on backend type
-	switch {
-	case opt.backendConfig.S3 != nil:
-		bs.Spec.Storage.Provider = kubestashapi.ProviderS3
-		bs.Spec.Storage.S3 = &kubestashapi.S3Spec{
-			Endpoint:    opt.backendConfig.S3.Endpoint,
-			Bucket:      opt.backendConfig.S3.Bucket,
-			Prefix:      opt.backendConfig.S3.Prefix,
-			Region:      opt.backendConfig.S3.Region,
-			SecretName:  opt.backendConfig.StorageSecretName,
-			InsecureTLS: opt.backendConfig.S3.InsecureTLS,
-		}
-
-	case opt.backendConfig.Azure != nil:
-		bs.Spec.Storage.Provider = kubestashapi.ProviderAzure
-		bs.Spec.Storage.Azure = &kubestashapi.AzureSpec{
-			Container:      opt.backendConfig.Azure.Container,
-			Prefix:         opt.backendConfig.Azure.Prefix,
-			SecretName:     opt.backendConfig.StorageSecretName,
-			MaxConnections: opt.backendConfig.Azure.MaxConnections,
-		}
-
-	case opt.backendConfig.GCS != nil:
-		bs.Spec.Storage.Provider = kubestashapi.ProviderGCS
-		bs.Spec.Storage.GCS = &kubestashapi.GCSSpec{
-			Bucket:         opt.backendConfig.GCS.Bucket,
-			Prefix:         opt.backendConfig.GCS.Prefix,
-			SecretName:     opt.backendConfig.StorageSecretName,
-			MaxConnections: opt.backendConfig.GCS.MaxConnections,
-		}
-	default:
-		return nil, fmt.Errorf("no storage backend configured. Reason: Unknown backend type")
-	}
-
-	storage, err := blob.NewBlob(context.Background(), opt.klient, bs)
+	storage, err := blob.NewBlob(context.Background(), opt.klient, namespace, opt.backendConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create blob storage client: %w", err)
 	}
