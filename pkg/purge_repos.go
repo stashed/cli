@@ -156,7 +156,7 @@ func (opt *purgeOptions) purgeRepositories() error {
 	if opt.storage, err = opt.getBlobStorageFromConfig(); err != nil {
 		return err
 	}
-	cutoffTime, err := opt.parseDurationWithValidation()
+	cutoffTime, err := opt.parseDuration()
 	if err != nil {
 		return err
 	}
@@ -192,6 +192,24 @@ func (opt *purgeOptions) validateAndLoadConfig() (*v1.Backend, error) {
 	return cfg, nil
 }
 
+func loadBackendConfig(path string) (*v1.Backend, error) {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil, fmt.Errorf("config file does not exist: %s", path)
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config file: %w", err)
+	}
+
+	var cfg v1.Backend
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return nil, fmt.Errorf("failed to parse config file: %w", err)
+	}
+
+	return &cfg, nil
+}
+
 func (opt *purgeOptions) getBlobStorageFromConfig() (*blob.Blob, error) {
 	storage, err := blob.NewBlob(context.Background(), opt.klient, namespace, opt.backendConfig)
 	if err != nil {
@@ -201,12 +219,48 @@ func (opt *purgeOptions) getBlobStorageFromConfig() (*blob.Blob, error) {
 	return storage, nil
 }
 
-func (opt *purgeOptions) parseDurationWithValidation() (time.Time, error) {
-	cutoffTime, err := opt.parseDuration()
-	if err != nil {
+func (opt *purgeOptions) parseDuration() (time.Time, error) {
+	// Parse duration string like "1y", "6mo", "30d", "24h"
+	durationRegex := regexp.MustCompile(`(\d+)([ydhms]|mo)`)
+	matches := durationRegex.FindAllStringSubmatch(opt.olderThan, -1)
+
+	if len(matches) == 0 {
 		return time.Time{}, fmt.Errorf("invalid duration format: %s", opt.olderThan)
 	}
-	return cutoffTime, nil
+
+	now := time.Now()
+	cutoff := now
+
+	for _, match := range matches {
+		if len(match) != 3 {
+			continue
+		}
+
+		value, err := strconv.Atoi(match[1])
+		if err != nil {
+			return time.Time{}, fmt.Errorf("invalid duration value: %s", match[1])
+		}
+
+		unit := match[2]
+		switch unit {
+		case "y":
+			cutoff = cutoff.AddDate(-value, 0, 0)
+		case "mo":
+			cutoff = cutoff.AddDate(0, -value, 0)
+		case "d":
+			cutoff = cutoff.AddDate(0, 0, -value)
+		case "h":
+			cutoff = cutoff.Add(-time.Duration(value) * time.Hour)
+		case "m":
+			cutoff = cutoff.Add(-time.Duration(value) * time.Minute)
+		case "s":
+			cutoff = cutoff.Add(-time.Duration(value) * time.Second)
+		default:
+			return time.Time{}, fmt.Errorf("unsupported duration unit: %s", unit)
+		}
+	}
+
+	return cutoff, nil
 }
 
 func (opt *purgeOptions) logOperationDetails(cutoffTime time.Time) {
@@ -298,68 +352,6 @@ func (opt *purgeOptions) executePurgeWorkflow(setupOpt restic.SetupOptions, cuto
 	return opt.deleteRepositories(rw, repoList)
 }
 
-func loadBackendConfig(path string) (*v1.Backend, error) {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return nil, fmt.Errorf("config file does not exist: %s", path)
-	}
-
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read config file: %w", err)
-	}
-
-	var cfg v1.Backend
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("failed to parse config file: %w", err)
-	}
-
-	return &cfg, nil
-}
-
-func (opt *purgeOptions) parseDuration() (time.Time, error) {
-	// Parse duration string like "1y", "6mo", "30d", "24h"
-	durationRegex := regexp.MustCompile(`(\d+)([ydhms]|mo)`)
-	matches := durationRegex.FindAllStringSubmatch(opt.olderThan, -1)
-
-	if len(matches) == 0 {
-		return time.Time{}, fmt.Errorf("invalid duration format: %s", opt.olderThan)
-	}
-
-	now := time.Now()
-	cutoff := now
-
-	for _, match := range matches {
-		if len(match) != 3 {
-			continue
-		}
-
-		value, err := strconv.Atoi(match[1])
-		if err != nil {
-			return time.Time{}, fmt.Errorf("invalid duration value: %s", match[1])
-		}
-
-		unit := match[2]
-		switch unit {
-		case "y":
-			cutoff = cutoff.AddDate(-value, 0, 0)
-		case "mo":
-			cutoff = cutoff.AddDate(0, -value, 0)
-		case "d":
-			cutoff = cutoff.AddDate(0, 0, -value)
-		case "h":
-			cutoff = cutoff.Add(-time.Duration(value) * time.Hour)
-		case "m":
-			cutoff = cutoff.Add(-time.Duration(value) * time.Minute)
-		case "s":
-			cutoff = cutoff.Add(-time.Duration(value) * time.Second)
-		default:
-			return time.Time{}, fmt.Errorf("unsupported duration unit: %s", unit)
-		}
-	}
-
-	return cutoff, nil
-}
-
 func (opt *purgeOptions) findRepositoriesToPurge(rw *restic.ResticWrapper, cutoffTime time.Time) ([]repositoryInfo, error) {
 	var repos []repositoryInfo
 	subDirs, err := opt.listSubdirectories("")
@@ -385,92 +377,6 @@ func (opt *purgeOptions) findRepositoriesToPurge(rw *restic.ResticWrapper, cutof
 	return repos, nil
 }
 
-func (opt *purgeOptions) displayRepositoriesTable(repos []repositoryInfo, repoBase string) {
-	fmt.Printf("\nFound %d repositories to purge:\n", len(repos))
-
-	// Create a tabwriter for formatted output
-	w := tabwriter.NewWriter(os.Stdout, TableMinWidth, TableTabWidth, TablePadding, TablePadChar, 0)
-	defer func() {
-		_ = w.Flush() // Handle error silently for display purposes
-	}()
-
-	// Header - Updated to show "REPOSITORY" to match your desired output
-	_, _ = fmt.Fprintf(w, "REPOSITORY\tLAST MODIFIED\tAGE\n")
-	_, _ = fmt.Fprintf(w, "----------\t-------------\t---\n")
-
-	// Data rows
-	now := time.Now()
-	for _, repo := range repos {
-		age := now.Sub(repo.LastModified)
-		ageStr := formatDuration(age)
-		repoURL := strings.TrimRight(repoBase+"/"+repo.Path, "/")
-		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\n",
-			repoURL,
-			repo.LastModified.Format(OutputTimeFormat),
-			ageStr)
-	}
-	fmt.Println()
-}
-
-func (opt *purgeOptions) confirmDeletion(count int) bool {
-	fmt.Printf("\nThis will permanently delete %d repositories. Are you sure? (y/N): ", count)
-	var confirmation string
-	_, _ = fmt.Scanln(&confirmation)
-	confirmation = strings.ToLower(strings.TrimSpace(confirmation))
-	return confirmation == "y" || confirmation == "yes"
-}
-
-func (opt *purgeOptions) deleteRepositories(rw *restic.ResticWrapper, repos []repositoryInfo) error {
-	stats := &purgeStats{
-		TotalFound: len(repos),
-		StartTime:  time.Now(),
-	}
-	defer func() {
-		stats.EndTime = time.Now()
-		opt.displayPurgeStats(stats)
-	}()
-
-	repoBase, err := opt.getResticRepoFromEnv(rw)
-	if err != nil {
-		return fmt.Errorf("failed to get restic repo from env: %w", err)
-	}
-
-	// Execute restic purge operations
-	fmt.Println("Starting repository deletion process...")
-	script := opt.generateRepoPurgeScript(rw, repoBase, repos)
-	out, err := runResticScriptViaDocker(script)
-	if err != nil {
-		return fmt.Errorf("failed to execute restic purge script: %w\nOutput:\n%s", err, out)
-	}
-
-	fmt.Printf("\n===== Snapshot Deletion Summary =====\n%s\n", out)
-
-	// Clean up storage metadata
-	fmt.Println("Cleaning up storage metadata...")
-	prefix, err := opt.backendConfig.Prefix()
-	if err != nil {
-		return fmt.Errorf("failed to get prefix from backend config: %w", err)
-	}
-
-	for _, repo := range repos {
-		repoURL := strings.TrimRight(repoBase+"/"+repo.Path, "/")
-		if err := opt.deleteRepositoryMetadata(repo, prefix); err != nil {
-			fmt.Printf("❌ %s: metadata not deleted\n", repoURL)
-			stats.TotalFailed++
-			stats.Errors = append(stats.Errors, err)
-		} else {
-			fmt.Printf("✅ %s: metadata deleted\n", repoURL)
-			stats.TotalDeleted++
-		}
-	}
-
-	if stats.TotalFailed > 0 {
-		return fmt.Errorf("failed to delete %d out of %d repositories", stats.TotalFailed, stats.TotalFound)
-	}
-
-	return nil
-}
-
 func (opt *purgeOptions) listSubdirectories(path string) ([]string, error) {
 	entries, err := opt.storage.ListDirN(context.Background(), path)
 	if err != nil {
@@ -482,32 +388,6 @@ func (opt *purgeOptions) listSubdirectories(path string) ([]string, error) {
 		out = append(out, strings.TrimSuffix(string(raw), "/"))
 	}
 	return out, nil
-}
-
-func (opt *purgeOptions) getResticRepoFromEnv(rw *restic.ResticWrapper) (string, error) {
-	localDirs := &cliLocalDirectories{
-		configDir: filepath.Join(ScratchDir, configDirName),
-	}
-	if err := rw.DumpEnv(localDirs.configDir, ResticEnvs); err != nil {
-		return "", fmt.Errorf("failed to dump env: %v", err)
-	}
-	envData, err := os.ReadFile(filepath.Join(ScratchDir, configDirName, ResticEnvs))
-	if err != nil {
-		return "", fmt.Errorf("failed to read env file: %v", err)
-	}
-
-	var repoBase string
-	for _, line := range strings.Split(string(envData), "\n") {
-		if strings.HasPrefix(line, "RESTIC_REPOSITORY=") {
-			repoBase = strings.TrimPrefix(line, "RESTIC_REPOSITORY=")
-			repoBase = strings.Trim(repoBase, `"`)
-			break
-		}
-	}
-	if repoBase == "" {
-		return "", fmt.Errorf("RESTIC_REPOSITORY not found in env file")
-	}
-	return repoBase, nil
 }
 
 func (opt *purgeOptions) generateRepoListScript(repoBase string, rw *restic.ResticWrapper, subDirs []string) string {
@@ -607,6 +487,128 @@ func extractRepoListFromOutput(out string, subDirs []string, cutoffTime time.Tim
 	return kerr.NewAggregate(errs)
 }
 
+func (opt *purgeOptions) displayNoRepositoriesMessage() {
+	fmt.Println("✅ No repositories found matching the criteria.")
+	fmt.Printf("   - Age filter: older than %s\n", opt.olderThan)
+}
+
+func (opt *purgeOptions) getResticRepoFromEnv(rw *restic.ResticWrapper) (string, error) {
+	localDirs := &cliLocalDirectories{
+		configDir: filepath.Join(ScratchDir, configDirName),
+	}
+	if err := rw.DumpEnv(localDirs.configDir, ResticEnvs); err != nil {
+		return "", fmt.Errorf("failed to dump env: %v", err)
+	}
+	envData, err := os.ReadFile(filepath.Join(ScratchDir, configDirName, ResticEnvs))
+	if err != nil {
+		return "", fmt.Errorf("failed to read env file: %v", err)
+	}
+
+	var repoBase string
+	for _, line := range strings.Split(string(envData), "\n") {
+		if strings.HasPrefix(line, "RESTIC_REPOSITORY=") {
+			repoBase = strings.TrimPrefix(line, "RESTIC_REPOSITORY=")
+			repoBase = strings.Trim(repoBase, `"`)
+			break
+		}
+	}
+	if repoBase == "" {
+		return "", fmt.Errorf("RESTIC_REPOSITORY not found in env file")
+	}
+	return repoBase, nil
+}
+
+func (opt *purgeOptions) displayRepositoriesTable(repos []repositoryInfo, repoBase string) {
+	fmt.Printf("\nFound %d repositories to purge:\n", len(repos))
+
+	// Create a tabwriter for formatted output
+	w := tabwriter.NewWriter(os.Stdout, TableMinWidth, TableTabWidth, TablePadding, TablePadChar, 0)
+	defer func() {
+		_ = w.Flush() // Handle error silently for display purposes
+	}()
+
+	// Header - Updated to show "REPOSITORY" to match your desired output
+	_, _ = fmt.Fprintf(w, "REPOSITORY\tLAST MODIFIED\tAGE\n")
+	_, _ = fmt.Fprintf(w, "----------\t-------------\t---\n")
+
+	// Data rows
+	now := time.Now()
+	for _, repo := range repos {
+		age := now.Sub(repo.LastModified)
+		ageStr := formatDuration(age)
+		repoURL := strings.TrimRight(repoBase+"/"+repo.Path, "/")
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\n",
+			repoURL,
+			repo.LastModified.Format(OutputTimeFormat),
+			ageStr)
+	}
+	fmt.Println()
+}
+
+func displayDryRunMessage(count int) {
+	fmt.Printf("\nDry run completed. %d repositories would be deleted.\n", count)
+	fmt.Println("To actually delete these repositories, run the command without --dry-run")
+}
+
+func (opt *purgeOptions) confirmDeletion(count int) bool {
+	fmt.Printf("\nThis will permanently delete %d repositories. Are you sure? (y/N): ", count)
+	var confirmation string
+	_, _ = fmt.Scanln(&confirmation)
+	confirmation = strings.ToLower(strings.TrimSpace(confirmation))
+	return confirmation == "y" || confirmation == "yes"
+}
+
+func (opt *purgeOptions) deleteRepositories(rw *restic.ResticWrapper, repos []repositoryInfo) error {
+	stats := &purgeStats{
+		TotalFound: len(repos),
+		StartTime:  time.Now(),
+	}
+	defer func() {
+		stats.EndTime = time.Now()
+		opt.displayPurgeStats(stats)
+	}()
+
+	repoBase, err := opt.getResticRepoFromEnv(rw)
+	if err != nil {
+		return fmt.Errorf("failed to get restic repo from env: %w", err)
+	}
+
+	// Execute restic purge operations
+	fmt.Println("Starting repository deletion process...")
+	script := opt.generateRepoPurgeScript(rw, repoBase, repos)
+	out, err := runResticScriptViaDocker(script)
+	if err != nil {
+		return fmt.Errorf("failed to execute restic purge script: %w\nOutput:\n%s", err, out)
+	}
+
+	fmt.Printf("\n===== Snapshot Deletion Summary =====\n%s\n", out)
+
+	// Clean up storage metadata
+	fmt.Println("Cleaning up storage metadata...")
+	prefix, err := opt.backendConfig.Prefix()
+	if err != nil {
+		return fmt.Errorf("failed to get prefix from backend config: %w", err)
+	}
+
+	for _, repo := range repos {
+		repoURL := strings.TrimRight(repoBase+"/"+repo.Path, "/")
+		if err := opt.deleteRepositoryMetadata(repo, prefix); err != nil {
+			fmt.Printf("❌ %s: metadata not deleted\n", repoURL)
+			stats.TotalFailed++
+			stats.Errors = append(stats.Errors, err)
+		} else {
+			fmt.Printf("✅ %s: metadata deleted\n", repoURL)
+			stats.TotalDeleted++
+		}
+	}
+
+	if stats.TotalFailed > 0 {
+		return fmt.Errorf("failed to delete %d out of %d repositories", stats.TotalFailed, stats.TotalFound)
+	}
+
+	return nil
+}
+
 func (opt *purgeOptions) generateRepoPurgeScript(rw *restic.ResticWrapper, repoBase string, repos []repositoryInfo) string {
 	var lines []string
 	lines = append(lines, "#!/bin/sh", "set -euo pipefail", "")
@@ -676,11 +678,6 @@ func (opt *purgeOptions) deleteRepositoryMetadata(repo repositoryInfo, prefix st
 	return nil
 }
 
-func (opt *purgeOptions) displayNoRepositoriesMessage() {
-	fmt.Println("✅ No repositories found matching the criteria.")
-	fmt.Printf("   - Age filter: older than %s\n", opt.olderThan)
-}
-
 func (opt *purgeOptions) displayPurgeStats(stats *purgeStats) {
 	fmt.Printf("\n===== Final Summary =====\n")
 	fmt.Printf("Operation completed in %v\n", stats.duration())
@@ -712,11 +709,6 @@ func newUncachedClient() (client.Client, error) {
 		cfg,
 		clientsetscheme.AddToScheme,
 	)
-}
-
-func displayDryRunMessage(count int) {
-	fmt.Printf("\nDry run completed. %d repositories would be deleted.\n", count)
-	fmt.Println("To actually delete these repositories, run the command without --dry-run")
 }
 
 func formatDuration(d time.Duration) string {
