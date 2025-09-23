@@ -392,6 +392,9 @@ func (opt *purgeOptions) generateRepoListScript(repoBase string, rw *restic.Rest
 		if rw.GetCaPath() != "" {
 			cmd += fmt.Sprintf(` --cacert "%s"`, rw.GetCaPath())
 		}
+		if opt.backendConfig.S3 != nil && opt.backendConfig.S3.InsecureTLS {
+			cmd += ` --insecure-tls`
+		}
 		cmd += fmt.Sprintf(` || echo "Failed to access repository %s"`, dir)
 		lines = append(lines, cmd)
 	}
@@ -676,36 +679,41 @@ func (opt *purgeOptions) generateRepoPurgeScript(rw *restic.ResticWrapper, repoB
 		cacertFlag = fmt.Sprintf(` --cacert "%s"`, rw.GetCaPath())
 	}
 
+	insecureTLSFlag := ""
+	if opt.backendConfig.S3 != nil && opt.backendConfig.S3.InsecureTLS {
+		insecureTLSFlag = ` --insecure-tls`
+	}
+
 	purgeFunction := fmt.Sprintf(`purge_repo() {
 	  repo=$1
 	  export RESTIC_REPOSITORY="$repo"
 
-	  if ! restic forget --keep-last 1 --group-by '' --prune --no-cache --json%s >/dev/null 2>&1; then
+	  if ! restic forget --keep-last 1 --group-by '' --prune --no-cache --json%s %s >/dev/null 2>&1; then
 		echo "Failed forget (keep-last) for $repo"
 		results="$results\n❌ $repo: failed at keep-last"
 		return 1
 	  fi
 
-	  ID=$(restic snapshots --latest 1 --no-cache --json%s | jq -r '.[0].id // empty')
+	  ID=$(restic snapshots --latest 1 --no-cache --json%s  %s | jq -r '.[0].id // empty')
 	  if [ -z "$ID" ]; then
 		echo "Repo $repo is already empty"
 		results="$results\n⚠️  $repo: already empty"
 		return 0
 	  fi
 
-	  if ! restic forget "$ID" --prune --no-cache%s >/dev/null 2>&1; then
+	  if ! restic forget "$ID" --prune --no-cache%s  %s >/dev/null 2>&1; then
 		echo "Failed final forget for $repo"
 		results="$results\n❌ $repo: failed at final forget"
 		return 1
 	  fi
 
-	  if restic snapshots --json --no-cache%s | jq -e 'length==0' >/dev/null; then
+	  if restic snapshots --json --no-cache%s  %s | jq -e 'length==0' >/dev/null; then
 		results="$results\n✅ $repo: all snapshots purged"
 	  else
 		echo "Repo $repo: some snapshots remain"
 		results="$results\n⚠️  $repo: not fully purged"
 	  fi
-	}`, cacertFlag, cacertFlag, cacertFlag, cacertFlag)
+	}`, cacertFlag, insecureTLSFlag, cacertFlag, insecureTLSFlag, cacertFlag, insecureTLSFlag, cacertFlag, insecureTLSFlag)
 
 	lines = append(lines, purgeFunction)
 
