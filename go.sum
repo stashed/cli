@@ -875,7 +875,7 @@ sigs.k8s.io/structured-merge-diff/v4 v4.6.0 h1:IUA9nvMmnKWcj5jl84xn+T5MnlZKThmUW
 sigs.k8s.io/structured-merge-diff/v4 v4.6.0/go.mod h1:dDy58f92j70zLsuZVuUX5Wp9vtxXpaZnkPGWeqDfCps=
 sigs.k8s.io/yaml v1.4.0 h1:Mk1wCc2gy/F0THH0TAp1QYyJNzRm2KCLy3o5ASXVI5E=
 sigs.k8s.io/yaml v1.4.0/go.mod h1:Ejl7/uTz7PSA4eKMyQCUTnhZYNmLIl+5c2lQPGR2BPY=
-stash.appscode.dev/apimachinery v0.41.0 h1:1K4j0ADKjlQ/tGnCpctEmDx1CfJzu1HKgQC0EK5U4ZA=
-stash.appscode.dev/apimachinery v0.41.0/go.mod h1:y1VgM/7CT990qqHAtE0JGg1N0sFWzmrq/9HzUU5V8dc=
-stash.appscode.dev/stash v0.41.0 h1:FIWRv7ZEgOyUW+xLPCo2Hj2rfa0G0OWlwz8qHDGBxrw=
-stash.appscode.dev/stash v0.41.0/go.mod h1:hbgYWKaY8s5q9B0omdg/R0Ql7ThDbZcgRYUCYs5g9Gc=
+stash.appscode.dev/apimachinery v0.42.0 h1:tqGAhAbII/WoYxM4LyQW+Hc6jgjRgBYUcI3AORwBLYs=
+stash.appscode.dev/apimachinery v0.42.0/go.mod h1:Q7iqhJAS0n7IV545NxaYNE5C31bBrWklZj7SfjOyryc=
+stash.appscode.dev/stash v0.42.0 h1:3H/xiKWqbrHj4H9r3yunYxThrKNDvtzzRTsL+TcOUOo=
+stash.appscode.dev/stash v0.42.0/go.mod h1:1M7/54gtOGn6DPD69ce2Tj7iTntM20WCsAp5/hA7Rcg=
