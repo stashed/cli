@@ -363,7 +363,7 @@ func (opt *purgeOptions) findRepositoriesToPurge(rw *restic.ResticWrapper, repoB
 	script := opt.generateRepoListScript(repoBase, rw, subDirs)
 	out, err := runResticScriptViaDocker(script)
 	if err != nil {
-		return nil, fmt.Errorf("Error running repo check script: %v\nOutput:\n%s", err, out)
+		return nil, fmt.Errorf("error running repo check script: %v\nOutput:\n%s", err, out)
 	}
 
 	err = extractRepoListFromOutput(out, repoBase, subDirs, cutoffTime, &repos)

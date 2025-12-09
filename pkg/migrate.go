@@ -130,7 +130,10 @@ func (opt *migrateOptions) migrateRepo() error {
 	if err = os.MkdirAll(ScratchDir, 0o755); err != nil {
 		return err
 	}
-	defer os.RemoveAll(ScratchDir)
+	err = os.RemoveAll(ScratchDir)
+	if err != nil {
+		klog.Errorf("Error removing all: %v", err)
+	}
 
 	// configure restic wrapper
 	extraOpt := util.ExtraOptions{

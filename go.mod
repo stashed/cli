@@ -1,8 +1,6 @@
 module stash.appscode.dev/cli
 
-go 1.24
-
-toolchain go1.24.4
+go 1.25.5
 
 require (
 	github.com/kubernetes-csi/external-snapshotter/client/v7 v7.0.0
