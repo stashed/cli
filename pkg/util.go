@@ -152,6 +152,12 @@ func getContainerName(pod *core.Pod) string {
 	return apis.StashContainer
 }
 
+func RemoveDirWithLogErr(dir string) {
+	if err := os.RemoveAll(dir); err != nil {
+		klog.Errorf("failed to remove directory %s. Reason: %v", dir, err)
+	}
+}
+
 func runCmdViaDocker(localDirs cliLocalDirectories, command string, extraArgs []string) error {
 	// get current user
 	currentUser, err := user.Current()

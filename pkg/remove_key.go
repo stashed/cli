@@ -93,10 +93,8 @@ func (opt *keyOptions) removeResticKey() error {
 	if err = os.MkdirAll(ScratchDir, 0o755); err != nil {
 		return err
 	}
-	err = os.RemoveAll(ScratchDir)
-	if err != nil {
-		klog.Errorf("Error removing all: %v", err)
-	}
+
+	RemoveDirWithLogErr(ScratchDir)
 
 	// configure restic wrapper
 	extraOpt := util.ExtraOptions{

@@ -278,9 +278,7 @@ func (opt *purgeOptions) setupScratchDirectory() error {
 }
 
 func (opt *purgeOptions) cleanupScratchDirectory() {
-	if err := os.RemoveAll(ScratchDir); err != nil {
-		klog.Warningf("Failed to cleanup scratch directory: %v", err)
-	}
+	RemoveDirWithLogErr(ScratchDir)
 }
 
 func (opt *purgeOptions) getStorageSecret() (*core.Secret, error) {
