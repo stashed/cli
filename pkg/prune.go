@@ -146,7 +146,7 @@ func (opt *pruneOptions) pruneRepo(extraArgs []string) error {
 	if err = os.MkdirAll(ScratchDir, 0o755); err != nil {
 		return err
 	}
-	RemoveDirWithLogErr(ScratchDir)
+	defer RemoveDirWithLogErr(ScratchDir)
 
 	// configure restic wrapper
 	extraOpt := util.ExtraOptions{
