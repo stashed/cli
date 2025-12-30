@@ -162,8 +162,7 @@ func (opt *keyOptions) addResticKey() error {
 	if err = os.MkdirAll(ScratchDir, 0o755); err != nil {
 		return err
 	}
-	defer os.RemoveAll(ScratchDir)
-
+	defer removeDirWithLogErr(ScratchDir)
 	// configure restic wrapper
 	extraOpt := util.ExtraOptions{
 		StorageSecret: secret,

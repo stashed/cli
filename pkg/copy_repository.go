@@ -33,7 +33,7 @@ func NewCmdCopyRepository() *cobra.Command {
 		DisableAutoGenTag: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 || args[0] == "" {
-				return fmt.Errorf("Repository name is not provided")
+				return fmt.Errorf("repository name is not provided")
 			}
 
 			repositoryName := args[0]
