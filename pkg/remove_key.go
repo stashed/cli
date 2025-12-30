@@ -93,7 +93,7 @@ func (opt *keyOptions) removeResticKey() error {
 	if err = os.MkdirAll(ScratchDir, 0o755); err != nil {
 		return err
 	}
-	defer RemoveDirWithLogErr(ScratchDir)
+	defer removeDirWithLogErr(ScratchDir)
 
 	// configure restic wrapper
 	extraOpt := util.ExtraOptions{

@@ -278,7 +278,7 @@ func (opt *purgeOptions) setupScratchDirectory() error {
 }
 
 func (opt *purgeOptions) cleanupScratchDirectory() {
-	RemoveDirWithLogErr(ScratchDir)
+	removeDirWithLogErr(ScratchDir)
 }
 
 func (opt *purgeOptions) getStorageSecret() (*core.Secret, error) {
