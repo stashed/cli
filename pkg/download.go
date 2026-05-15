@@ -276,7 +276,7 @@ func (opt *downloadOptions) executeDownloadCmdInPod(pod *core.Pod, snapshots []s
 }
 
 func (opt *downloadOptions) copyDownloadedDataToDestination(pod *core.Pod) error {
-	_, err := exec.Command(cmdKubectl, "cp", "--namespace", pod.Namespace, fmt.Sprintf("%s/%s:%s", pod.Namespace, pod.Name, opt.getPodDirForSnapshots()), opt.localDirs.downloadDir).CombinedOutput()
+	_, err := exec.Command(cmdKubectl, "cp", "--namespace", pod.Namespace, "-c", getContainerName(pod), fmt.Sprintf("%s/%s:%s", pod.Namespace, pod.Name, opt.getPodDirForSnapshots()), opt.localDirs.downloadDir).CombinedOutput()
 	if err != nil {
 		return err
 	}

@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	"stash.appscode.dev/apimachinery/apis"
 	"stash.appscode.dev/apimachinery/apis/stash/v1alpha1"
 
 	filepathx "gomodules.xyz/x/filepath"
@@ -44,6 +45,20 @@ func getBackendMountingPod(kubeClient kubernetes.Interface, repo *v1alpha1.Repos
 	}
 	// return the pod that has the vol and mnt
 	for i := range podList.Items {
+		if hasLabel(&podList.Items[i], apis.LabelApp, apis.StashNetVolAccessor) {
+			// if the pod is running and has the volume and volume mount, return it
+			if podList.Items[i].Status.Phase == core.PodRunning &&
+				hasVolume(podList.Items[i].Spec.Volumes, vol) {
+				for _, c := range podList.Items[i].Spec.Containers {
+					if hasVolumeMount(c.VolumeMounts, mnt) {
+						return &podList.Items[i], nil
+					}
+				}
+			}
+		}
+	}
+
+	for i := range podList.Items {
 		if hasVolume(podList.Items[i].Spec.Volumes, vol) {
 			for _, c := range podList.Items[i].Spec.Containers {
 				if hasVolumeMount(c.VolumeMounts, mnt) {
@@ -54,6 +69,15 @@ func getBackendMountingPod(kubeClient kubernetes.Interface, repo *v1alpha1.Repos
 	}
 
 	return nil, fmt.Errorf("no backend mounting pod found for Repository %v", repo.Name)
+}
+
+func hasLabel(pod *core.Pod, key, value string) bool {
+	if pod == nil {
+		return false
+	}
+
+	v, ok := pod.Labels[key]
+	return ok && v == value
 }
 
 func hasVolume(volumes []core.Volume, vol core.Volume) bool {
