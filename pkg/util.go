@@ -129,6 +129,7 @@ func execCommandOnPod(kubeClient *kubernetes.Clientset, config *rest.Config, pod
 
 	executor, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
 	if err != nil {
+		//fmt.Println("### Err Executor:", err)
 		return nil, fmt.Errorf("failed to init executor: %v", err)
 	}
 
@@ -137,6 +138,10 @@ func execCommandOnPod(kubeClient *kubernetes.Clientset, config *rest.Config, pod
 		Stderr: &execErr,
 		Tty:    true,
 	})
+
+	//fmt.Println("STDOUT:", execOut.String())
+	//fmt.Println("STDERR:", execErr.String())
+
 	if err != nil {
 		return nil, fmt.Errorf("could not execute: %v, reason: %s", err, execErr.String())
 	}
