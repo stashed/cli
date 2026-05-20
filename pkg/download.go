@@ -293,5 +293,6 @@ func (opt *downloadOptions) clearDataFromPod(pod *core.Pod) error {
 }
 
 func (opt *downloadOptions) getPodDirForSnapshots() string {
-	return filepath.Join(apis.ScratchDirMountPath, apis.SnapshotDownloadDir)
+	_, mnt := opt.repo.Spec.Backend.Local.ToVolumeAndMount(opt.repo.Name)
+	return filepath.Join(mnt.MountPath, mnt.SubPath, DestinationDir, apis.SnapshotDownloadDir)
 }
