@@ -248,15 +248,19 @@ func runRestoreViaDocker(localDirs cliLocalDirectories, extraArgs []string, snap
 
 func (opt *downloadOptions) downloadSnapshotsFromPod(pod *core.Pod, snapshots []string) error {
 	if err := opt.executeDownloadCmdInPod(pod, snapshots); err != nil {
-		return err
+		fmt.Println("1. ############# Err:", err)
+		return nil
 	}
+	fmt.Println("1. ############# Done")
 	if err := opt.copyDownloadedDataToDestination(pod); err != nil {
-		return err
+		fmt.Println("1. ############# Err:", err)
+		return nil
 	}
 
 	if err := opt.clearDataFromPod(pod); err != nil {
-		fmt.Println("############# Err:", err)
-		return err
+		fmt.Println("2. ############# Err:", err)
+		return nil
+		//return err
 	}
 
 	klog.Infof("Snapshots: %v of Repository %s/%s restored in path %s", snapshots, namespace, opt.repo.Name, opt.localDirs.downloadDir)
@@ -274,22 +278,22 @@ func (opt *downloadOptions) executeDownloadCmdInPod(pod *core.Pod, snapshots []s
 		klog.Infoln("Output:", string(out))
 	}
 	if err != nil {
-		fmt.Println("############# Err:", err)
+		return err
 	}
 	return err
 }
 
 func (opt *downloadOptions) copyDownloadedDataToDestination(pod *core.Pod) error {
+	fmt.Println("################ Copying")
 	_, err := exec.Command(cmdKubectl, "cp", "--namespace", pod.Namespace, "-c", getContainerName(pod), fmt.Sprintf("%s/%s:%s", pod.Namespace, pod.Name, opt.getPodDirForSnapshots()), opt.localDirs.downloadDir).CombinedOutput()
 	if err != nil {
-		fmt.Println("############# Err:", err)
-
 		return err
 	}
 	return nil
 }
 
 func (opt *downloadOptions) clearDataFromPod(pod *core.Pod) error {
+	fmt.Println("################ Clearing")
 	cmd := []string{"rm", "-rf", opt.getPodDirForSnapshots()}
 	out, err := execCommandOnPod(opt.kubeClient, opt.config, pod, cmd)
 	if string(out) != "" {
