@@ -255,6 +255,7 @@ func (opt *downloadOptions) downloadSnapshotsFromPod(pod *core.Pod, snapshots []
 	}
 
 	if err := opt.clearDataFromPod(pod); err != nil {
+		fmt.Println("############# Err:", err)
 		return err
 	}
 
@@ -272,12 +273,17 @@ func (opt *downloadOptions) executeDownloadCmdInPod(pod *core.Pod, snapshots []s
 	if string(out) != "" {
 		klog.Infoln("Output:", string(out))
 	}
+	if err != nil {
+		fmt.Println("############# Err:", err)
+	}
 	return err
 }
 
 func (opt *downloadOptions) copyDownloadedDataToDestination(pod *core.Pod) error {
 	_, err := exec.Command(cmdKubectl, "cp", "--namespace", pod.Namespace, "-c", getContainerName(pod), fmt.Sprintf("%s/%s:%s", pod.Namespace, pod.Name, opt.getPodDirForSnapshots()), opt.localDirs.downloadDir).CombinedOutput()
 	if err != nil {
+		fmt.Println("############# Err:", err)
+
 		return err
 	}
 	return nil
