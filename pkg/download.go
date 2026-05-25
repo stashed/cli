@@ -17,6 +17,7 @@ limitations under the License.
 package pkg
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -285,11 +286,15 @@ func (opt *downloadOptions) executeDownloadCmdInPod(pod *core.Pod, snapshots []s
 
 func (opt *downloadOptions) copyDownloadedDataToDestination(pod *core.Pod) error {
 	fmt.Println("################ Copying")
-	_, err := exec.Command(cmdKubectl, "cp", "--namespace", pod.Namespace, "-c", getContainerName(pod), fmt.Sprintf("%s/%s:%s", pod.Namespace, pod.Name, opt.getPodDirForSnapshots()), opt.localDirs.downloadDir).CombinedOutput()
-	if err != nil {
-		return err
+
+	var stderr bytes.Buffer
+	cmd := exec.Command(cmdKubectl, "cp", "--namespace", pod.Namespace, "-c", getContainerName(pod), fmt.Sprintf("%s/%s:%s", pod.Namespace, pod.Name, opt.getPodDirForSnapshots()), opt.localDirs.downloadDir)
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if stderr.Len() > 0 {
+		klog.Warningln("***************************************************kubectl cp stderr***************************************:", stderr.String())
 	}
-	return nil
+	return err
 }
 
 func (opt *downloadOptions) clearDataFromPod(pod *core.Pod) error {
