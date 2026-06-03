@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"os/user"
@@ -145,6 +146,55 @@ func execCommandOnPod(kubeClient *kubernetes.Clientset, config *rest.Config, pod
 	}
 
 	return execOut.Bytes(), nil
+}
+
+func execCommandOnPodWithStreams(kubeClient *kubernetes.Clientset, config *rest.Config, pod *core.Pod, command []string, stdout, stderr io.Writer, tty bool) error {
+	var stderrBuffer *bytes.Buffer
+	if stderr == nil {
+		stderrBuffer = &bytes.Buffer{}
+		stderr = stderrBuffer
+	} else if buf, ok := stderr.(*bytes.Buffer); ok {
+		stderrBuffer = buf
+	}
+	if stdout == nil {
+		stdout = io.Discard
+	}
+
+	klog.Infof("Executing command %v on pod %v", command, pod.Name)
+
+	req := kubeClient.CoreV1().RESTClient().Post().
+		Resource("pods").
+		Name(pod.Name).
+		Namespace(pod.Namespace).
+		SubResource("exec").
+		Timeout(5 * time.Hour)
+	req.VersionedParams(&core.PodExecOptions{
+		Container: getContainerName(pod),
+		Command:   command,
+		Stdout:    true,
+		Stderr:    true,
+	}, scheme.ParameterCodec)
+
+	executor, err := remotecommand.NewSPDYExecutor(config, "POST", req.URL())
+	if err != nil {
+		klog.Errorln("failed to init executor:", err)
+		return fmt.Errorf("failed to init executor: %v", err)
+	}
+
+	err = executor.StreamWithContext(context.Background(), remotecommand.StreamOptions{
+		Stdout: stdout,
+		Stderr: stderr,
+		Tty:    tty,
+	})
+	if err != nil {
+		if stderrBuffer != nil && stderrBuffer.Len() > 0 {
+			klog.Errorln("pod exec failed:", err, "reason:", stderrBuffer.String())
+			return fmt.Errorf("could not execute: %v, reason: %s", err, stderrBuffer.String())
+		}
+		klog.Errorln("pod exec failed:", err)
+		return fmt.Errorf("could not execute: %v", err)
+	}
+	return nil
 }
 
 func getContainerName(pod *core.Pod) string {

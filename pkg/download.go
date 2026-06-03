@@ -250,18 +250,21 @@ func runRestoreViaDocker(localDirs cliLocalDirectories, extraArgs []string, snap
 func (opt *downloadOptions) downloadSnapshotsFromPod(pod *core.Pod, snapshots []string) error {
 	if err := opt.executeDownloadCmdInPod(pod, snapshots); err != nil {
 		fmt.Println("1. ############# Err:", err)
-		return nil
+		klog.Errorln("download command failed:", err)
+		return err
 	}
 	fmt.Println("1. ############# Done")
-	if err := opt.copyDownloadedDataToDestination(pod); err != nil {
-		fmt.Println("1. ############# Err:", err)
-		return nil
+	if err := opt.copyDownloadedDataToDestinationWithCP(pod); err != nil {
+		fmt.Println("2. ############# Err:", err)
+		klog.Errorln("copy downloaded data failed:", err)
+		return err
 	}
+	fmt.Println("2. ############# Done")
 
 	if err := opt.clearDataFromPod(pod); err != nil {
-		fmt.Println("2. ############# Err:", err)
-		return nil
-		//return err
+		fmt.Println("3. ############# Err:", err)
+		klog.Errorln("failed to clear data from pod:", err)
+		return err
 	}
 
 	klog.Infof("Snapshots: %v of Repository %s/%s restored in path %s", snapshots, namespace, opt.repo.Name, opt.localDirs.downloadDir)
@@ -284,15 +287,79 @@ func (opt *downloadOptions) executeDownloadCmdInPod(pod *core.Pod, snapshots []s
 	return err
 }
 
-func (opt *downloadOptions) copyDownloadedDataToDestination(pod *core.Pod) error {
+func (opt *downloadOptions) copyDownloadedDataToDestinationWithCP(pod *core.Pod) error {
 	fmt.Println("################ Copying")
 
+	if os.Getenv("STASH_DOWNLOAD_DEBUG_USE_KUBECTL_CP") == "true" {
+		return opt.copyDownloadedDataToDestination(pod)
+	}
+
+	podSnapshotsDir := opt.getPodDirForSnapshots()
+	command := []string{"tar", "-C", podSnapshotsDir, "-czf", "-", "."}
+	fmt.Println("########### Pod Copy Args:", command)
+
+	localTarCmd := exec.Command("tar", "-C", opt.localDirs.downloadDir, "-xzf", "-")
+	fmt.Println("########### Local Copy Args:", localTarCmd.Args)
+
+	var localTarStderr bytes.Buffer
+	localTarCmd.Stderr = &localTarStderr
+	localTarStdin, err := localTarCmd.StdinPipe()
+	if err != nil {
+		klog.Errorln("failed to pipe local tar stdin:", err)
+		return errors.Wrap(err, "failed to pipe local tar stdin")
+	}
+	if err := localTarCmd.Start(); err != nil {
+		klog.Errorln("failed to start local tar:", err)
+		return errors.Wrap(err, "failed to start local tar")
+	}
+
+	var execStderr bytes.Buffer
+	execErr := execCommandOnPodWithStreams(opt.kubeClient, opt.config, pod, command, localTarStdin, &execStderr, false)
+	if closeErr := localTarStdin.Close(); closeErr != nil && execErr == nil {
+		klog.Errorln("failed to close local tar stdin:", closeErr)
+		execErr = errors.Wrap(closeErr, "failed to close local tar stdin")
+	}
+	tarErr := localTarCmd.Wait()
+	if execErr != nil {
+		klog.Errorln("pod exec stream failed:", execErr)
+	}
+	if tarErr != nil {
+		klog.Errorln("local tar failed:", tarErr)
+	}
+
+	if execStderr.Len() > 0 {
+		klog.Warningln("################ pod exec stderr:", execStderr.String())
+	}
+	if localTarStderr.Len() > 0 {
+		klog.Warningln("################ local tar stderr:", localTarStderr.String())
+	}
+
+	if execErr != nil && tarErr != nil {
+		klog.Errorln("pod exec and local tar failed:", execErr, tarErr)
+		return errors.Wrap(execErr, fmt.Sprintf("pod exec failed; local tar failed: %v", tarErr))
+	}
+	if execErr != nil {
+		return execErr
+	}
+	if tarErr != nil {
+		return errors.Wrap(tarErr, "local tar failed")
+	}
+	return nil
+}
+
+func (opt *downloadOptions) copyDownloadedDataToDestination(pod *core.Pod) error {
+	fmt.Println("################ Copying")
+	fmt.Println(" ############### Using Kubetl CP")
 	var stderr bytes.Buffer
 	cmd := exec.Command(cmdKubectl, "cp", "--namespace", pod.Namespace, "-c", getContainerName(pod), fmt.Sprintf("%s/%s:%s", pod.Namespace, pod.Name, opt.getPodDirForSnapshots()), opt.localDirs.downloadDir)
+	fmt.Println("########### Copy Args:", cmd.Args)
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	if stderr.Len() > 0 {
 		klog.Warningln("***************************************************kubectl cp stderr***************************************:", stderr.String())
+	}
+	if err != nil {
+		klog.Errorln("kubectl cp failed:", err)
 	}
 	return err
 }
